@@ -5,12 +5,15 @@ This is a python pipeline where you can simply use summary statistics created fr
 The codes are written in python3 (>=python3.6.9). This programme comes with several dependencies:
 
 - numpy
-- sklearn
+- scikit-learn
+- joblib
 - pandas
 - h5py
 - rpy2
+- r-essentials
+- tzlocal
 - tensorflow
-- keras 
+- keras
 
 The easiest way to install this dependencies is using conda. 
 ```
