@@ -502,10 +502,11 @@ class ABC_TFK_Classification():
         :return: will plot it the folder to see the confusion matrix. also print out the summary of the model to see the
          confusion matrix in text format
         """
-
+        # index=robjects.r['as.vector'](robjects.r['factor'](robjects.r['as.matrix'](list(index))))
+        # print (index)
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
-        cls.r_summary(cvmodsel,target='Confusion')
-        # x, y = robjects.r['summary'](cvmodsel)
+        # cls.r_summary(cvmodsel,target='Confusion')
+        x, y = robjects.r['summary'](cvmodsel)
         robjects.r['plot'](cvmodsel)
 
     @classmethod
