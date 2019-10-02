@@ -1,13 +1,8 @@
-import sklearn
 from tensorflow.python import keras
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Flatten, Conv2D, Dropout,MaxPooling2D, Conv3D, MaxPooling3D
+from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.models import load_model
-import tensorflow
-import scipy
-from sklearn import preprocessing
-from tensorflow.keras.utils import HDF5Matrix
+
 
 
 class myCallback(Callback):
