@@ -6,12 +6,11 @@ import os
 
 ####R packaage check
 def importr_tryhard(packname):
-    from rpy2.rinterface_lib.embedded import RRuntimeError
+    import rpy2
     from rpy2.robjects.packages import importr
-
     try:
         rpack = importr(packname)
-    except RRuntimeError:
+    except rpy2.rinterface.RRuntimeError:
         utils = importr('utils')
         utils.chooseCRANmirror(ind=1)
         utils.install_packages(packname)

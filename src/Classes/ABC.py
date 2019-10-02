@@ -622,6 +622,7 @@ class ABC_TFK_Classification():
         ssnn.index = indexnn
         sfs = cls.read_ss_2_series(file=ssfile)
         cls.check_results(results=[x_test[0:2]], observed=sfs)
+        print (ModelSeparation.predict_proba(sfs.values.reshape(1, -1)))
         if scale_x:
             predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
         else:
