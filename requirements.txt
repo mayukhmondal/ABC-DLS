@@ -1,8 +1,8 @@
-h5py
 numpy
+scikit-learn
 pandas
+h5py
 rpy2
 tensorflow
 keras
-sklearn
 joblib
