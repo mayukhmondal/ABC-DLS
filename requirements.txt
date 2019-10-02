@@ -1,0 +1,8 @@
+h5py
+numpy
+pandas
+rpy2
+tensorflow
+keras
+sklearn
+joblib
