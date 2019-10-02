@@ -36,6 +36,6 @@ def ANNModelCheck(x, y):
     model.add(Dense(y.shape[1], activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
-    model.fit(x, y, epochs=20, verbose=2, shuffle="batch")
+    model.fit(x, y, epochs=50, verbose=2, shuffle="batch")
 
     return model
