@@ -32,7 +32,7 @@ sp.add_argument('--demography',
                 help='The demography.py file full path. If this is given it will assume it has better function cater to your own demography. The def ANNModelCheck should be inside')
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "mnlogistic", "neuralnet". default is rejection" ',
-                default='rejection')
+                default='rejection', choices=["rejection", "mnlogistic", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .005 ', default=.005, type=float)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
@@ -65,7 +65,7 @@ sp.add_argument('--test_size',
                 default=10000, type=int)
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "mnlogistic", "neuralnet". default is rejection" ',
-                default='rejection')
+                default='rejection', choices=["rejection", "mnlogistic", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .005 ', default=.005, type=float)
 
 sp = subparsers.add_parser('After_train', help='This is to run the ABC analysis after the traingin part is done')
@@ -76,7 +76,7 @@ sp.add_argument('--test_size',
                 default=10000, type=int)
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "mnlogistic", "neuralnet". default is rejection" ',
-                default='rejection')
+                default='rejection', choices=["rejection", "mnlogistic", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .005 ', default=.005, type=float)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
