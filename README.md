@@ -13,12 +13,18 @@ The codes are written in python3 (>=python3.6.9). This programme comes with seve
 - keras 
 
 The easiest way to install this dependencies is using conda. 
-`conda install --file requirements.txt`
+```
+conda install --file requirements.txt
+```
 Wait a little bit as it can take long time to install all the dependencies. 
 After installing all the dependencies you can just run either
-`python src/Run_Classification.py --help`
+```
+python src/Run_Classification.py --help
+```
 or 
-`python src/Run_ParamsEstimation.py --help`
+```
+python src/Run_ParamsEstimation.py --help
+```
 
 For Model selection and for parameters estimation respectively. 
 For more information please see examples/Guide.pdf
