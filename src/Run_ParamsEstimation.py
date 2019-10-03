@@ -90,7 +90,7 @@ if args.cmd == 'All':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
     ###running
-    ABC.ABC_TFK_Params.wrapper(info=args.info, sfsfile=args.sfsfile, demography=args.demography,
+    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography,
                                method=args.method, tol=args.tolerance, test_size=args.test_size,
                                chunksize=args.chunksize,
                                csvout=args.csvout, scale=args.scale)

@@ -1592,6 +1592,11 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
                                                                   y_test=y_test, scale_x=scale_x, scale_y=scale_y,
                                                                   params_names=pandas.read_csv(
                                                                       'params_header.csv').columns)
+        print('correlation between params. Prior')
+        print(params_unscaled.corr().to_string())
+
+        print('correlation between predicted params. Posterior')
+        print(test_predictions.corr().to_string())
 
         cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
                                 method=method)

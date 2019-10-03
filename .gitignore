@@ -14,3 +14,7 @@ params_header.csv
 ModelParamPrediction.h5
 nnparamcv.pdf
 nnparamcv_together.pdf
+scale_x.sav
+scale_y.sav
+paramposterior.pdf
+params.csv.gz
