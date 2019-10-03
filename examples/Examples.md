@@ -44,8 +44,11 @@ python src/Run_Classification.py Pre_train examples/Model.info
 - input: examples/Model.info  
 Can be any text file which has all the demographic models that we want to compare together. Every line is denoted for one demographic simulation csv file. We should also denote the number of columns which are for the parameters present in that file. This will remove those columns from the files as they are not ss for the comparison.  
 Should look like: 
+
 > <Model1.csv.gz> <param_n> 
+
 > <Model2.csv.gz> <param_n> 
+
 >... 
 
 This will create in total 3 files. x.h5 (this is for ss), y.h5 (models names in integer format) and y_cat_dict.txt (models name and their corresponding integer number). These first two part will be needed to run the neural network training for TF. The last part will be used later. 
