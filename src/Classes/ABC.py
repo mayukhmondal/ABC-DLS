@@ -1294,7 +1294,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                       sumstat=pandas.DataFrame(ss.iloc[:, colnum]), nval=repeats, tols=tol,
                                       method=method, trace=trace)
                 print(param.iloc[:, colnum].name)
-                print(robjects.r['summary'](cvresreg)[0][0])
+                print(robjects.r['summary'](cvresreg))
                 robjects.r['plot'](cvresreg, ask=False)
             robjects.r['dev.off']()
         if method == 'rejection' or method == 'neuralnet':
