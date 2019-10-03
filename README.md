@@ -32,7 +32,7 @@ python src/Run_ParamsEstimation.py --help
 For Model selection and for parameters estimation respectively. 
 For more information please see examples/Examples.md
 
-The first time you run it will also try to install abc from r package manager. 
+The first time you run it will also try to install abc from r package manager (automatically). 
 
 ## Contact 
 The code is maintained by Mayukh Mondal. In case you need further assistance please contact <mondal.mayukh@gmail.com>
