@@ -29,6 +29,7 @@ In principle you do not need parameter columns for the classification part, but 
 python  src/Run_Classification.py --help 
 ``` 
 Will output 5 different methods: 
+
 | Methods | Helps | 
 | ------ | ------ | 
 | All| The whole run of the NN for parameter estimation from first to last | 
