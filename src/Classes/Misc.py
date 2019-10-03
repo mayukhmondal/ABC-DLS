@@ -6,7 +6,6 @@ import os
 
 ####R packaage check
 def importr_tryhard(packname):
-    import rpy2
     from rpy2.robjects.packages import importr
     try:
         rpack = importr(packname)
