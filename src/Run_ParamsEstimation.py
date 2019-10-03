@@ -42,9 +42,6 @@ sp = subparsers.add_parser('Pre_train', help='To prepare the data for training A
 sp.set_defaults(cmd='Pre_train')
 sp.add_argument('info',
                 help='the path for the info file. whose firstcolumn will be file path (.csv or .csv.gz) and tab delimited column with and the number of paramter in that file. ex. <file1.csv.gz> <n>. Only the first one will be taken as valid')
-sp.add_argument('--test_size',
-                help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
-                default=10000, type=int)
 sp.add_argument('--chunksize',
                 help='If two big for the memroy use chunk size. relatively slow but no problem with ram. default 100 ',
                 type=int, default=100)
@@ -98,7 +95,7 @@ if args.cmd == 'All':
                                chunksize=args.chunksize,
                                csvout=args.csvout, scale=args.scale)
 elif args.cmd == 'Pre_train':
-    ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=args.test_size, scale=args.scale)
+    ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scale=args.scale)
 elif args.cmd == 'Train':
     ABC.ABC_TFK_Params_Train(demography=args.demography, test_rows=args.test_size)
 elif args.cmd == 'CV':
