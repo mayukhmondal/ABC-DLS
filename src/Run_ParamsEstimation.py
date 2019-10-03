@@ -81,7 +81,6 @@ sp.add_argument('--csvout',
                 action="store_true")
 args = parser.parse_args()
 
-args = parser.parse_args()
 
 ##ccheking inputs
 if args.cmd == 'All':

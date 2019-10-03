@@ -1,4 +1,4 @@
-from tensorflow.python import keras
+
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import Callback
