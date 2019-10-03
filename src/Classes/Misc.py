@@ -162,7 +162,7 @@ def removefiles(files:list)-> None:
     """
     commands=removefilescommands(files)
     for file in files:
-        print ("This file is removed:",file)
+        print ("Removing if exist:",file)
     [os.system(command) for command in commands]
     return None
 
