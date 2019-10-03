@@ -85,6 +85,12 @@ To define the observed csv file. Here we put YRI_CEU_CHB from the high coverage 
 If you are happy with all the result you can use csvout. This will remove .h5 files to free up space but also will produce csv files which then can directly be used R to further improve the results using abc if necessary. As all the commands of abc is not supported here in ABC-TFK.
 
 This will print out (including the CV part) which models is better explained by the NN. It will also print out the goodness of fit to see if our observed model comes naturally under all the distribution of such model. If you csvout it will additionally output model_index.csv.gz (all the model indexes), ss_predicted.csv.gz (prediction from simulated ss by NN) and ss_target.csv.gz (prediction of the observed or real data). 
+### All
+In case rather than doing it separately, we can do all these stuffs together in one command.  
+``` 
+python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout  --demography src/extras/ModelClass.py examples/Model.info 
+``` 
+It will produce the same files as previously but all of them together. If we do not use --chunksize it will produce x_test.h5 and y_test.h5 (of course if we use csvout it will be deleted) instead of x.h5 y.h5 as it will keep the training part on the ram itself. If you reach ram memory error, please use chunksize which will be relatively slower but do not have any upper limit for the file size.   
 ### Optional 
 We can easily use this result in R further to improve our analysis: 
 ``` 
@@ -96,4 +102,8 @@ cv4postpr(as.vector(index),as.matrix(ss_predict[,-1]),nval=1000,method='rejectio
 ``` 
 
 To see with different amount of tolerance level and nval how the abc analysis changes. 
+
+
+
+
 
