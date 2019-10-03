@@ -148,7 +148,7 @@ This will calculate both the CV part as well as will compare with the observed d
 ### All
 To put all these parts together we can use: 
 ```
-python src/Run_ParamsEstimation.py All --demography src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv examples/Model.info
+python src/Run_ParamsEstimation.py All --demography src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale examples/Model.info
 ```
 It will produce similar result. 
 ### Optional 
