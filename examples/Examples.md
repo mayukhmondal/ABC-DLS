@@ -103,6 +103,66 @@ cv4postpr(as.vector(index),as.matrix(ss_predict[,-1]),nval=1000,method='rejectio
 ``` 
 
 To see with different amount of tolerance level and nval how the abc analysis changes. 
+## Parameter Estimation
+After we have chosen our best model, we try to predict the parameters which can explain the observed results. This will follow similarly as the previous files. But instead of multiple files for different demography it will only use one of the files for parameter estimation (given a model). It has similar structure like Classification: All, Pre_train, Train, CV, After_train. 
+### Pre_train
+As classification part it will prepare the data for training. 
+```
+python src/Run_ParamsEstimation.py Pre_train examples/Model.info --scale
+```
+- input: examples/Model.info   
+Exactly like classification. But in case the Model.info file has multiple lines; it will only use the first line for the parameter estimation. 
+--scale 
+If the data is not already scaled it will be scaled. It will be scaled using MinMaxscaler, which means all the number will be with in 0 to 1. Unlike classification, scaling is very important here. Also, we found that theoretical scaling is much better than MinMaxscaler. Thus, if you know how to do the theoretical scaling, it will be preferable to do it before and then use that as an input rather than using the unscaled data. For example, the effective population size parameters should be scaled by NA (Ancestral effective population size). Also, the sfs should be scaled such a way that sum (sfs)==1. 
+
+It will produce x.h5 and y.h5 like previously. The main important different is for y.h5 whereas in classification part it only needed model names, here it will use parameters. It will also save params_header.csv to know the name of the parameters. 
+### Train
+Same as classification this will train the model. Unlike the classification, it takes a lot of epochs and very convoluted model to get high score for the accuracy. Thus, if you see you do not reach higher accuracy do not be disheartened. 
+```
+python src/Run_ParamsEstimation.py Train --demography src/extras/ModelParams.py --test_size 1000
+```
+- --demography src/extras/ModelParams.py
+Although there is a default method present in ABC-TFK (meaning python src/Run_ParamsEstimation.py Train --test_size 1000 will also work), we can give a model from outside. It must have a def name ANNModelParams. We can decide the number of epochs and other stuff inside that definition. Here we kept 100 to make it faster.  
+- --test_size 1000
+As above kept 1000 samples for later use. All the other samples are used for training part. 
+
+This will save the model as ModelParamPrediction.h5, which later can be used for prediction and stuff. 
+### CV
+To calculate cross validation error of the parameters. 
+```
+python src/Run_ParamsEstimation.py CV --test_size 1000 --tolerance .01 --method loclinear
+```
+
+- --test_size 1000 --tolerance .01 
+Same as clasiification.
+--method loclinear
+To tell which method to be used for CV. We found that generally loclinear is good for CV and neuralnet for observed data. On top of that if we use ABC-TFK cv method either it will produce the CV independently per column for NN prediction (when using loclinear or rejection) or it will produce CV by all the columns together by NN prediction (when using neuralnet or rejection). 
+
+It will either produce nnparamcv.pdf (for using loclinear), nnparamcv_together.pdf (for using neuralnet) or both (for rejection) and print the cv error table in the terminal. In case of neuralnet it will also produce a correlation matrix for prior and posterior. This is important to see if there are some parameters becoming more correlated than the prior which might be the drawback of the ss, or the neural network used by TF. For example, we found that migrations and split time become correlated in case of SFS. 
+### After_train
+After everything is done, we can use the After_train to use the ABC analysis. 
+```
+python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv
+```
+This will calculate both the CV part as well as will compare with the observed data. This will produce paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of model_index.csv.gz will produce params.csv.gz. Inside those files will be necessary information for the parameters. 
+### All
+To put all these parts together we can use: 
+```
+python src/Run_ParamsEstimation.py All --demography src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv examples/Model.info
+```
+It will produce similar result. 
+### Optional 
+We can use further the results in R:
+```
+library(abc)
+params=read.csv('params.csv.gz')
+ss=read.csv('ss_predicted.csv.gz')
+target=read.csv('ss_target.csv.gz')
+res=abc(target = target,param=params,sumstat = ss,tol=.01,method='neuralnet',transf = 'log')
+summary(res)
+plot(res,param=params)
+```
+This will transform the parameter values in log scale. Thus, we can calculate the distance much more precisely. 
 
 
 
