@@ -385,7 +385,8 @@ class ABC_TFK_Classification():
         """
         Misc.removefiles(
             ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
-             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt'])
+             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'params.csv.gz',
+             'ss_predicted.csv.gz', 'ss_target.csv.gz'])
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
         pandas.DataFrame(
@@ -450,6 +451,8 @@ class ABC_TFK_Classification():
             if ANNModelCheck:
                 ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
             else:
+                print('Could not find the ANNModelCheck in', demography,
+                      '. Please check. Now using the default ANNModelChek')
                 ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
             ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
@@ -621,7 +624,7 @@ class ABC_TFK_Classification():
         ssnn.index = indexnn
         sfs = cls.read_ss_2_series(file=ssfile)
         cls.check_results(results=[x_test[0:2]], observed=sfs)
-        print (ModelSeparation.predict_proba(sfs.values.reshape(1, -1)))
+        print(ModelSeparation.predict_proba(sfs.values.reshape(1, -1)))
         if scale_x:
             predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
         else:
@@ -1168,6 +1171,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             if ANNModelParams:
                 ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
             else:
+                print('Could not find the ANNModelParams in', demography,
+                      '. Please check. Now using the default ANNModelParams')
                 ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
         else:
             ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
