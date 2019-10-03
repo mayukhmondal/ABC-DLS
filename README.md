@@ -30,7 +30,7 @@ python src/Run_ParamsEstimation.py --help
 ```
 
 For Model selection and for parameters estimation respectively. 
-For more information please see <examples/Examples.md>
+For more information please see examples/Examples.md
 
 The first time you run it will also try to install abc from r package manager. 
 
