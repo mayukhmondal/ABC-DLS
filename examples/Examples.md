@@ -59,6 +59,7 @@ This will train the model.
 ABC-TFK has a default training neural model. But it is impossible to predict which model should be better for the input data. Thus, we can define custom made model cater to our own need. One such example is src/extras/ModelClass.py. Here we put very less epochs (only 20) to get faster result. More is merrier of course. 
 - --test_size 1000  
 This will keep the last 1000 line save for test data set and will be used for ABC analysis. In the previous step it is already shuffled the data thus last 1000 lines you would expect near equal number of demographies.  
+
 This will save the neural model as ModelClassification.h5 which we can use later for other use.  
 ### CV 
 The next will be calculating the CV error to see if our Neural network is even capable of differentiating between models. This step is important if we do not have the observed data. If you have the observed data in hand use the next part (After_train) 
@@ -69,6 +70,7 @@ python src/Run_Classification.py CV --test_size 1000 --tolerance 0.01
 This is the number of simulation rows (in total) will be used for test data set. This test data set is never been seen by the neural network, thus useful to see if your model is overfitting. Only this test data set will be used for ABC (r package) analysis.  
 - --tolerance .01  
 This parameter is needed by the ABC analysis to tell how much tolerance your model can have.  
+
 This will print out the confusion matrix as well as save the CV.pdf where we can understand the power of neural network to differentiate between models. 
 ### After_train 
 This part is similar to CV part, but it has the observed file together in the step thus can be used to see which demographic model can better explain the result.  
