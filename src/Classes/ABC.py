@@ -811,7 +811,11 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         """
         from tensorflow.keras.models import load_model
         if os.path.isfile(ModelParamPredictionFile):
-            model = load_model(ModelParamPredictionFile)
+            try:
+                model = load_model(ModelParamPredictionFile)
+            except AttributeError:
+                model=load_model(ModelParamPredictionFile,custom_objects={'Gaussian_noise':cls.Gaussian_noise})
+
         else:
             print('The ANN model file could not be found please check. ', ModelParamPredictionFile)
             sys.exit(1)
