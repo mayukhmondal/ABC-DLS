@@ -29,7 +29,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     from tensorflow.python import keras
     from tensorflow.python.keras.models import Sequential
-    from tensorflow.python.keras.layers import Dense
+    from tensorflow.python.keras.layers import Dense, Lambda
     from keras.utils import HDF5Matrix
 
 ##type hint for readability
@@ -414,6 +414,20 @@ class ABC_TFK_Classification():
         return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
     @classmethod
+    def Gaussian_noise(cls, input_layer, sd: float = .01):
+        """
+        Gaussian noise to the input data. Same as Keras.GaussianNoise but it will not only work with training part but
+        will work on test data set and observed data. Thus every time it will run will give slightly different results.
+        Good to produce a distribution from a single observation
+        :param input_layer: tensorflow input layer
+        :param sd: the standard deviation present will be present in the noise random normal distribution
+        :return: will add the noise to the input_layer
+        """
+        import tensorflow as tf
+        noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
+        return input_layer + noise
+
+    @classmethod
     def ANNModelCheck(cls, x: Union[numpy.array, HDF5Matrix], y: Union[numpy.array, HDF5Matrix]) -> keras.models.Model:
         """
         The Tensor flow for model check
@@ -422,6 +436,7 @@ class ABC_TFK_Classification():
         :return: will return the trained model
         """
         model = Sequential()
+        model.add(Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)))
         model.add(Dense(128, activation='relu', input_shape=(x.shape[1],)))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(128, activation='relu'))
@@ -459,6 +474,21 @@ class ABC_TFK_Classification():
         ModelSeparation.save("ModelClassification.h5")
         return ModelSeparation
 
+    @classmethod
+    def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.array, HDF5Matrix],
+                             repeats: int = 100) -> pandas.DataFrame:
+        """
+        Instead of predicting once on NNModel. It will predict multiple times [important to use
+        Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)) on the starting layer] from same data and return mean on
+        those repeats
+        :param Model: the keras trained model
+        :param x: x or summary statistics. can be both x_test or observed
+        :param repeats: the number of repeats to be used on such prediction. default is 100
+        :return: will return a pandas dataframe of predicted values
+        """
+        ssnn = [Model.predict(x[:]) for _ in range(repeats)]
+        ssnn = numpy.mean(numpy.array(ssnn), axis=0)
+        return pandas.DataFrame(ssnn)
     @classmethod
     def print_after_match_linestart(cls, file: str, match: str) -> None:
         """
@@ -619,16 +649,15 @@ class ABC_TFK_Classification():
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
 
-        ssnn = pandas.DataFrame(ModelSeparation.predict(x_test[:]))
+        ssnn =cls.predict_repeats_mean(ModelSeparation,x_test,repeats=100)
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         ssnn.index = indexnn
         sfs = cls.read_ss_2_series(file=ssfile)
         cls.check_results(results=[x_test[0:2]], observed=sfs)
-        print(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         if scale_x:
-            predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
+            predictednn =cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
         else:
-            predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
+            predictednn = cls.predict_repeats_mean(ModelSeparation, sfs.values.reshape(1, -1))
         print('Predicted by NN')
         print(sorted(y_cat_dict.items()))
         print(predictednn)
