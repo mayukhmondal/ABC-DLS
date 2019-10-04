@@ -436,7 +436,7 @@ class ABC_TFK_Classification():
         """
         model = Sequential()
         model.add(Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)))
-        model.add(Dense(128, activation='relu', input_shape=(x.shape[1],)))
+        model.add(Dense(128, activation='relu'))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(128, activation='relu'))
