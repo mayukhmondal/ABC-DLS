@@ -186,7 +186,6 @@ class ABC_TFK_Classification():
         p = subprocess.Popen([command], executable='/bin/bash', stdout=subprocess.PIPE, shell=True,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        # print (command)
         if stderr:
             print(stderr)
             sys.exit(1)
@@ -280,7 +279,7 @@ class ABC_TFK_Classification():
         f = h5py.File(h5path, 'w')
         transh5 = f.create_dataset('mydata', arraysize, chunks=True)
 
-        ###transorming
+        ###transforming
         if verbose:
             print('transforming')
         row = 0
@@ -536,7 +535,6 @@ class ABC_TFK_Classification():
          confusion matrix in text format
         """
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
-        # cls.r_summary(cvmodsel,target='Confusion')
         x, y = robjects.r['summary'](cvmodsel)
         robjects.r['plot'](cvmodsel)
 
@@ -1168,8 +1166,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param y: the parameters which produced those ss
         :return: will return the trained model
         """
-        ####
-        # callbacks = myCallback()
         model = Sequential()
         model.add(Dense(512, activation='relu', input_shape=(x.shape[1],)))
         model.add(Dense(128, activation='relu'))
@@ -1177,7 +1173,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         model.add(Dense(32, activation='relu'))
         model.add(Dense(y.shape[1]))
         model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
-        # model.fit(x, y, epochs=500, shuffle="batch", callbacks=[callbacks], verbose=2)
         model.fit(x, y, epochs=500, shuffle="batch", verbose=2)
 
         return model
@@ -1523,7 +1518,7 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
 
     @classmethod
     def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
-        # print (x_dimension)
+
         y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
