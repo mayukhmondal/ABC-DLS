@@ -17,15 +17,14 @@ The first part is to choose the best model which can explain the observed data (
 You can look inside the examples/*.csv.gz files to get an idea. 
 ```sh
 N_AF,N_EU,N_AS,N_B,T_AF,T_B,T_EU_AS,0_0_0,0_0_1,0_0_2,...
-51345.18223692785,12088.175310709128,57003.53191147518,2836.3397488400688,19919.590697189542,6745.785581877058,2044.914414636497,0.0,0.05763950461706744,0.011561403720162306,...
-44461.927156180536,19591.694811174035,50700.19845184081,2642.3892773045395,2718.7327121234107,4662.7293230893265,2379.931022189205,0.0,0.08125373412395043,0.015558448274754432,...
-51431.42563665978,36277.816701087,64579.202181147644,1245.2241624937133,2949.691221614999,2733.2034297360074,1822.4184924786944,0.0,0.06643583266923958,0.010742217176571226,...
-33688.093216904344,25472.873973886602,30435.727894210475,1464.36792729051,11392.273637177412,6731.070839338572,2388.1057949481874,0.0,0.05962954644324739,0.011929341763292071,...
-54183.559035734295,73182.44963451767,65784.87589486384,5368.394693791342,23710.073995546874,5807.500359988167,1869.7751657298722,0.0,0.06323807875620768,0.013285449995686458,...
-33768.001079286056,63595.15247825567,21653.347671160893,4839.534165227084,21733.51348118516,2137.418318876772,2374.811025752982,0.0,0.07321064169101178,0.020707344946100742,...
+41.91238472966386,8.309530807784103,2.765119195470757,0.033056478661619815,0.3241105917566006,1.9075173699598655,0.08600273078185215,0.0,0.01710902810227033,0.0024309585132660265,...
+1.4036446805365959,28.806143458313183,40.793276938448685,0.07667751542033917,2.7942812729697404,0.1611504840934601,0.0009608538419194447,0.0,0.011552644156829899,0.002952178031510643,...
+14.4699687789293,13.076507818094042,15.468141529239466,0.7566621341914272,2.827195148492236,0.2683689967394146,0.019711951401945545,0.0,0.06450083622477325,0.01793789070092734,...
+33.49003204256888,8.991749677628123,38.47138632478331,0.05440611526914164,1.7826816037574387,1.7932789841164765,0.09935861063949145,0.0,0.018857425585701144,0.0017586872079860553,...
+31.045117227506175,10.91187123855422,21.944990557726523,0.5565143283059646,2.8951686614340337,0.3440145000742446,0.10954860391870827,0.0,0.054948080811165076,0.01490294823057456,...
 ```
 In principle you do not need parameter columns for the classification part, but we kept it to make it similar to later part where parameters are required. 
-``` 
+``` sh
 python  src/Run_Classification.py --help 
 ``` 
 Will output 5 different methods: 
@@ -39,20 +38,23 @@ Will output 5 different methods:
 | After_train | This is to run the ABC analysis after the training part is done | 
 ### Pre_train  
 This is the pre training part. Where the data is prepared for the TF.  
-``` 
+``` sh
 python src/Run_Classification.py Pre_train examples/Model.info  
 ``` 
 - input: examples/Model.info  
 Can be any text file which has all the demographic models that we want to compare together. Every line is denoted for one demographic simulation csv file. We should also denote the number of columns which are for the parameters present in that file. This will remove those columns from the files as they are not ss for the comparison.  
 Should look like: 
+
 > <Model1.csv.gz> <param_n> 
+
 > <Model2.csv.gz> <param_n> 
+
 >... 
 
 This will create in total 3 files. x.h5 (this is for ss), y.h5 (models names in integer format) and y_cat_dict.txt (models name and their corresponding integer number). These first two part will be needed to run the neural network training for TF. The last part will be used later. 
 ### Train 
 The next part is to run the training part by neural network. This will train the network to differentiate between models.  
-``` 
+``` sh
 python src/Run_Classification.py Train --demography src/extras/ModelClass.py --test_size 1000 
 ``` 
 This will train the model.  
@@ -64,7 +66,7 @@ This will keep the last 1000 line save for test data set and will be used for AB
 This will save the neural model as ModelClassification.h5 which we can use later for other use.  
 ### CV 
 The next will be calculating the CV error to see if our Neural network is even capable of differentiating between models. This step is important if we do not have the observed data. If you have the observed data in hand use the next part (After_train) 
-``` 
+``` sh
 python src/Run_Classification.py CV --test_size 1000 --tolerance 0.01 
 ``` 
 - --test_size 1000  
@@ -75,7 +77,7 @@ This parameter is needed by the ABC analysis to tell how much tolerance your mod
 This will print out the confusion matrix as well as save the CV.pdf where we can understand the power of neural network to differentiate between models. 
 ### After_train 
 This part is similar to CV part, but it has the observed file together in the step thus can be used to see which demographic model can better explain the result.  
-``` 
+``` sh
 python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout 
 ``` 
 - --test_size 1000 and --tolerance .01 
@@ -88,13 +90,13 @@ If you are happy with all the result you can use csvout. This will remove .h5 fi
 This will print out (including the CV part) which models is better explained by the NN. It will also print out the goodness of fit to see if our observed model comes naturally under all the distribution of such model. If you csvout it will additionally output model_index.csv.gz (all the model indexes), ss_predicted.csv.gz (prediction from simulated ss by NN) and ss_target.csv.gz (prediction of the observed or real data). 
 ### All
 In case rather than doing it separately, we can do all these stuffs together in one command.  
-``` 
+``` sh
 python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout  --demography src/extras/ModelClass.py examples/Model.info 
 ``` 
 It will produce the same files as previously but all of them together. If we do not use --chunksize it will produce x_test.h5 and y_test.h5 (of course if we use csvout it will be deleted) instead of x.h5 y.h5 as it will keep the training part on the ram itself. If you reach ram memory error, please use chunksize which will be relatively slower but do not have any upper limit for the file size.   
 ### Optional 
 We can easily use this result in R further to improve our analysis: 
-``` 
+``` sh
 library(abc) 
 ss_predict=read.csv('ss_predicted.csv.gz') 
 target=read.csv('ss_target.csv.gz') 
@@ -107,7 +109,7 @@ To see with different amount of tolerance level and nval how the abc analysis ch
 After we have chosen our best model, we try to predict the parameters which can explain the observed results. This will follow similarly as the previous files. But instead of multiple files for different demography it will only use one of the files for parameter estimation (given a model). It has similar structure like Classification: All, Pre_train, Train, CV, After_train. 
 ### Pre_train
 As classification part it will prepare the data for training. 
-```
+```sh
 python src/Run_ParamsEstimation.py Pre_train examples/Model.info --scale
 ```
 - input: examples/Model.info   
@@ -118,7 +120,7 @@ If the data is not already scaled it will be scaled. It will be scaled using Min
 It will produce x.h5 and y.h5 like previously. The main important different is for y.h5 whereas in classification part it only needed model names, here it will use parameters. It will also save params_header.csv to know the name of the parameters. 
 ### Train
 Same as classification this will train the model. Unlike the classification, it takes a lot of epochs and very convoluted model to get high score for the accuracy. Thus, if you see you do not reach higher accuracy do not be disheartened. 
-```
+```sh
 python src/Run_ParamsEstimation.py Train --demography src/extras/ModelParams.py --test_size 1000
 ```
 - --demography src/extras/ModelParams.py
@@ -129,7 +131,7 @@ As above kept 1000 samples for later use. All the other samples are used for tra
 This will save the model as ModelParamPrediction.h5, which later can be used for prediction and stuff. 
 ### CV
 To calculate cross validation error of the parameters. 
-```
+```sh
 python src/Run_ParamsEstimation.py CV --test_size 1000 --tolerance .01 --method loclinear
 ```
 
@@ -141,19 +143,19 @@ To tell which method to be used for CV. We found that generally loclinear is goo
 It will either produce nnparamcv.pdf (for using loclinear), nnparamcv_together.pdf (for using neuralnet) or both (for rejection) and print the cv error table in the terminal. In case of neuralnet it will also produce a correlation matrix for prior and posterior. This is important to see if there are some parameters becoming more correlated than the prior which might be the drawback of the ss, or the neural network used by TF. For example, we found that migrations and split time become correlated in case of SFS. 
 ### After_train
 After everything is done, we can use the After_train to use the ABC analysis. 
-```
+```sh
 python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv
 ```
 This will calculate both the CV part as well as will compare with the observed data. This will produce paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of model_index.csv.gz will produce params.csv.gz. Inside those files will be necessary information for the parameters. 
 ### All
 To put all these parts together we can use: 
-```
+```sh
 python src/Run_ParamsEstimation.py All --demography src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale examples/Model.info
 ```
 It will produce similar result. 
 ### Optional 
 We can use further the results in R:
-```
+```sh
 library(abc)
 params=read.csv('params.csv.gz')
 ss=read.csv('ss_predicted.csv.gz')
