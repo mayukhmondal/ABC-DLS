@@ -384,8 +384,8 @@ class ABC_TFK_Classification():
         """
         Misc.removefiles(
             ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
-             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'params.csv.gz',
-             'ss_predicted.csv.gz', 'ss_target.csv.gz'])
+             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
+             'params.csv.gz','ss_predicted.csv.gz', 'ss_target.csv.gz'])
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
         pandas.DataFrame(
@@ -460,6 +460,7 @@ class ABC_TFK_Classification():
         ANNModelCheck
         :return:will return the keras model. it will also save the model in ModelClassification.h5
         """
+        Misc.removefiles(["ModelClassification.h5"])
         if demography:
             ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
             if ANNModelCheck:
@@ -488,6 +489,7 @@ class ABC_TFK_Classification():
         ssnn = [Model.predict(x[:]) for _ in range(repeats)]
         ssnn = numpy.mean(numpy.array(ssnn), axis=0)
         return pandas.DataFrame(ssnn)
+
     @classmethod
     def print_after_match_linestart(cls, file: str, match: str) -> None:
         """
@@ -647,13 +649,13 @@ class ABC_TFK_Classification():
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
 
-        ssnn =cls.predict_repeats_mean(ModelSeparation,x_test,repeats=100)
+        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         ssnn.index = indexnn
         sfs = cls.read_ss_2_series(file=ssfile)
         cls.check_results(results=[x_test[0:2]], observed=sfs)
         if scale_x:
-            predictednn =cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
+            predictednn = cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
         else:
             predictednn = cls.predict_repeats_mean(ModelSeparation, sfs.values.reshape(1, -1))
         print('Predicted by NN')
@@ -814,7 +816,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
             try:
                 model = load_model(ModelParamPredictionFile)
             except AttributeError:
-                model=load_model(ModelParamPredictionFile,custom_objects={'Gaussian_noise':cls.Gaussian_noise})
+                model = load_model(ModelParamPredictionFile, custom_objects={'Gaussian_noise': cls.Gaussian_noise})
 
         else:
             print('The ANN model file could not be found please check. ', ModelParamPredictionFile)
@@ -916,7 +918,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
-        ssnn =cls.predict_repeats_mean(ModelSeparation,x_test,repeats=100)
+        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
         if y_cat_dict:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         else:
@@ -1194,6 +1196,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         ANNModelParams as def in Any.py
         :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
         """
+        Misc.removefiles(["ModelParamPrediction.h5"])
         if demography:
             ANNModelParams = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelParams')
             if ANNModelParams:
@@ -1522,7 +1525,6 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
 
     @classmethod
     def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
-
         y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
