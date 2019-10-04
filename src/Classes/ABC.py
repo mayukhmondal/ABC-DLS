@@ -916,7 +916,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
-        ssnn = pandas.DataFrame(ModelSeparation.predict(x_test[:]))[0]
+        ssnn =cls.predict_repeats_mean(ModelSeparation,x_test,repeats=100)
         if y_cat_dict:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         else:
