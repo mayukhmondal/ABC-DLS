@@ -385,7 +385,7 @@ class ABC_TFK_Classification():
         Misc.removefiles(
             ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
              'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-             'params.csv.gz','ss_predicted.csv.gz', 'ss_target.csv.gz'])
+             'params.csv.gz','ss_predicted.csv.gz', 'ss_target.csv.gz','NN.pdf','CV.pdf'])
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
         pandas.DataFrame(
