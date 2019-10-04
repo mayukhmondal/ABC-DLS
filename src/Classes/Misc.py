@@ -152,17 +152,19 @@ def removefilescommands(files:list)->list:
 
     return ['rm -f ' + file for file in files]
 
-def removefiles(files:list)-> None:
+def removefiles(files:list,print:bool=True)-> None:
     """
     Its the wrapper of removefiles commands. if you want ot remove the files right now. also print it is removing.
     good to know which files are getting removed always. It will print remove even if the file do not exist in the first
     place
     :param files: the list of files
+    :parma print: to print if removing the file. bool. default is true. If false noting will be printed just deleted
     :return: will not return anything just remove and print
     """
     commands=removefilescommands(files)
-    for file in files:
-        print ("Removing if exist:",file)
+    if print:
+        for file in files:
+            print ("Removing if exist:",file)
     [os.system(command) for command in commands]
     return None
 
