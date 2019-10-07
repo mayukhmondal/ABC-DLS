@@ -471,7 +471,7 @@ class ABC_TFK_Classification():
                 ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
             else:
                 print('Could not find the ANNModelCheck in', demography,
-                      '. Please check. Now using the default ANNModelChek')
+                      '. Please check. Now using the default ANNModelCheck')
                 ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
             ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
