@@ -25,8 +25,6 @@ class myCallback(Callback):
 
 
 
-
-
 def ANNModelCheck(x, y):
     """
     The Tensor flow for model check
