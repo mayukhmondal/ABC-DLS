@@ -29,8 +29,9 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     from tensorflow.python import keras
     from tensorflow.python.keras.models import Sequential
-    from tensorflow.python.keras.layers import Dense, Lambda
+    from tensorflow.python.keras.layers import Dense, Lambda, Dropout
     from keras.utils import HDF5Matrix
+    from tensorflow.keras.callbacks import EarlyStopping
 
 ##type hint for readability
 from typing import List, Dict, Tuple, Optional, Callable, Union
@@ -443,7 +444,10 @@ class ABC_TFK_Classification():
         model.add(Dense(y.shape[1], activation='softmax'))
 
         model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
-        model.fit(x, y, epochs=500, verbose=2, shuffle="batch")
+        ###adding an early stop so that it does not overfit
+        ES = EarlyStopping(monitor='val_loss', patience=100)
+        ####
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
 
         return model
 
