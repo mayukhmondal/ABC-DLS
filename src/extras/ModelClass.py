@@ -4,6 +4,18 @@ from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import Callback
 
 
+def Gaussian_noise(input_layer, sd: float = .01):
+    """
+    Gaussian noise to the input data. Same as Keras.GaussianNoise but it will not only work with training part but
+    will work on test data set and observed data. Thus every time it will run will give slightly different results.
+    Good to produce a distribution from a single observation
+    :param input_layer: tensorflow input layer
+    :param sd: the standard deviation present will be present in the noise random normal distribution
+    :return: will add the noise to the input_layer
+    """
+    import tensorflow as tf
+    noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
+    return input_layer + noise
 
 class myCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
@@ -23,8 +35,7 @@ def ANNModelCheck(x, y):
     :return: will return the trained model
     """
     model = Sequential()
-    model.add(Dense(512, activation='relu', input_shape=(x.shape[1],)))
-    model.add(Dropout(.01))
+    model.add(Lambda(Gaussian_noise, input_shape=(x.shape[1],)))
     model.add(Dense(256, activation='relu'))
     model.add(Dropout(.01))
     model.add(Dense(128, activation='relu'))
