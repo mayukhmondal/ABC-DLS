@@ -14,7 +14,7 @@ def Gaussian_noise(input_layer, sd: float = .01):
     :return: will add the noise to the input_layer
     """
     import tensorflow as tf
-    noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
+    noise = tf.random.normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
     return input_layer + noise
 
 class myCallback(Callback):
@@ -45,6 +45,6 @@ def ANNModelCheck(x, y):
     model.add(Dense(y.shape[1], activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
-    model.fit(x, y, epochs=50, verbose=2, shuffle="batch")
+    model.fit(x, y, epochs=5, verbose=2, shuffle="batch")
 
     return model

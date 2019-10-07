@@ -424,7 +424,7 @@ class ABC_TFK_Classification():
         :return: will add the noise to the input_layer
         """
         import tensorflow as tf
-        noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
+        noise = tf.random.normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
         return input_layer + noise
 
     @classmethod
@@ -475,7 +475,7 @@ class ABC_TFK_Classification():
                 ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
             ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-        ModelSeparation.save("ModelClassification.h5")
+        ModelSeparation.save("ModelClassification")
         return ModelSeparation
 
     @classmethod
