@@ -475,7 +475,7 @@ class ABC_TFK_Classification():
                 ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
             ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-        ModelSeparation.save("ModelClassification")
+        ModelSeparation.save("ModelClassification.h5")
         return ModelSeparation
 
     @classmethod
