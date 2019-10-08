@@ -2,7 +2,7 @@ from tensorflow.python import keras
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import Callback
-
+from tensorflow.keras.callbacks import EarlyStopping
 
 def Gaussian_noise(input_layer, sd: float = .01):
     """
@@ -45,6 +45,9 @@ def ANNModelCheck(x, y):
     model.add(Dense(y.shape[1], activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
-    model.fit(x, y, epochs=5, verbose=2, shuffle="batch")
+    ###adding an early stop so that it does not overfit
+    ES = EarlyStopping(monitor='val_loss', patience=100)
+    ####
+    model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
 
     return model
