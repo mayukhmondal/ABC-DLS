@@ -1728,7 +1728,7 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         to see the power and then use a real data set to show what most likely parameters can create the real data.
         it will use abc to give the power or standard deviation of the parameters that is predicted by nn to know how
         much we are sure about the results. mainly it will do two parts of abc. one cv error and parameter estimation
-        
+
         :param ssfile:  the real ss file path
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
