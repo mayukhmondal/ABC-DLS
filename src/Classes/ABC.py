@@ -320,10 +320,10 @@ class ABC_TFK_Classification():
         """
         Special way to train test split for hdf5. will take the first n-test_rows for training and rest for test
 
-        :param path:the path of .h5 file
+        :param path: the path of .h5 file
         :param dataset: the name of the dataset of h5py file. default 'mydata'
-        :param test_rows:the number of rows for test every thing will be left for training. default is 10k
-        :return:will return the test, train split for hdf5
+        :param test_rows: the number of rows for test every thing will be left for training. default is 10k
+        :return: will return the test, train split for hdf5
         """
         rows = HDF5Matrix(path, dataset).shape[0]
         train = HDF5Matrix(path, dataset, start=0, end=rows - test_rows)
@@ -810,8 +810,8 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
         y.h5 present.
 
-        :param demography:custom function made for keras model. the path of that .py file. shoul have a def
-        ANNModelCheck
+        :param demography: custom function made for keras model. the path of that .py file. shoul have a def
+            ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
@@ -1476,7 +1476,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->cls.plot_param_cv_error->
         cls.abc_params-> Misc.removefiles->cls.csvout
 
-        :param ModelParamPrediction:The fitted keras model
+        :param ModelParamPrediction: The fitted keras model
         :param x_test: the test part of x aka summary statistics
         :param y_test: the test part of y aka parameter dataset
         :param ssfile: the real ss file path
@@ -1486,7 +1486,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param method: the method to be used in r_abc. default is rejection
         :param tol: the tolerance level to be used in r_abc. default is .005
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
-        later by r
+            later by r
         :return: will not return anything but print out the result and save files for plot
         """
         print("Evaluate with test:")
@@ -1592,8 +1592,6 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
-
-
 
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
