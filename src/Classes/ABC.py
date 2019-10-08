@@ -29,7 +29,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     from tensorflow.python import keras
     from tensorflow.python.keras.models import Sequential
-    from tensorflow.python.keras.layers import Dense, Lambda, Dropout
+    from tensorflow.python.keras.layers import Dense, Lambda
     from keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
 
@@ -42,20 +42,19 @@ class ABC_TFK_Classification():
     Main classification class. It will distinguish between different models. with given underlying models it will
     compare with real data and will predict how much it sure about which model can bet predict the real data.
 
-    :param info: the path of info file whose file column is the path of the file and second column defining the
-        number of  parameters
+    :param info: the path of info file whose file column is the path of the file and second column defining the number
+        of  parameters
     :param ssfile: the summary statisfic on real data set. should be csv format
-    :param demography: custom function made for keras model. the path of that .py file. shoul have a def
-    ANNModelCheck
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-    as documented in the r.abc
+    :param demography: custom function made for keras model. the path of that .py file. shoul have a def ANNModelCheck
+    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc. as
+        documented in the r.abc
     :param tolerance: the level of tolerance for abc. default is .005
     :param test_size:  the number of test rows. everything else will be used for train. 10k is default
     :param chunksize:  the number of rows accessed at a time.
-    :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-    The scaling will only happen on the ss.
+    :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
+        scaling will only happen on the ss.
     :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
-    later by r
+        later by r
     :return: will not return anything but will plot and print the power
     """
 
@@ -71,7 +70,7 @@ class ABC_TFK_Classification():
         parameters
 
         :param info:  the path of info file whose file column is the path of the file and second column defining the
-        number of  parameters
+            number of  parameters
         :return: will return the the files path, number of parameters and names of the model all in three lists
         """
         infodata = Misc.reading_bylines_small(info)
@@ -135,14 +134,14 @@ class ABC_TFK_Classification():
         this will remove the params columns (As not needed for model comparison) and make same number of rows per model
         so that it is not biased. also add the very first column as the name of the model
 
-        :param filename: the csv file path. whose first columns are paramteres and all the rest are sfs or ss. comma
-        separated
-        :param params_number: the number of paratmetes presnt in the file. rest are sfs or ss
+        :param filename: the csv file path. whose first columns are paramters and all the rest are sfs or ss. comma
+            separated
+        :param params_number: the number of parameters present in the file. rest are sfs or ss
         :param nrows: the number of rows to include in the file. remember the nrows start with 0. thus if you want to
-        include 100 line put 99. the first line is header thus ignored
-        :param modelname:name of the model. string
-        :return:will not return anything but will create or update Comparison.csv file .where all the ss with the name
-        of the models are written
+            include 100 line put 99. the first line is header thus ignored
+        :param modelname: name of the model. string
+        :return: will not return anything but will create or update Comparison.csv file .where all the ss with the name
+            of the models are written
         """
 
         command = Misc.joinginglistbyspecificstring(
@@ -209,7 +208,7 @@ class ABC_TFK_Classification():
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scale: if the raw data should be scaled or not. default is false. will be saled by MinMaxscaler
         :return: will return value which will be important to training ann. will return x_(train,test), y_(train,test)
-        scale_x (MinMaxScaler or None) and y_cat_dict ({0:'model1',1:'model2'..})
+            scale_x (MinMaxScaler or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
         from sklearn.model_selection import train_test_split
 
@@ -238,15 +237,15 @@ class ABC_TFK_Classification():
         minmax scaler to scale the data
 
         :param csvpath: the path of ss csv file. can be zipped
-        :param h5path:output of h5path. default is temp.h5
+        :param h5path: output of h5path. default is temp.h5
         :param scaling: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler
         :param expectedrows: the number of rows is expected for the data output. if not given it will calculate from
-        the csv file
+            the csv file
         :param chunksize: the number of rows can be accessed at a time. if memory error put lower number. default is 10
         :param verbose: in case to check the progression put verbose true. default false
         :param special_func: in case some kind of special function has to be done before the min max scaler
-        :param kwargs:all the related parameters for special_func
-        :return:will return the min max scaler which can be used later. or none. it will save h5path the whole data
+        :param kwargs: all the related parameters for special_func
+        :return: will return the min max scaler which can be used later. or none. it will save h5path the whole data
         """
         ###the scaling part
         if scaling:
@@ -339,12 +338,11 @@ class ABC_TFK_Classification():
         saved in hdf5 format and will be split it in necessary steps
 
         :param filename: the file path of csv where the first column is the models name and rest are ss. every row
-        different
-        simulation. header included and shuffled data. output of shufling_joined_models
+            different simulation. header included and shuffled data. output of shufling_joined_models
         :param chunksize: the number of rows accessed at a time.
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scale: to tell if needed to be scaled or not. by default is false. if true will also save scale_x.sav to
-        be used later if needed
+            be used later if needed
         :return: will return train and test data fro both x and y
         """
 
@@ -386,18 +384,18 @@ class ABC_TFK_Classification():
         cls.shufling_joined_models -> if chunksize :  cls.preparingdata_hdf5; else: cls.data_prep4ANN
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
-        number of  parameters
+            number of  parameters
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-        The scaling will only happen on the ss.
+            The scaling will only happen on the ss.
         :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
-        or None) and y_cat_dict ({0:'model1',1:'model2'..})
+            or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
         Misc.removefiles(
             ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
              'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-             'params.csv.gz','ss_predicted.csv.gz', 'ss_target.csv.gz','NN.pdf','CV.pdf'])
+             'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf'])
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
         pandas.DataFrame(
@@ -554,9 +552,9 @@ class ABC_TFK_Classification():
         :param tol: the level of tolerance. default is .005
         :param repeats: the number of repeat to use is on cv (cross validation) error. default is 100
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-        as documented in the r.abc
+            as documented in the r.abc
         :return: will plot it the folder to see the confusion matrix. also print out the summary of the model to see the
-         confusion matrix in text format
+            confusion matrix in text format
         """
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
         x, y = robjects.r['summary'](cvmodsel)
@@ -610,7 +608,7 @@ class ABC_TFK_Classification():
         :param ss:  the simulated summary statics in dataframe format.
         :param y_cat_dict: name of all the models. will be printed the pdf
         :param extra: internal. to add in the graph to say about the method
-        :return:will not return anything. rather call googness_fit to plot stuff and print the summary of gfit
+        :return: will not return anything. rather call googness_fit to plot stuff and print the summary of gfit
         """
         best_index = int(observed.idxmax(axis=1).values)
         for key in y_cat_dict:
@@ -637,7 +635,7 @@ class ABC_TFK_Classification():
         :param ss_predictions: the predicted ss by nn on simulation[meaning nn(ss)]
         :param predict4mreal: the predicted ss by nn on real data [meaning nn(ss_real))]
         :return: will not return anything but will create files model_index.csv.gz,ss_predicted.csv.gz,ss_target.csv.gz
-        and will remove x_test.h5, y_test.h5, x.h5, y.h5, scale_x.sav, scale_y.sav, params_header.csv
+            and will remove x_test.h5, y_test.h5, x.h5, y.h5, scale_x.sav, scale_y.sav, params_header.csv
         """
         modelindex = modelindex.rename('model_name')
         modelindex.to_csv('model_index.csv.gz', index=False, header=True)
@@ -666,10 +664,10 @@ class ABC_TFK_Classification():
         :param y_cat_dict: name of all the models. will be printed the pdf
         :param ssfile: the summary statisfic on real data set. should be csv format
         :param method: to tell which method is to be used in abc. default is mnlogitic. but can be rejection, neural net
-         etc. as docuemented in the r.abc
+            etc. as docuemented in the r.abc
         :param tolerance: the level of tolerance. default is .005
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
-        later by r
+            later by r
         :return: will not return anything but will produce the graphs and print out how much it isure about any model
         """
 
@@ -715,19 +713,19 @@ class ABC_TFK_Classification():
         cls.gfit_all (cls.r_summary) -> cls.csvout)
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
-        number of  parameters
+            number of  parameters
         :param ssfile: the summary statisfic on real data set. should be csv format
         :param demography: custom function made for keras model. the path of that .py file. shoul have a def
-        ANNModelCheck
+            ANNModelCheck
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-        as documented in the r.abc
+            as documented in the r.abc
         :param tolerance: the level of tolerance for abc. default is .005
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-        The scaling will only happen on the ss.
+            The scaling will only happen on the ss.
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
-        later by r
+            later by r
         :return: will not return anything but will plot and print the power
         """
 
@@ -745,14 +743,14 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
      then easily can be used in training part of the classification. it will also delete all the files that can be
      output by the classification. so that it will work on a clean sheet.
 
-     :param info: the path of info file whose file column is the path of the file and second column defining the
+    :param info: the path of info file whose file column is the path of the file and second column defining the
         number of  parameters
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param chunksize:  the number of rows accessed at a time.
-    :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-    The scaling will only happen on the ss.
+    :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler. The
+        scaling will only happen on the ss.
     :return: will not return anything but will create x.hdf5 ,y.hdf5 and scale_x so that it can be used for training
-    later
+        later
     """
 
     def __new__(cls, info, test_size=int(1e4), chunksize=int(1e4), scale=False):
@@ -765,8 +763,8 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     y.h5 in the cwd in hdf5 matrix format (HD5matrix) of keras
 
     :param demography: custom function made for keras model. the path of that .py file. shoul have a def
-    ANNModelCheck
-     :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+        ANNModelCheck
+    :param test_rows: the number of test rows. everything else will be used for train. 10k is default
     :return: will not return anything but will train and save the file ModelClassification.h5
     """
 
@@ -830,7 +828,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
     :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-    as documented in the r.abc
+        as documented in the r.abc
     :return: will not return anything but will plot the cross validation stuff of different models
     """
 
@@ -934,7 +932,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
         :return: The fitted keras model, test data set of x and y, scale of x and y if exists and name of all the models
-        ({0:'model1',1:'model2'..}
+            ({0:'model1',1:'model2'..}
         """
         ModelSeparation = cls.loadingkerasmodel()
         y_test = cls.reading_y_test(test_rows=test_rows)
@@ -952,7 +950,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-        as documented in the r.abc
+            as documented in the r.abc
         :return: will not return anything but will plot the cross validation stuff of different models
         """
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
@@ -978,15 +976,15 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
     data set to see the power and then use a real data setto show how likely it support one model over another.
     it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
     sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
-    :param ssfile:  the summary statisfic on real data set. should be csv format
 
-    :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+    :param ssfile: the summary statistic on real data set. should be csv format
+    :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .01
-    :param method:to tell which method is used in abc. default is rejection. but can be rejection, neural net etc.
-    as documented in the r.abc
-    :param csvout:in case of everything satisfied. this will output the test dataset in csv format. can be used
-    later by r
-    :return:will not return anything but will produce the graphs and print out how much it isure about any model
+    :param method: to tell which method is used in abc. default is rejection. but can be rejection, neural net etc. as
+        documented in the r.abc
+    :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used  later
+        by r
+    :return: will not return anything but will produce the graphs and print out how much it is sure about any model
     """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
@@ -1005,11 +1003,11 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
         :param ssfile:  the summary statisfic on real data set. should be csv format
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .01
-        :param method:to tell which method is used in abc. default is rejection. but can be rejection, neural net etc.
-        as documented in the r.abc
-        :param csvout:in case of everything satisfied. this will output the test dataset in csv format. can be used
-        later by r
-        :return:will not return anything but will produce the graphs and print out how much it isure about any model
+        :param method: to tell which method is used in abc. default is rejection. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :return: will not return anything but will produce the graphs and print out how much it isure about any model
         """
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
@@ -1024,19 +1022,19 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     it will compare with real data and will predict which parameter best predict the real data.
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
-    number of  parameters. only the first line will be used
+        number of  parameters. only the first line will be used
     :param ssfile: the summary statisfic on real data set. should be csv format
     :param chunksize: the number of rows accessed at a time.
     :param test_size:  the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
     :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-    as documented in the r.abc
+        as documented in the r.abc
     :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
-    ANNModelCheck
+        ANNModelCheck
     :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
-    later by r
+        later by r
     :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-    The scaling will only happen on the ss.
+        The scaling will only happen on the ss.
     :return:  will not return anything but will plot and print the parameters
 
     """
@@ -1105,7 +1103,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
         :return: will return train and test data for both x and y in hdf5 matrix format with scale_x and scale_y if
-        required
+            required
         """
         xfile = "x.h5"
         yfile = "y.h5"
@@ -1179,13 +1177,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         preparingdata->Misc.removefiles
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
-        number of  parameters. only first line will be used
+            number of  parameters. only first line will be used
         :param chunksize: the number of rows accesed at a time. in case of big data
         :param testsize: the number of test rows. everything else will be used for train. 10k is default
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-        The scaling will be on both params and ss
+            The scaling will be on both params and ss
         :return: will return (x_train, x_test, scale_x), (y_train, y_test, scale_y) and  header file path
-        (params_header.csv)
+            (params_header.csv)
         """
         Misc.removefiles(
             ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
@@ -1242,7 +1240,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param x_train: train part of x aka summary statistics
         :param y_train: train part of all the parameters
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
-        ANNModelParams as def in Any.py
+            ANNModelParams as def in Any.py
         :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
         """
         Misc.removefiles(["ModelParamPrediction.h5"])
@@ -1324,13 +1322,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         :param ModelParamPrediction: the ann model that was run by keras tf
         :param x_test: the test part of x aka summary statistics
-        :param y_test:the y_test or parameters series which never ran on the ann itself
+        :param y_test: the y_test or parameters series which never ran on the ann itself
         :param scale_x: the MinMax scaler of x axis. can be None
-        :param scale_y:the MinMax scaler of y axis. can be None
+        :param scale_y: the MinMax scaler of y axis. can be None
         :param params_names: all the parameter or y header in a numpy.array
         :param ss: the real ss in a pandas series
         :return: will return test_prediction [ANN(x_test)_ unscaled y], predict4mreal [ANN(real_ss_scaled)_unscaled y]
-        params_unscaled [y_test_unscaled y]
+            params_unscaled [y_test_unscaled y]
         """
         if scale_y:
             test_predictions = scale_y.inverse_transform(ModelParamPrediction.predict(x_test))
@@ -1369,7 +1367,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param tol: the tolerance level. default is .001
         :param repeats: the number of repeats for cv calculation. default is 100
         :param method: the method to calculate abc cv error. can be "rejection", "loclinear", and "neuralnet". default
-        loclinear
+            loclinear
         :param name: the ouput save file name
         :return: will not return anything but save the plot and also print out summary of cv
         """
@@ -1411,7 +1409,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param ss: the summary statics in dataframe format
         :param tol: the tolerance level. default is .001
         :param method: the method to calculate abc cv error. can be "rejection", "loclinear", and "neuralnet". default
-        loclinear
+            loclinear
         :param name: the ouput save file name
         :return: will not return anything but save the plot and print out the summary
         """
@@ -1457,7 +1455,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param predict4mreal: the predicted value from the real data
         :param params_unscaled: the real parameters to produce the ss
         :return: will not return anything but save 3 files params.csv.gz, ss_predicted.csv.gz, ss_target.csv.gz which
-        can be used for further in R for in depth abc
+            can be used for further in R for in depth abc
         """
         params_unscaled.to_csv('params.csv.gz', index=False)
         test_predictions.to_csv('ss_predicted.csv.gz', index=False)
@@ -1528,19 +1526,19 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         cls.plot_param_cv_error->cls.abc_params-> Misc.removefiles->cls.csvout)
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
-        number of  parameters. only the first line will be used
+            number of  parameters. only the first line will be used
         :param ssfile: the summary statisfic on real data set. should be csv format
         :param chunksize: the number of rows accessed at a time.
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-        as documented in the r.abc
+            as documented in the r.abc
         :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
-        ANNModelCheck
+            ANNModelCheck
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
-        later by r
+            later by r
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-        The scaling will only happen on the ss.
+            The scaling will only happen on the ss.
         :return:  will not return anything but will plot and print the parameters
         """
 
@@ -1569,13 +1567,13 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
 class ABC_TFK_Params_Train(ABC_TFK_Params):
     """
     Subset for the training of parameter estimation. the slowest part of the code.it need training data set for x and y.
-     can be hdf5 matrix format (HD5matrix) of keras
+    can be hdf5 matrix format (HD5matrix) of keras
 
     :param x_train: train part of x aka summary statistics
     :param y_train: train part of all the parameters
     :param demography: custom function made for keras model. the path of that .py file. should have a def has
-    ANNModelParams as def in Any.py
-    :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
+        ANNModelParams as def in Any.py
+    :return: will not return the keras model. it will save the model in ModelParamPrediction.h5
     """
 
     def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
@@ -1583,9 +1581,19 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
 
     @classmethod
     def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
+        """
+        This is the wrapper. Will write later
+
+        :param test_rows: the number of rows kept for test data set. it will return those lines from the end
+        :param demography: custom function made for keras model. the path of that .py file. should have a def has
+            ANNModelParams as def in Any.py
+        :return: will not return anython but save the keras model
+        """
         y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+
+
 
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
@@ -1596,7 +1604,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
     :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-    as documented in the r.abc
+        as documented in the r.abc
     :return: will not return anything but will plot the cross validation stuff for parameter estimation
     """
 
@@ -1607,6 +1615,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     def read_scalex_scaley(cls) -> Tuple[Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
         """
         this to read if scale_x and scale_y is present in the folder and return it (MinMaxscaler)
+
         :return: return x_scale and y_scale min max scaler if present
         """
         if os.path.isfile('scale_x.sav'):
@@ -1629,7 +1638,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         to read all the data before doing the abc stuff
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
-        :return:  The fitted keras model, test data set of x and y, scale of x and y if exists
+        :return: The fitted keras model, test data set of x and y, scale of x and y if exists
         """
         ModelParamPrediction = ABC_TFK_Classification_CV.loadingkerasmodel('ModelParamPrediction.h5')
         y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows)
@@ -1646,15 +1655,15 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         as the name suggest after ann ran it will prepare the data for abc analysis
 
         :param ModelParamPrediction: the ann model that was run by keras tf
-        :param x_test:the test part of x aka summary statistics
-        :param y_test:the y_test series which never ran on the ann itself
-        :param y_test:the y_test or parameters series which never ran on the ann itself
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the y_test series which never ran on the ann itself
+        :param y_test: the y_test or parameters series which never ran on the ann itself
         :param scale_x: the MinMax scaler of x axis. can be None
-        :param scale_y:the MinMax scaler of y axis. can be None
+        :param scale_y: the MinMax scaler of y axis. can be None
         :param params_names: all the parameter or y header in a numpy.array
         :param ss: the real ss in a pandas series
         :return: will return test_prediction [ANN(x_test)_ unscaled y], predict4mreal [ANN(real_ss_scaled)_unscaled y]
-        params_unscaled [y_test_unscaled y]
+            params_unscaled [y_test_unscaled y]
         """
         if scale_y:
             test_predictions = scale_y.inverse_transform(ModelParamPrediction.predict(x_test))
@@ -1671,13 +1680,12 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     @classmethod
     def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet') -> None:
         """
-       Subset of Paramter estimation Specifically to calculate cross validation test. good if you dont have
+       Subset of Parameter estimation Specifically to calculate cross validation test. good if you dont have
        real data
 
        :param test_size: the number of test rows. everything else will be used for train. 10k is default
        :param tol: the level of tolerance for abc. default is .005
        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-       as documented in the r.abc
        :return: will not return anything but will plot the cross validation stuff for parameter estimation
        """
         ModelParamPrediction, x_test, y_test, scale_x, scale_y = cls.read_data(test_rows=test_size)
@@ -1710,9 +1718,9 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
    :param test_size:  the number of test rows. everything else will be used for train. 10k is default
    :param tol: the level of tolerance for abc. default is .005
    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-   as documented in the r.abc
+        as documented in the r.abc
    :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
-   later by r
+        later by r
    :return: will not return anything but will plot and print the parameters
    """
 
@@ -1733,9 +1741,9 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-        as documented in the r.abc
+            as documented in the r.abc
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
-        later by r
+            later by r
         :return: will not return anything but will plot and print the parameters
         """
         ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_TFK_Params_CV.read_data(test_rows=test_size)
