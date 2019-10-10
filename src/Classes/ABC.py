@@ -1241,7 +1241,10 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         model.add(Dense(32, activation='relu'))
         model.add(Dense(y.shape[1]))
         model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
-        model.fit(x, y, epochs=500, shuffle="batch", verbose=2)
+        ###adding an early stop so that it does not overfit
+        ES = EarlyStopping(monitor='val_loss', patience=100)
+        ####
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
 
         return model
 
