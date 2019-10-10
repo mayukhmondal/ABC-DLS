@@ -30,10 +30,9 @@ sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "loclinear", and "neuralnet". default is "neuralnet" ',
                 default='neuralnet', choices=["rejection", "loclinear", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .001 ', default=.01, type=float)
-
-sp.add_argument('--x_dimension',
-                help='The dimension of x shape. default is one row at a time. flatten. put it like 11,11,11 etc')
-sp.add_argument('--scale', help="To scale the data", action="store_true")
+sp.add_argument('--scale',
+                help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y (parameters), b: to scale both (ss+parameters)",
+                default='n', choices=["n", "x", "y", "b"])
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
@@ -45,7 +44,9 @@ sp.add_argument('info',
 sp.add_argument('--chunksize',
                 help='If two big for the memroy use chunk size. relatively slow but no problem with ram. default 100 ',
                 type=int, default=100)
-sp.add_argument('--scale', help="To scale the data", action="store_true")
+sp.add_argument('--scale',
+                help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y (parameters), b: to scale both (ss+parameters)",
+                default='n', choices=["n", "x", "y", "b"])
 
 sp = subparsers.add_parser('Train', help='The trainging part of the ANN. Should be done after Pre_train part')
 sp.set_defaults(cmd='Train')
@@ -81,25 +82,52 @@ sp.add_argument('--csvout',
                 action="store_true")
 args = parser.parse_args()
 
-
 ##ccheking inputs
 if args.cmd == 'All':
     if not os.path.isfile(args.ssfile):
         print("The sfs file could not be found please check")
     if args.chunksize:
         args.chunksize = int(args.chunksize)
+    if args.scale == 'n':
+        scaling_x = False
+        scaling_y = False
+    elif args.scale == 'x':
+        scaling_x = True
+        scaling_y = False
+    elif args.scale == 'y':
+        scaling_x = False
+        scaling_y = True
+    elif args.scale == 'b':
+        scaling_x = True
+        scaling_y = True
     ###running
     ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography,
-                               method=args.method, tol=args.tolerance, test_size=args.test_size,
-                               chunksize=args.chunksize,
-                               csvout=args.csvout, scale=args.scale)
+                       method=args.method, tol=args.tolerance, test_size=args.test_size,
+                       chunksize=args.chunksize,
+                       csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y)
 elif args.cmd == 'Pre_train':
-    ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scale=args.scale)
+    if args.chunksize:
+        args.chunksize = int(args.chunksize)
+    if args.scale == 'n':
+        scaling_x = False
+        scaling_y = False
+    elif args.scale == 'x':
+        scaling_x = True
+        scaling_y = False
+    elif args.scale == 'y':
+        scaling_x = False
+        scaling_y = True
+    elif args.scale == 'b':
+        scaling_x = True
+        scaling_y = True
+    ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scaling_x=scaling_x,
+                                scaling_y=scaling_y)
 elif args.cmd == 'Train':
     ABC.ABC_TFK_Params_Train(demography=args.demography, test_rows=args.test_size)
 elif args.cmd == 'CV':
     ABC.ABC_TFK_Params_CV(test_size=args.test_size, tol=args.tolerance, method=args.method)
 elif args.cmd == 'After_train':
+    if not os.path.isfile(args.ssfile):
+        print("The sfs file could not be found please check")
     ABC.ABC_TFK_Params_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance, method=args.method,
-                             csvout=args.csvout)
-
+                                   csvout=args.csvout)

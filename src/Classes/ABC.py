@@ -1033,17 +1033,20 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         ANNModelCheck
     :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
-    :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-        The scaling will only happen on the ss.
+    :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by MinMaxscaler.
+
+    :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
     :return:  will not return anything but will plot and print the parameters
 
     """
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, csvout: bool = False, scale: bool = False) -> None:
+                demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
+                scaling_y: bool = False) -> None:
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           demography=demography, csvout=csvout, scale=scale)
+                           demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y)
 
     @classmethod
     def separation_param_ss(cls, filename: str, params_number: int) -> Tuple[str, str]:
@@ -1077,20 +1080,23 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     @classmethod
     def save_scale(cls, scale_x: preprocessing.MinMaxScaler, scale_y: Optional[preprocessing.MinMaxScaler]) -> None:
         """
-        As the name suggest it will save the scaling  (MinMaxscaler) in a file. sklearn scaling will be saved
+        As the name suggest it will save the scaling if scaling is done (MinMaxscaler) in a file. sklearn scaling will
+        be saved.
 
         :param scale_x: scaled for x
         :param scale_y: scaled for y
         :return: will save in  scale_x.sav, scale_y.sav file. will return nothing
         """
         scaler_filename = "scale_x.sav"
-        joblib.dump(scale_x, scaler_filename)
+        if scale_x:
+            joblib.dump(scale_x, scaler_filename)
         scaler_filename = "scale_y.sav"
-        joblib.dump(scale_y, scaler_filename)
+        if scale_y:
+            joblib.dump(scale_y, scaler_filename)
 
     @classmethod
     def preparingdata_hdf5(cls, paramfile: str, simss: str, chunksize: int = 100, test_size: int = int(1e4),
-                           scale: bool = False) -> Tuple[
+                           scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
         HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], HDF5Matrix, HDF5Matrix, Optional[
             preprocessing.MinMaxScaler]]:
         """
@@ -1105,26 +1111,27 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return: will return train and test data for both x and y in hdf5 matrix format with scale_x and scale_y if
             required
         """
+
         xfile = "x.h5"
         yfile = "y.h5"
         Misc.removefiles([xfile, yfile])
-        if scale:
+        if scaling_x:
             scale_x = cls.MinMax4bigfile(csvpath=simss, h5path=xfile, chunksize=chunksize)
         else:
             scale_x = cls.MinMax4bigfile(csvpath=simss, h5path=xfile, chunksize=chunksize, scaling=False)
         x_train, x_test = cls.train_test_split_hdf5(xfile, test_rows=int(test_size))
 
-        if scale:
+        if scaling_y:
             scale_y = cls.MinMax4bigfile(csvpath=paramfile, h5path=yfile, chunksize=chunksize)
         else:
-            scale_y = cls.MinMax4bigfile(csvpath=paramfile, h5path=yfile, chunksize=chunksize, scaline=False)
+            scale_y = cls.MinMax4bigfile(csvpath=paramfile, h5path=yfile, chunksize=chunksize, scaling=False)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
-        if scale_x and scale_y:
-            cls.save_scale(scale_x, scale_y)
+        cls.save_scale(scale_x, scale_y)
         return x_train, x_test, scale_x, y_train, y_test, scale_y
 
     @classmethod
-    def preparingdata(cls, paramfile: str, simssfile: str, test_size: int = int(1e4), scale: bool = False) -> Tuple[
+    def preparingdata(cls, paramfile: str, simssfile: str, test_size: int = int(1e4), scaling_x: bool = False,
+                      scaling_y: bool = False) -> Tuple[
         numpy.array, numpy.array, Optional[preprocessing.MinMaxScaler], numpy.array, numpy.array, Optional[
             preprocessing.MinMaxScaler]]:
         """
@@ -1134,11 +1141,14 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param paramfile: the parameter csv file or y
         :param simssfile: the ss file path for x
         :param testsize: the number of test rows. everything else will be used for train. 10k is default
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
         :return: will return train and test data fro both x and y in numpy format with scale_x and scale_y if required
         """
         from sklearn.model_selection import train_test_split
         params = pandas.read_csv(paramfile)
-        if scale:
+        if scaling_y:
             scale_y = preprocessing.MinMaxScaler()
             y = scale_y.fit_transform(params.values)
         else:
@@ -1146,7 +1156,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             scale_y = None
 
         simss = pandas.read_csv(simssfile)
-        if scale:
+        if scaling_x:
 
             scale_x = preprocessing.MinMaxScaler()
             x = scale_x.fit_transform(simss.values)
@@ -1155,8 +1165,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             scale_x = None
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size)
-        if scale_x and scale_y:
-            cls.save_scale(scale_x, scale_y)
+
+        cls.save_scale(scale_x, scale_y)
         x_test_file = "x_test.h5"
         y_test_file = "y_test.h5"
         Misc.removefiles([x_test_file, y_test_file])
@@ -1166,7 +1176,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
     @classmethod
     def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                          scale: bool = False) -> Tuple[
+                          scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
         Union[numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
             numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
         """
@@ -1180,11 +1190,14 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             number of  parameters. only first line will be used
         :param chunksize: the number of rows accesed at a time. in case of big data
         :param testsize: the number of test rows. everything else will be used for train. 10k is default
-        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-            The scaling will be on both params and ss
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
         :return: will return (x_train, x_test, scale_x), (y_train, y_test, scale_y) and  header file path
             (params_header.csv)
         """
+
         Misc.removefiles(
             ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
              'params.csv', 'ss.csv', 'params_header.csv'])
@@ -1197,11 +1210,14 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                                                                         simss=simss,
                                                                                         chunksize=chunksize,
                                                                                         test_size=test_size,
-                                                                                        scale=scale)
+                                                                                        scaling_x=scaling_x,
+                                                                                        scaling_y=scaling_y)
         else:
             x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata(paramfile=paramfile,
                                                                                    simssfile=simss,
-                                                                                   test_size=test_size, scale=scale)
+                                                                                   test_size=test_size,
+                                                                                   scaling_x=scaling_x,
+                                                                                   scaling_y=scaling_y)
         header = 'params_header.csv'
         pandas.DataFrame(index=pandas.read_csv(paramfile, nrows=10).columns).transpose().to_csv(header,
                                                                                                 index=False)
@@ -1341,12 +1357,16 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             params_unscaled = pandas.DataFrame(y_test[:], columns=params_names[-y_test.shape[1]:])
         if scale_x:
             ssscaled = scale_x.transform(ss.values.reshape(1, -1))
-
-            predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
+            if scale_y:
+                predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
+            else:
+                predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
         else:
             ssscaled = ss.values.reshape(1, -1)
-
-            predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
+            if scale_y:
+                predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
+            else:
+                predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
 
         predict4mreal.columns = params_names[:y_test.shape[1]]
 
@@ -1516,7 +1536,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, csvout: bool = False, scale: bool = False) -> None:
+                demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
+                scaling_y: bool = False) -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
@@ -1537,15 +1558,18 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             ANNModelCheck
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
-        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-            The scaling will only happen on the ss.
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
         :return:  will not return anything but will plot and print the parameters
         """
 
         x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
                                                                                               chunksize=chunksize,
                                                                                               test_size=test_size,
-                                                                                              scale=scale)
+                                                                                              scaling_x=scaling_x,
+                                                                                              scaling_y=scaling_y)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
@@ -1560,8 +1584,8 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
     """
 
     def __new__(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
-                scale: bool = False) -> None:
-        return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale)
+                scaling_x: bool = False, scaling_y: bool = False):
+        return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scaling_x=scaling_x,scaling_y=scaling_y)
 
 
 class ABC_TFK_Params_Train(ABC_TFK_Params):
@@ -1619,12 +1643,12 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         if os.path.isfile('scale_x.sav'):
             scale_x = joblib.load('scale_x.sav')
         else:
-            print('scale_x.sav not found. Assuming no scaling is required')
+            print('scale_x.sav not found. Assuming no scaling is required for x ')
             scale_x = None
         if os.path.isfile('scale_y.sav'):
             scale_y = joblib.load('scale_y.sav')
         else:
-            print('scale_y.sav not found.Assuming no scaling is required')
+            print('scale_y.sav not found. Assuming no scaling is required for y')
             scale_y = None
         return scale_x, scale_y
 
