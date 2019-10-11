@@ -29,7 +29,7 @@ sp.add_argument('--demography',
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "loclinear", and "neuralnet". default is "neuralnet" ',
                 default='neuralnet', choices=["rejection", "loclinear", "neuralnet"])
-sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .001 ', default=.01, type=float)
+sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .01 ', default=.01, type=float)
 sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y (parameters), b: to scale both (ss+parameters)",
                 default='n', choices=["n", "x", "y", "b"])
