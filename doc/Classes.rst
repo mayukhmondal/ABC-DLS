@@ -1,5 +1,5 @@
-Classes package
-===============
+Classes
+=======
 
 .. toctree::
    :maxdepth: 2
