@@ -1532,7 +1532,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
                                 method=method)
         cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
-        Misc.removefiles([paramfile])
         if csvout:
             cls.csvout(params_unscaled=params_unscaled, test_predictions=test_predictions, predict4mreal=predict4mreal)
 
