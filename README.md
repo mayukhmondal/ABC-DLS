@@ -19,6 +19,11 @@ The easiest way to install this dependencies is using conda. To install conda pl
 ```
 conda install --file requirements.txt
 ```
+or if you want to make a different environment:
+```
+conda create --name ABC-TFK --file requirements.txt  python=3
+conda activate ABC-TFK
+```
 Wait a little bit as it can take long time to install all the dependencies. 
 After installing all the dependencies you can just run either
 ```
