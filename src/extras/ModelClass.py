@@ -45,9 +45,10 @@ def ANNModelCheck(x, y):
     model.add(Dense(y.shape[1], activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
-    ###adding an early stop so that it does not overfit
-    ES = EarlyStopping(monitor='val_loss', patience=100)
+    ###adding an early stop so that it does not overfit. slow but better
+    # ES = EarlyStopping(monitor='val_loss', patience=100)
+    # model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
     ####
-    model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
+    model.fit(x, y, epochs=5, verbose=2, shuffle="batch")
 
     return model
