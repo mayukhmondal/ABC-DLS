@@ -1,6 +1,6 @@
 # ABC-TFK Examples
 
-ABC-TFK is a python pipeline where you can simply use summary statistics created from pop genome simulation files (ms, msprime, FastSimcoal etc.) to predict which underlying model can better explain the observed results, as well as which parameters can produce such results. The whole method is written in python and thus easy to read as well as can be accessed completely through command line thus knowing python is not needed. Although it will be helpful to know python as well as R as some of the packages here used is based on those languages. 
+ABC-TFK is a python pipeline where you can simply use summary statistics created from pop genome simulation files (ms, msprime, FastSimcoal etc.) to predict which underlying model can better explain the observed results, as well as which parameters can produce such results. The whole method is written in python and thus easy to read as well as can be accessed completely through command line thus knowing python is not needed. Although it will be helpful to know python as well as R as some of the packages here used is based on those languages. Remember both Classification and Parameter estimation will create file in the current working directory, thus you cannot run multiple runs together (as it would conflict with other runs). Thus either run one code at a time or run them in different folders (current working directory). 
 
 ## Classification and Model Selection 
 
