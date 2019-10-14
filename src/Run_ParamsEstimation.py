@@ -93,7 +93,7 @@ sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
 args = parser.parse_args()
-scaling_x, scaling_y = False
+scaling_x, scaling_y = False, False
 # checking inputs
 if args.cmd == 'All':
     if not os.path.isfile(args.ssfile):
