@@ -60,7 +60,30 @@ python src/Run_Classification.py Train --demography src/extras/ModelClass.py --t
 ``` 
 This will train the model.  
 -  --demography src/extras/ModelClass.py 
-ABC-TFK has a default training neural model. But it is impossible to predict which model should be better for the input data. Thus, we can define custom made model cater to our own need. One such example is src/extras/ModelClass.py. Here we put very less epochs (only 20) to get faster result. More is merrier of course. 
+ABC-TFK has a default training neural model. But it is impossible to predict which model should be better for the input data. Thus, we can define custom made model cater to our own need. One such example is src/extras/ModelClass.py. Here we put very less epochs (only 20) to get faster result. More is merrier of course. The *.py should have a definition name ANNModelCheck which should return the trained model (after model.fit) and has two input x and y. Example:
+```python
+from tensorflow.python import keras
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import *
+
+def ANNModelCheck(x, y):
+    """
+    your own set of code for tensorflow model. can be both Sequential or Model class (functional API). check src/extras/*.py to have an idea. also check https://keras.io/ to understand how to make Keras models
+    """
+    model = Sequential()
+    model.add(...)
+    ...
+    model.add(Dense(y.shape[1], activation='softmax')) # this line is important for classification
+    # Model Class can also be used. Example: 
+    # x_0 = Input(shape=(x.shape[1],))
+    # x_1 = Dense(128, activation='relu')(x_0)
+    # x_1= Dense(y.shape[1], activation='softmax') (x_1)
+    # model = Model(inputs=x_0, outputs=x_1)
+    model.compile(...)
+    #we found for classification in model.complile loss=keras.losses.categorical_crossentropy, optimizer='adam' these two gives the best results
+    model.fit(x, y,...)
+    return model
+```
 - --test_size 1000  
 This will keep the last 1000 line save for test data set and will be used for ABC analysis. In the previous step it is already shuffled the data thus last 1000 lines you would expect near equal number of demographies.  
 
@@ -125,7 +148,30 @@ Same as classification this will train the model. Unlike the classification, it 
 python src/Run_ParamsEstimation.py Train --demography src/extras/ModelParams.py --test_size 1000
 ```
 - --demography src/extras/ModelParams.py
-Although there is a default method present in ABC-TFK (meaning python src/Run_ParamsEstimation.py Train --test_size 1000 will also work), we can give a model from outside. It must have a def name ANNModelParams. We can decide the number of epochs and other stuff inside that definition. Here we kept 100 to make it faster.  
+Although there is a default method present in ABC-TFK (meaning python src/Run_ParamsEstimation.py Train --test_size 1000 will also work), we can give a model from outside. Here we kept 100 to make it faster. *.py must have a def name ANNModelParams. We can decide the number of epochs and other stuff inside that definition. The structure of the file is very similar. Only ANNModelParams instead of ANNModelCheck and also the output of neural network is linear (which is the default for keras) instead of softmax. Everything else should be done as your model prefers. Example:
+```python
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import *
+
+
+def ANNModelParams(x, y):
+    """
+    your own set of code for tensorflow model. can be both Sequential or Model class (functional API). check src/extras/*.py to have an idea. also check https://keras.io/ to understand how to make Keras models
+    """
+    model = Sequential()
+    model.add(...)
+    ...
+    model.add(Dense(y.shape[1])) # this line is important for parameter estimation
+    # Model Class can also be used. Example: 
+    # x_0 = Input(shape=(x.shape[1],))
+    # x_1 = Dense(128, activation='relu')(x_0)
+    # x_1= Dense(y.shape[1]) (x_1)
+    # model = Model(inputs=x_0, outputs=x_1)
+    model.compile(...)
+    # we found for parameter estimation in model.complile, loss='logcosh' and optimizer='Nadam', these two gives the best results
+    model.fit(x, y,...)
+    return model
+``` 
 - --test_size 1000
 As above kept 1000 samples for later use. All the other samples are used for training part. 
 
@@ -167,7 +213,7 @@ plot(res,param=params)
 ```
 This will transform the parameter values in log scale. Thus, we can calculate the distance much more precisely. 
 ## Good Practices
-- Never believe in one model of neural network. Although I have implemented one neural network model by default. It is always better to run several different models (with that several different model run is alos recommended) and see it reaches the same outcome. 
+- Never believe in one model of neural network. Although I have implemented one neural network model by default. It is always better to run several different models (with that several different simulation run is also recommended) and see it reaches the same outcome. 
 - Take care of over fitting by checking accuracy in training data set vs test data set. If training accuracy is very high compared to test data set try to run less number of epochs and or use more data to train. 
 - More data is always better. Especially because we can simulate easily more and more data synthetically. But take care more data means it will take more time to converge. In principle, memory is not a problem as the code is implemented in hdf5 format thus you have unlimited memory.
 - Some time it is easy to make model but it is your responsibility to make them enough to differentiate. For example a 0% admixture proportion essentially means a model with out admixture (aka in this case normal Out of Africa). Thus admixture model should be more than 0% of admixture. What minimum percentage of admixture is good to train the data depends on the model itself (e.g. older the population split, it is easier to differentiate thus needed lesser admixture to detect). It is always better to revisit simulation after training in your test data set and see if those low level of admixture (sub set of all test data set) can be correctly differentiated or not by your neural network.
