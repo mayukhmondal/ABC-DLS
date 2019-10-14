@@ -202,7 +202,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def data_prep4ANN(cls, raw: pandas.DataFrame, test_size: int = int(1e4), scale: bool = False) -> Tuple[
-        numpy.array, numpy.array, numpy.array, numpy.array, Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+        numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
         """
         Preparing data for NN classification method. The MinMaxScaler is used to normalize in case normalization needed
 
@@ -376,8 +376,8 @@ class ABC_TFK_Classification:
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                           scale: bool = False) -> \
             Tuple[
-                Union[numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Union[
-                    numpy.array, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+                Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[
+                    numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
         """
         This the wrapper for pre_training part of the classification. it will produce data in hdf5 format which then
         easily can be used in training part of the classification. it will also delete all the files that can be output
@@ -440,7 +440,7 @@ class ABC_TFK_Classification:
         return input_layer + noise
 
     @classmethod
-    def ANNModelCheck(cls, x: Union[numpy.array, HDF5Matrix], y: Union[numpy.array, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelCheck(cls, x: Union[numpy.ndarray, HDF5Matrix], y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
         """
         The Tensor flow for model check
 
@@ -465,7 +465,7 @@ class ABC_TFK_Classification:
         return model
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[numpy.array, HDF5Matrix], y_train: Union[numpy.array, HDF5Matrix],
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
                       demography: Optional[str] = None) -> keras.models.Model:
         """
         This the wrapper for training part of the classification method. it need training data set for x and y. can be
@@ -493,7 +493,7 @@ class ABC_TFK_Classification:
         return ModelSeparation
 
     @classmethod
-    def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.array, HDF5Matrix],
+    def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
                              repeats: int = 100) -> pandas.DataFrame:
         """
         Instead of predicting once on NNModel. It will predict multiple times [important to use
@@ -649,8 +649,8 @@ class ABC_TFK_Classification:
                           'y_cat_dict.txt'])
 
     @classmethod
-    def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.array, HDF5Matrix],
-                            y_test: Union[numpy.array, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+    def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                            y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                             y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
                             tolerance: float = .005, csvout: bool = False) -> None:
         """
@@ -1136,7 +1136,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     @classmethod
     def preparingdata(cls, paramfile: str, simssfile: str, test_size: int = int(1e4), scaling_x: bool = False,
                       scaling_y: bool = False) -> Tuple[
-        numpy.array, numpy.array, Optional[preprocessing.MinMaxScaler], numpy.array, numpy.array, Optional[
+        numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], numpy.ndarray, numpy.ndarray, Optional[
             preprocessing.MinMaxScaler]]:
         """
         In case the data is smaller and can be fit inside ram it will load the data in the ram and split it for train
@@ -1182,8 +1182,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     @classmethod
     def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                           scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
-        Union[numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
-            numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
+        Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
+            numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
         """
         This is a a wrapper on the pretrain for parameter estimation. this will build stuff just before the training in
         ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
@@ -1231,7 +1231,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return x_train, x_test, scale_x, y_train, y_test, scale_y, header
 
     @classmethod
-    def ANNModelParams(cls, x: Union[numpy.array, HDF5Matrix], y: Union[numpy.array, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix], y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
         """
         A basic model for ANN to calculate parameters
 
@@ -1254,7 +1254,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return model
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[numpy.array, HDF5Matrix], y_train: Union[numpy.array, HDF5Matrix],
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
                       demography: Optional[str] = None) -> keras.models.Model:
         """
         This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need trainging
@@ -1338,9 +1338,9 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return test_predictions, predict4mreal, params_unscaled
 
     @classmethod
-    def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.array, HDF5Matrix],
-                          y_test: Union[numpy.array, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
-                          scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.array,
+    def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                          y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+                          scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray,
                           ss: pandas.Series) -> Tuple[
         pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
         """
@@ -1493,8 +1493,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv'])
 
     @classmethod
-    def wrapper_aftertrain(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.array, HDF5Matrix],
-                           y_test: Union[numpy.array, HDF5Matrix], ssfile: str,
+    def wrapper_aftertrain(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                           y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            csvout: bool = False) -> None:
@@ -1664,7 +1664,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
 
     @classmethod
     def read_data(cls, test_rows: int = int(1e4)) -> Tuple[
-        keras.models.Model, Union[numpy.array, HDF5Matrix], Union[numpy.array, HDF5Matrix], Optional[
+        keras.models.Model, Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[
             preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
         """
         to read all the data before doing the abc stuff
@@ -1679,9 +1679,9 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         return ModelParamPrediction, x_test, y_test, scale_x, scale_y
 
     @classmethod
-    def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.array, HDF5Matrix],
-                          y_test: Union[numpy.array, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
-                          scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.array) -> Tuple[
+    def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                          y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+                          scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray) -> Tuple[
         pandas.DataFrame, pandas.DataFrame]:
         """
         as the name suggest after ann ran it will prepare the data for abc analysis
