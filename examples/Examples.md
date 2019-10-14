@@ -68,7 +68,8 @@ from tensorflow.python.keras.layers import *
 
 def ANNModelCheck(x, y):
     """
-    your own set of code for tensorflow model. can be both Sequential or Model class (functional API). check src/extras/*.py to have an idea. also check https://keras.io/ to understand how to make Keras models
+    your own set of code for tensorflow model. can be both Sequential or Model class (functional API). check 
+    src/extras/*.py to have an idea. also check https://keras.io/ to understand how to make Keras models
     """
     model = Sequential()
     model.add(...)
@@ -80,7 +81,8 @@ def ANNModelCheck(x, y):
     # x_1= Dense(y.shape[1], activation='softmax') (x_1)
     # model = Model(inputs=x_0, outputs=x_1)
     model.compile(...)
-    #we found for classification in model.complile loss=keras.losses.categorical_crossentropy, optimizer='adam' these two gives the best results
+    # we found for classification in model.complile loss=keras.losses.categorical_crossentropy, optimizer='adam'; these 
+    # two gives the best results
     model.fit(x, y,...)
     return model
 ```
@@ -156,7 +158,8 @@ from tensorflow.python.keras.layers import *
 
 def ANNModelParams(x, y):
     """
-    your own set of code for tensorflow model. can be both Sequential or Model class (functional API). check src/extras/*.py to have an idea. also check https://keras.io/ to understand how to make Keras models
+    your own set of code for tensorflow model. can be both Sequential or Model class (functional API). check 
+    src/extras/*.py to have an idea. also check https://keras.io/ to understand how to make Keras models
     """
     model = Sequential()
     model.add(...)
@@ -168,7 +171,8 @@ def ANNModelParams(x, y):
     # x_1= Dense(y.shape[1]) (x_1)
     # model = Model(inputs=x_0, outputs=x_1)
     model.compile(...)
-    # we found for parameter estimation in model.complile, loss='logcosh' and optimizer='Nadam', these two gives the best results
+    # we found for parameter estimation in model.complile, loss='logcosh' and optimizer='Nadam', these two gives the 
+    # best results
     model.fit(x, y,...)
     return model
 ``` 
