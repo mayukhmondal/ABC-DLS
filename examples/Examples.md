@@ -165,7 +165,14 @@ summary(res)
 plot(res,param=params)
 ```
 This will transform the parameter values in log scale. Thus, we can calculate the distance much more precisely. 
+## Good Practices
+- Never believe in one model of neural network. Although I have implemented one neural network model by default. It is always better to run several different models and see it reaches the same outcome. 
+- Take care of overfitting by checking accuracy in training data set vs test data set. If training accuracy is very high compared to test data set try to run less number of epochs and or use more data to train. 
+- More data is always better. Especially because we can simulate easily more and more data synthetically. But take care more data mean it takes more time to converge. Memory in principle is not a problem as the code is implemented in hdf5 format thus you have unlimited memory.
+- Some time it is easy to make model but it is your responsibility to make them enough to differentiate. For example a 0% admixture proportion essentially means normal Out of Africa simulations. Thus it should be more than 0% for Back to Africa model. What percentage is good to train the date depends on the model itself. It always better to revisit simulation after training and see if those low level of admixture can be differentiated or not by your neural network.
+- Use migrations cautiously till we found a better method (or summary statistics) to calculate migrations. Although this approach gives you the freedom to use migrations should be used moderately. We found that migrations make the result less accurate as well as big migrations between populations can change the underlying tree and the interpretation of the model itself. Some time migration affect the result indirectly which is not easy to understand. Try to check if your model give the same result with or without migrations. 
 
+ 
 
 
 
