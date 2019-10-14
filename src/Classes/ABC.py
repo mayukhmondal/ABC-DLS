@@ -473,10 +473,10 @@ class ABC_TFK_Classification:
         Misc.loading_def_4m_file -> def ANNModelCheck
 
         :param x_train: train part of x aka summary statistics
-        :param y_train:traing part of y aka models names. should be used keras.utils.to_categorical to better result
+        :param y_train: training part of y aka models names. should be used keras.utils.to_categorical to better result
         :param demography: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
-        :return:will return the keras model. it will also save the model in ModelClassification.h5
+        :return: will return the keras model. it will also save the model in ModelClassification.h5
         """
         Misc.removefiles(["ModelClassification.h5"])
         if demography:
@@ -714,7 +714,7 @@ class ABC_TFK_Classification:
         cls.subsetting_file_concating-> cls.shufling_joined_models -> if chunksize :  cls.preparingdata_hdf5;
         else: cls.data_prep4ANN) -> wrapper_train Misc.loading_def_4m_file -> def ANNModelCheck )
         wrapper_after_train(ModelSeparation.evaluate -> cls.read_ss_2_series -> cls.plot_power_of_ss (cls.r_summary) ->
-         cls.model_selection (cls.r_summary)-> cls.gfit_all (cls.r_summary) -> cls.csvout)
+        cls.model_selection (cls.r_summary)-> cls.gfit_all (cls.r_summary) -> cls.csvout)
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
