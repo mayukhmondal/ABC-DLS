@@ -29,6 +29,7 @@ python  src/Run_Classification.py --help
 ``` 
 Will output 5 different methods: 
 
+
 | Methods | Helps | 
 | ------ | ------ | 
 | All| The whole run of the NN for parameter estimation from first to last | 
@@ -155,7 +156,7 @@ python src/Run_ParamsEstimation.py All --demography src/extras/ModelParams.py --
 It will produce similar result. 
 ### Optional 
 We can use further the results in R:
-```sh
+```
 library(abc)
 params=read.csv('params.csv.gz')
 ss=read.csv('ss_predicted.csv.gz')
@@ -166,11 +167,11 @@ plot(res,param=params)
 ```
 This will transform the parameter values in log scale. Thus, we can calculate the distance much more precisely. 
 ## Good Practices
-- Never believe in one model of neural network. Although I have implemented one neural network model by default. It is always better to run several different models and see it reaches the same outcome. 
-- Take care of overfitting by checking accuracy in training data set vs test data set. If training accuracy is very high compared to test data set try to run less number of epochs and or use more data to train. 
-- More data is always better. Especially because we can simulate easily more and more data synthetically. But take care more data mean it takes more time to converge. Memory in principle is not a problem as the code is implemented in hdf5 format thus you have unlimited memory.
-- Some time it is easy to make model but it is your responsibility to make them enough to differentiate. For example a 0% admixture proportion essentially means normal Out of Africa simulations. Thus it should be more than 0% for Back to Africa model. What percentage is good to train the date depends on the model itself. It always better to revisit simulation after training and see if those low level of admixture can be differentiated or not by your neural network.
-- Use migrations cautiously till we found a better method (or summary statistics) to calculate migrations. Although this approach gives you the freedom to use migrations should be used moderately. We found that migrations make the result less accurate as well as big migrations between populations can change the underlying tree and the interpretation of the model itself. Some time migration affect the result indirectly which is not easy to understand. Try to check if your model give the same result with or without migrations. 
+- Never believe in one model of neural network. Although I have implemented one neural network model by default. It is always better to run several different models (with that several different model run is alos recommended) and see it reaches the same outcome. 
+- Take care of over fitting by checking accuracy in training data set vs test data set. If training accuracy is very high compared to test data set try to run less number of epochs and or use more data to train. 
+- More data is always better. Especially because we can simulate easily more and more data synthetically. But take care more data means it will take more time to converge. In principle, memory is not a problem as the code is implemented in hdf5 format thus you have unlimited memory.
+- Some time it is easy to make model but it is your responsibility to make them enough to differentiate. For example a 0% admixture proportion essentially means a model with out admixture (aka in this case normal Out of Africa). Thus admixture model should be more than 0% of admixture. What minimum percentage of admixture is good to train the data depends on the model itself (e.g. older the population split, it is easier to differentiate thus needed lesser admixture to detect). It is always better to revisit simulation after training in your test data set and see if those low level of admixture (sub set of all test data set) can be correctly differentiated or not by your neural network.
+- Use migrations (under island model) cautiously, till a better method (or summary statistics) to calculate migrations was found. Although this approach gives the freedom to use migrations, it should be used moderately. We found that migrations make the result less accurate, as well as big amount of migrations between populations can change the underlying tree of demographic history and thus the interpretation of the model itself. Migration can affect the result indirectly which is not easy to understand. Try to check if your model give the same result with or without migrations. If not revisit your model with out migration, rather going forward with migrations. 
 
  
 
