@@ -966,9 +966,6 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         else:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
         ssnn.index = indexnn
-        print('Predicted by NN')
-        print(sorted(y_cat_dict.items()))
-
         robjects.r['pdf']("CV.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method)
         robjects.r['dev.off']()
