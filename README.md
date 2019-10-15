@@ -20,7 +20,7 @@ The codes are written in python3 (>=python3.6.9). This programme comes with seve
 - tensorflow
 - keras
 
-The easiest way to install all of this dependencies is using conda. To install conda please visit <https://www.anaconda.com/distribution/>. After installing conda (remember to install python 3), use:
+The easiest way to install all of these dependencies is using conda. To install conda please visit <https://www.anaconda.com/distribution/>. After installing conda (remember to install python 3), use:
 ```
 conda install --file requirements.txt
 ```
