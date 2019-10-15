@@ -29,7 +29,7 @@ or if you want to make a different environment:
 conda create --name ABC-TFK --file requirements.txt  python=3
 conda activate ABC-TFK
 ```
-Wait a little bit as it can take long time to install all the dependencies. 
+Wait a little bit as it can take a long time to install all the dependencies.  
 After installing all the dependencies you can just run either
 ```
 python src/Run_Classification.py --help
@@ -39,10 +39,7 @@ or
 python src/Run_ParamsEstimation.py --help
 ```
 
-For Model selection and for parameters estimation respectively. 
-For more information please see examples/Examples.md
-
-The first time you run it will also try to install abc from r package manager (automatically). 
-
+For Model selection and for parameters estimation respectively. The first time you run it will also try to install abc from r package manager (automatically).   
+Please see examples/Examples.md for a detailed guide how to use the codes.
 ## Contact 
 The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact <mondal.mayukh@gmail.com>
