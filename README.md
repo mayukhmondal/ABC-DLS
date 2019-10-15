@@ -2,6 +2,11 @@
 This is a python pipeline where you can simply use summary statistics created from pop genome simulation files (ms, msprime, FastSimcoal etc.) to predict which underlying model can better explain the observed results, as well as which parameters can produce such results. The whole method is written in python and thus easy to read as well as can be accessed completely through command line thus knowing python is not needed. Although it will be helpful to know python as well as R as some of the packages here used is based on those languages.  
 
 ## Getting Started
+To download the package either click the download button in <https://github.com/mayukhmondal/ABC-TFK> or use:
+```bash
+git clone https://github.com/mayukhmondal/ABC-TFK
+cd ABC-TFK
+```
 The codes are written in python3 (>=python3.6.9). This programme comes with several dependencies:
 
 - numpy
