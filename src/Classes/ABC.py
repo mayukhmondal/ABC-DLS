@@ -58,8 +58,9 @@ class ABC_TFK_Classification:
     :return: will not return anything but will plot and print the power
     """
 
-    def __new__(cls, info, ssfile, demography=None, method="mnlogistic", tolerance=.001, test_size=int(1e4),
-                chunksize=int(1e4), scale=False, csvout=False):
+    def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
+                tolerance: float = .001, test_size: int = int(1e4),
+                chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False):
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
                            test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout)
 
@@ -202,7 +203,8 @@ class ABC_TFK_Classification:
 
     @classmethod
     def data_prep4ANN(cls, raw: pandas.DataFrame, test_size: int = int(1e4), scale: bool = False) -> Tuple[
-        numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+        numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Dict[
+            int, str]]:
         """
         Preparing data for NN classification method. The MinMaxScaler is used to normalize in case normalization needed
 
@@ -376,7 +378,8 @@ class ABC_TFK_Classification:
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                           scale: bool = False) -> \
             Tuple[
-                Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[
+                Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix],
+                Union[
                     numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
         """
         This the wrapper for pre_training part of the classification. it will produce data in hdf5 format which then
@@ -440,7 +443,8 @@ class ABC_TFK_Classification:
         return input_layer + noise
 
     @classmethod
-    def ANNModelCheck(cls, x: Union[numpy.ndarray, HDF5Matrix], y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelCheck(cls, x: Union[numpy.ndarray, HDF5Matrix],
+                      y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
         """
         The Tensor flow for model check
 
@@ -1231,7 +1235,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return x_train, x_test, scale_x, y_train, y_test, scale_y, header
 
     @classmethod
-    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix], y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
+                       y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
         """
         A basic model for ANN to calculate parameters
 
