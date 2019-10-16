@@ -255,7 +255,7 @@ class ABC_TFK_Classification:
             row = 0
             if verbose:
                 print('scaling')
-            for chunk in pandas.read_csv(csvpath, chunksize=chunksize, memory_map=True, low_memory=False):
+            for chunk in pandas.read_csv(csvpath, chunksize=chunksize):
                 if verbose:
                     print(row)
                 row = row + chunksize
@@ -270,7 +270,7 @@ class ABC_TFK_Classification:
                     scale.partial_fit(chunk.values)
         else:
             scale = None
-            chunk = pandas.read_csv(csvpath, nrows=chunksize, memory_map=True, low_memory=False)
+            chunk = pandas.read_csv(csvpath, nrows=chunksize)
             if special_func:
                 if verbose:
                     print(special_func(chunk, **kwargs).values)
@@ -293,7 +293,7 @@ class ABC_TFK_Classification:
         if verbose:
             print('transforming')
         row = 0
-        for chunk in pandas.read_csv(csvpath, chunksize=chunksize, memory_map=True, low_memory=False):
+        for chunk in pandas.read_csv(csvpath, chunksize=chunksize):
             if verbose:
                 print(row)
             if scaling:
