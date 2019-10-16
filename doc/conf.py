@@ -53,3 +53,5 @@ html_theme = 'classic'
 html_static_path = ['_static']
 
 source_suffix=['.rst','.md']
+# no sort for source clasess
+autodoc_member_order = 'bysource'
