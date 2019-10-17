@@ -40,6 +40,6 @@ python src/Run_ParamsEstimation.py --help
 ```
 
 For Model selection and for parameters estimation respectively. The first time you run it will also try to install abc from r package manager (automatically).   
-Please see [examples/Examples.md](examples/Examples.md) for a detailed guide how to use the codes.
+Please see [examples/Examples.md](https://github.com/mayukhmondal/ABC-TFK/blob/master/examples/Examples.md) for a detailed guide how to use the codes.
 ## Contact 
 The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact <mondal.mayukh@gmail.com>
