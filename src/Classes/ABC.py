@@ -36,7 +36,6 @@ with warnings.catch_warnings():
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
 
-
 class ABC_TFK_Classification:
     """
     Main classification class. It will distinguish between different models. with given underlying models it will
@@ -61,8 +60,116 @@ class ABC_TFK_Classification:
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4),
                 chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False):
+        """
+        This will automatically call the wrapper function and to do the necessary work.
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the number
+            of  parameters
+        :param ssfile: the summary statistic on real data set. should be csv format
+        :param demography: custom function made for keras model. the path of that .py file. Should have a def ANNModelCheck
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc. as
+            documented in the r.abc
+        :param tolerance: the level of tolerance for abc. default is .005
+        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+        :param chunksize:  the number of rows accessed at a time.
+        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
+            scaling will only happen on the ss.
+        :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
+            later by r
+        :return: will not return anything but will plot and print the power
+        """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
                            test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout)
+
+    @classmethod
+    def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
+                tolerance: float = .005, test_size: int = int(1e4),
+                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False):
+        """
+        the total wrapper of the classification method. with given underlying models it will compare with real data and
+        will predict how much it sure about which model can bet predict the real data.
+        wrapper_pre_train(Misc.removefiles -> cls.read_info -> Misc.getting_line_count ->
+        cls.subsetting_file_concating-> cls.shufling_joined_models -> if chunksize :  cls.preparingdata_hdf5;
+        else: cls.data_prep4ANN) -> wrapper_train Misc.loading_def_4m_file -> def ANNModelCheck )
+        wrapper_after_train(ModelSeparation.evaluate -> cls.read_ss_2_series -> cls.plot_power_of_ss (cls.r_summary) ->
+        cls.model_selection (cls.r_summary)-> cls.gfit_all (cls.r_summary) -> cls.csvout)
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param tolerance: the level of tolerance for abc. default is .005
+        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+        :param chunksize:  the number of rows accessed at a time.
+        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
+            The scaling will only happen on the ss.
+        :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :return: will not return anything but will plot and print the power
+        """
+
+        x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.wrapper_pre_train(info=info, test_size=test_size,
+                                                                                      chunksize=chunksize, scale=scale)
+        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+        cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
+                                y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
+                                csvout=csvout)
+
+    @classmethod
+    def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
+                          scale: bool = False) -> \
+            Tuple[
+                Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix],
+                Union[
+                    numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+        """
+        This the wrapper for pre_training part of the classification. it will produce data in hdf5 format which then
+        easily can be used in training part of the classification. it will also delete all the files that can be output
+        by the classification. so that it will work on a clean sheet.
+        Misc.removefiles -> cls.read_info -> Misc.getting_line_count ->  cls.subsetting_file_concating->
+        cls.shufling_joined_models -> if chunksize :  cls.preparingdata_hdf5; else: cls.data_prep4ANN
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param chunksize:  the number of rows accessed at a time.
+        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
+            The scaling will only happen on the ss.
+        :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
+            or None) and y_cat_dict ({0:'model1',1:'model2'..})
+        """
+        Misc.removefiles(
+            ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
+             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
+             'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf'])
+        files, paramnumbers, names = cls.read_info(info=info)
+        minlines = min([Misc.getting_line_count(file) for file in files]) - 1
+        pandas.DataFrame(
+            ['models'] + list(pandas.read_csv(files[0], nrows=10).columns[paramnumbers[0]:])).transpose().to_csv(
+            'Comparison.csv', index=False, header=False)
+        [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
+                                       modelname=names[i]) for i in range(len(files))]
+        shuffile = cls.shufling_joined_models(input='Comparison.csv', output='shuf.csv')
+
+        if chunksize:
+            x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.preparingdata_hdf5(filename=shuffile,
+                                                                                           chunksize=chunksize,
+                                                                                           test_size=test_size,
+                                                                                           scale=scale)
+            f = open("y_cat_dict.txt", "w")
+            f.write(str(y_cat_dict))
+            f.close()
+
+        else:
+            results = pandas.read_csv(shuffile, index_col=0)
+            x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.data_prep4ANN(results, test_size=test_size,
+                                                                                      scale=scale)
+        Misc.removefiles(['Comparison.csv', shuffile])
+
+        return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
     @classmethod
     def read_info(cls, info: str) -> Tuple[list, list, list]:
@@ -375,57 +482,32 @@ class ABC_TFK_Classification:
         return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
     @classmethod
-    def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
-                          scale: bool = False) -> \
-            Tuple[
-                Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix],
-                Union[
-                    numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
+                      demography: Optional[str] = None) -> keras.models.Model:
         """
-        This the wrapper for pre_training part of the classification. it will produce data in hdf5 format which then
-        easily can be used in training part of the classification. it will also delete all the files that can be output
-        by the classification. so that it will work on a clean sheet.
-        Misc.removefiles -> cls.read_info -> Misc.getting_line_count ->  cls.subsetting_file_concating->
-        cls.shufling_joined_models -> if chunksize :  cls.preparingdata_hdf5; else: cls.data_prep4ANN
+        This the wrapper for training part of the classification method. it need training data set for x and y. can be
+        either numpy array or hdf5 matrix format (HD5matrix) of keras
+        Misc.loading_def_4m_file -> def ANNModelCheck
 
-        :param info: the path of info file whose file column is the path of the file and second column defining the
-            number of  parameters
-        :param test_size: the number of test rows. everything else will be used for train. 10k is default
-        :param chunksize:  the number of rows accessed at a time.
-        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-            The scaling will only happen on the ss.
-        :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
-            or None) and y_cat_dict ({0:'model1',1:'model2'..})
+        :param x_train: train part of x aka summary statistics
+        :param y_train: training part of y aka models names. should be used keras.utils.to_categorical to better result
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :return: will return the keras model. it will also save the model in ModelClassification.h5
         """
-        Misc.removefiles(
-            ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
-             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-             'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf'])
-        files, paramnumbers, names = cls.read_info(info=info)
-        minlines = min([Misc.getting_line_count(file) for file in files]) - 1
-        pandas.DataFrame(
-            ['models'] + list(pandas.read_csv(files[0], nrows=10).columns[paramnumbers[0]:])).transpose().to_csv(
-            'Comparison.csv', index=False, header=False)
-        [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
-                                       modelname=names[i]) for i in range(len(files))]
-        shuffile = cls.shufling_joined_models(input='Comparison.csv', output='shuf.csv')
-
-        if chunksize:
-            x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.preparingdata_hdf5(filename=shuffile,
-                                                                                           chunksize=chunksize,
-                                                                                           test_size=test_size,
-                                                                                           scale=scale)
-            f = open("y_cat_dict.txt", "w")
-            f.write(str(y_cat_dict))
-            f.close()
-
+        Misc.removefiles(["ModelClassification.h5"])
+        if demography:
+            ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
+            if ANNModelCheck:
+                ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
+            else:
+                print('Could not find the ANNModelCheck in', demography,
+                      '. Please check. Now using the default ANNModelCheck')
+                ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
-            results = pandas.read_csv(shuffile, index_col=0)
-            x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.data_prep4ANN(results, test_size=test_size,
-                                                                                      scale=scale)
-        Misc.removefiles(['Comparison.csv', shuffile])
-
-        return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
+            ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
+        ModelSeparation.save("ModelClassification.h5")
+        return ModelSeparation
 
     @classmethod
     def Gaussian_noise(cls, input_layer, sd: float = .01):
@@ -469,32 +551,59 @@ class ABC_TFK_Classification:
         return model
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
-                      demography: Optional[str] = None) -> keras.models.Model:
+    def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                            y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+                            y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
+                            tolerance: float = .005, csvout: bool = False) -> None:
         """
-        This the wrapper for training part of the classification method. it need training data set for x and y. can be
-        either numpy array or hdf5 matrix format (HD5matrix) of keras
-        Misc.loading_def_4m_file -> def ANNModelCheck
+        This the wrapper for after training part of the classification. after training is done it will test on the test
+        data set to see the power and then use a real data setto show how likely it support one model over another.
+        it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
+        sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
+        ModelSeparation.evaluate -> cls.read_ss_2_series -> cls.plot_power_of_ss (cls.r_summary) -> cls.model_selection
+        (cls.r_summary)-> cls.gfit_all (cls.r_summary) -> cls.csvout
 
-        :param x_train: train part of x aka summary statistics
-        :param y_train: training part of y aka models names. should be used keras.utils.to_categorical to better result
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
-            ANNModelCheck
-        :return: will return the keras model. it will also save the model in ModelClassification.h5
+        :param ModelSeparation: The fitted keras model
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the test part of y aka models name. should be used keras.utils.to_categorical to better result
+        :param scale_x: the MinMax scaler of x axis. can be None
+        :param y_cat_dict: name of all the models. will be printed the pdf
+        :param ssfile: the summary statistic on real data set. should be csv format
+        :param method: to tell which method is to be used in abc. default is mnlogitic. but can be rejection, neural net
+            etc. as documented in the r.abc
+        :param tolerance: the level of tolerance. default is .005
+        :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
+            later by r
+        :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
-        Misc.removefiles(["ModelClassification.h5"])
-        if demography:
-            ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
-            if ANNModelCheck:
-                ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
-            else:
-                print('Could not find the ANNModelCheck in', demography,
-                      '. Please check. Now using the default ANNModelCheck')
-                ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
+
+        print("Evaluate with test:")
+        ModelSeparation.evaluate(x_test, y_test, verbose=2)
+
+        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
+        indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
+        ssnn.index = indexnn
+        sfs = cls.read_ss_2_series(file=ssfile)
+        cls.check_results(results=[x_test[0:2]], observed=sfs)
+        if scale_x:
+            predictednn = cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
         else:
-            ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-        ModelSeparation.save("ModelClassification.h5")
-        return ModelSeparation
+            predictednn = cls.predict_repeats_mean(ModelSeparation, sfs.values.reshape(1, -1))
+        print('Predicted by NN')
+        print(sorted(y_cat_dict.items()))
+        print(predictednn)
+
+        robjects.r['pdf']("NN.pdf")
+        cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method)
+        cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
+                            tol=tolerance)
+
+        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance)
+        robjects.r['dev.off']()
+        if csvout:
+            cls.csvout(modelindex=indexnn,
+                       ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(columns=y_cat_dict),
+                       predict4mreal=predictednn.rename(columns=y_cat_dict))
 
     @classmethod
     def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
@@ -652,99 +761,6 @@ class ABC_TFK_Classification:
         Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv',
                           'y_cat_dict.txt'])
 
-    @classmethod
-    def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
-                            y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
-                            y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
-                            tolerance: float = .005, csvout: bool = False) -> None:
-        """
-        This the wrapper for after training part of the classification. after training is done it will test on the test
-        data set to see the power and then use a real data setto show how likely it support one model over another.
-        it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
-        sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
-        ModelSeparation.evaluate -> cls.read_ss_2_series -> cls.plot_power_of_ss (cls.r_summary) -> cls.model_selection
-        (cls.r_summary)-> cls.gfit_all (cls.r_summary) -> cls.csvout
-
-        :param ModelSeparation: The fitted keras model
-        :param x_test: the test part of x aka summary statistics
-        :param y_test: the test part of y aka models name. should be used keras.utils.to_categorical to better result
-        :param scale_x: the MinMax scaler of x axis. can be None
-        :param y_cat_dict: name of all the models. will be printed the pdf
-        :param ssfile: the summary statistic on real data set. should be csv format
-        :param method: to tell which method is to be used in abc. default is mnlogitic. but can be rejection, neural net
-            etc. as documented in the r.abc
-        :param tolerance: the level of tolerance. default is .005
-        :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
-            later by r
-        :return: will not return anything but will produce the graphs and print out how much it is sure about any model
-        """
-
-        print("Evaluate with test:")
-        ModelSeparation.evaluate(x_test, y_test, verbose=2)
-
-        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
-        indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
-        ssnn.index = indexnn
-        sfs = cls.read_ss_2_series(file=ssfile)
-        cls.check_results(results=[x_test[0:2]], observed=sfs)
-        if scale_x:
-            predictednn = cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
-        else:
-            predictednn = cls.predict_repeats_mean(ModelSeparation, sfs.values.reshape(1, -1))
-        print('Predicted by NN')
-        print(sorted(y_cat_dict.items()))
-        print(predictednn)
-
-        robjects.r['pdf']("NN.pdf")
-        cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method)
-        cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
-                            tol=tolerance)
-
-        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance)
-        robjects.r['dev.off']()
-        if csvout:
-            cls.csvout(modelindex=indexnn,
-                       ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(columns=y_cat_dict),
-                       predict4mreal=predictednn.rename(columns=y_cat_dict))
-
-    @classmethod
-    def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
-                tolerance: float = .005, test_size: int = int(1e4),
-                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False):
-        """
-        the total wrapper of the classification method. with given underlying models it will compare with real data and
-        will predict how much it sure about which model can bet predict the real data.
-        wrapper_pre_train(Misc.removefiles -> cls.read_info -> Misc.getting_line_count ->
-        cls.subsetting_file_concating-> cls.shufling_joined_models -> if chunksize :  cls.preparingdata_hdf5;
-        else: cls.data_prep4ANN) -> wrapper_train Misc.loading_def_4m_file -> def ANNModelCheck )
-        wrapper_after_train(ModelSeparation.evaluate -> cls.read_ss_2_series -> cls.plot_power_of_ss (cls.r_summary) ->
-        cls.model_selection (cls.r_summary)-> cls.gfit_all (cls.r_summary) -> cls.csvout)
-
-        :param info: the path of info file whose file column is the path of the file and second column defining the
-            number of  parameters
-        :param ssfile: the summary statisfic on real data set. should be csv format
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
-            ANNModelCheck
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-            as documented in the r.abc
-        :param tolerance: the level of tolerance for abc. default is .005
-        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
-        :param chunksize:  the number of rows accessed at a time.
-        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
-            The scaling will only happen on the ss.
-        :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
-            later by r
-        :return: will not return anything but will plot and print the power
-        """
-
-        x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.wrapper_pre_train(info=info, test_size=test_size,
-                                                                                      chunksize=chunksize, scale=scale)
-        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
-        cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
-                                y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
-                                csvout=csvout)
-
-
 class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
     """
     Subset of class ABC_TFK_Classification. Specifically to do the pre train stuff. it will produce data in hdf5 format
@@ -762,8 +778,20 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
     """
 
     def __new__(cls, info, test_size=int(1e4), chunksize=int(1e4), scale=False):
-        return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale)
+        """
+        Will call the wrapper_pre_train function from ABC_TFK_Classification
 
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param chunksize:  the number of rows accessed at a time.
+        :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
+            The scaling will only happen on the ss.
+        :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
+            or None) and y_cat_dict ({0:'model1',1:'model2'..})
+
+        """
+        return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale)
 
 class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     """
@@ -777,12 +805,36 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     """
 
     def __new__(cls, demography=None, test_rows=int(1e4)):
+        """
+        This will call the wrapper function
+
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+        :return: will not return anything but will train and save the file ModelClassification.h5
+        """
         return cls.wrapper(demography=demography, test_rows=test_rows)
+
+    @classmethod
+    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4)) -> None:
+        """
+        wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
+        y.h5 present.
+
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+        :return: will not return anything but will train and save the file ModelClassification.h5
+        """
+        y_train = cls.reading_y_train(test_rows=test_rows)
+        x_train = cls.reading_x_train(test_rows=test_rows)
+        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
 
     @classmethod
     def reading_y_train(cls, test_rows: int = int(1e4)) -> HDF5Matrix:
         """
         reading the file for y.h5 and then return the y_train using hdf5matrix
+
         :param test_rows: the number of rows kept for test data set. it will remove those lines from the end
         :return: return y_train hdf5 format
         """
@@ -812,22 +864,6 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
             sys.exit(1)
         return x_train
 
-    @classmethod
-    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4)) -> None:
-        """
-        wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
-        y.h5 present.
-
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
-            ANNModelCheck
-        :param test_rows: the number of test rows. everything else will be used for train. 10k is default
-        :return: will not return anything but will train and save the file ModelClassification.h5
-        """
-        y_train = cls.reading_y_train(test_rows=test_rows)
-        x_train = cls.reading_x_train(test_rows=test_rows)
-        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
-
-
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     """
     Subset of class ABC_TFK_Classification. Specifically to calculate cross validation test. good if you dont have
@@ -841,7 +877,41 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     """
 
     def __new__(cls, test_size=int(1e4), tol=0.05, method='rejection'):
+        """
+        This will call the wrapper function
+
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :return: will not return anything but will plot the cross validation stuff of different models
+        """
         return cls.wrapper(test_size=test_size, tol=tol, method=method)
+
+    @classmethod
+    def wrapper(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection') -> None:
+        """
+        this will produce do the cross validation stuff using abc on the nn predicted stuff. good in case real data is
+        not available yet
+
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :return: will not return anything but will plot the cross validation stuff of different models
+        """
+        ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
+        print("Evaluate with test:")
+        ModelSeparation.evaluate(x_test, y_test, verbose=2)
+        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
+        if y_cat_dict:
+            indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
+        else:
+            indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
+        ssnn.index = indexnn
+        robjects.r['pdf']("CV.pdf")
+        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method)
+        robjects.r['dev.off']()
 
     @classmethod
     def loadingkerasmodel(cls, ModelParamPredictionFile: str = 'ModelClassification.h5') -> keras.models.Model:
@@ -949,32 +1019,6 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         y_cat_dict = cls.read_y_cat_dict()
         return ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict
 
-    @classmethod
-    def wrapper(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection') -> None:
-        """
-        this will produce do the cross validation stuff using abc on the nn predicted stuff. good in case real data is
-        not available yet
-
-        :param test_size: the number of test rows. everything else will be used for train. 10k is default
-        :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-            as documented in the r.abc
-        :return: will not return anything but will plot the cross validation stuff of different models
-        """
-        ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
-        print("Evaluate with test:")
-        ModelSeparation.evaluate(x_test, y_test, verbose=2)
-        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
-        if y_cat_dict:
-            indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
-        else:
-            indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
-        ssnn.index = indexnn
-        robjects.r['pdf']("CV.pdf")
-        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method)
-        robjects.r['dev.off']()
-
-
 class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
     """
     Subset of class ABC_TFK_Classification. To do the ABC part.  after training is done it will test on the test
@@ -994,6 +1038,18 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
                 csvout: bool = False):
+        """
+        This will call the wrapper function
+
+        :param ssfile:  the summary statisfic on real data set. should be csv format
+        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .01
+        :param method: to tell which method is used in abc. default is rejection. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :return: will not return anything but will produce the graphs and print out how much it is sure about any model
+        """
         return cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout)
 
     @classmethod
@@ -1050,8 +1106,122 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
                 scaling_y: bool = False) -> None:
+        """
+        This will call the wrapper function
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only the first line will be used
+        :param ssfile: the summary statistic on real data set. should be csv format
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
+            ANNModelCheck
+        :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :return:  will not return anything but will plot and print the parameters
+        """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y)
+
+    @classmethod
+    def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
+                tol: float = .005, method: str = 'rejection',
+                demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
+                scaling_y: bool = False) -> None:
+        """
+        the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
+        real data and will predict which parameter best predict the real data.
+        wrapper_pretrain(Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5
+        ;else preparingdata->Misc.removefiles) ->wrapper_train(Misc.loading_def_4m_file -> def ANNModelCheck)->
+        wrapper_after_train(ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->
+        cls.plot_param_cv_error->cls.abc_params-> Misc.removefiles->cls.csvout)
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only the first line will be used
+        :param ssfile: the summary statistic on real data set. should be csv format
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
+            ANNModelCheck
+        :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :return:  will not return anything but will plot and print the parameters
+        """
+
+        x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
+                                                                                              chunksize=chunksize,
+                                                                                              test_size=test_size,
+                                                                                              scaling_x=scaling_x,
+                                                                                              scaling_y=scaling_y)
+        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+        cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
+                               ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
+                               paramfile=paramfile, method=method, tol=tol, csvout=csvout)
+
+    @classmethod
+    def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
+                          scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
+        Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
+            numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
+        """
+        This is a a wrapper on the pretrain for parameter estimation. this will build stuff just before the training in
+        ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
+        also delete all the files that can be output from ABC-TFK thus not clashing with them
+        Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5 ;else
+        preparingdata->Misc.removefiles
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only first line will be used
+        :param chunksize: the number of rows accesed at a time. in case of big data
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :return: will return (x_train, x_test, scale_x), (y_train, y_test, scale_y) and  header file path
+            (params_header.csv)
+        """
+
+        Misc.removefiles(
+            ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
+             'params.csv', 'ss.csv', 'params_header.csv'])
+        files, paramnumbers, names = cls.read_info(info=info)
+        if len(files) > 1:
+            print("there are more than one file. Only will work with the first file:", files[0])
+        paramfile, simss = cls.separation_param_ss(filename=files[0], params_number=paramnumbers[0])
+        if chunksize:
+            x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata_hdf5(paramfile=paramfile,
+                                                                                        simss=simss,
+                                                                                        chunksize=chunksize,
+                                                                                        test_size=test_size,
+                                                                                        scaling_x=scaling_x,
+                                                                                        scaling_y=scaling_y)
+        else:
+            x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata(paramfile=paramfile,
+                                                                                   simssfile=simss,
+                                                                                   test_size=test_size,
+                                                                                   scaling_x=scaling_x,
+                                                                                   scaling_y=scaling_y)
+        header = 'params_header.csv'
+        pandas.DataFrame(index=pandas.read_csv(paramfile, nrows=10).columns).transpose().to_csv(header,
+                                                                                                index=False)
+        Misc.removefiles([simss, paramfile])
+
+        return x_train, x_test, scale_x, y_train, y_test, scale_y, header
 
     @classmethod
     def separation_param_ss(cls, filename: str, params_number: int) -> Tuple[str, str]:
@@ -1184,81 +1354,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return x_train, x_test, scale_x, y_train, y_test, scale_y
 
     @classmethod
-    def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                          scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
-        Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
-            numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
-        """
-        This is a a wrapper on the pretrain for parameter estimation. this will build stuff just before the training in
-        ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
-        also delete all the files that can be output from ABC-TFK thus not clashing with them
-        Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5 ;else
-        preparingdata->Misc.removefiles
-
-        :param info: the path of info file whose file column is the path of the file and second column defining the
-            number of  parameters. only first line will be used
-        :param chunksize: the number of rows accesed at a time. in case of big data
-        :param test_size: the number of test rows. everything else will be used for train. 10k is default
-        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
-            MinMaxscaler.
-        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
-            MinMaxscaler.
-        :return: will return (x_train, x_test, scale_x), (y_train, y_test, scale_y) and  header file path
-            (params_header.csv)
-        """
-
-        Misc.removefiles(
-            ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
-             'params.csv', 'ss.csv', 'params_header.csv'])
-        files, paramnumbers, names = cls.read_info(info=info)
-        if len(files) > 1:
-            print("there are more than one file. Only will work with the first file:", files[0])
-        paramfile, simss = cls.separation_param_ss(filename=files[0], params_number=paramnumbers[0])
-        if chunksize:
-            x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata_hdf5(paramfile=paramfile,
-                                                                                        simss=simss,
-                                                                                        chunksize=chunksize,
-                                                                                        test_size=test_size,
-                                                                                        scaling_x=scaling_x,
-                                                                                        scaling_y=scaling_y)
-        else:
-            x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata(paramfile=paramfile,
-                                                                                   simssfile=simss,
-                                                                                   test_size=test_size,
-                                                                                   scaling_x=scaling_x,
-                                                                                   scaling_y=scaling_y)
-        header = 'params_header.csv'
-        pandas.DataFrame(index=pandas.read_csv(paramfile, nrows=10).columns).transpose().to_csv(header,
-                                                                                                index=False)
-        Misc.removefiles([simss, paramfile])
-
-        return x_train, x_test, scale_x, y_train, y_test, scale_y, header
-
-    @classmethod
-    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
-                       y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
-        """
-        A basic model for ANN to calculate parameters
-
-        :param x:  the x or summary statistics. can be numpy array or hdf5.
-        :param y: the parameters which produced those ss
-        :return: will return the trained model
-        """
-        model = Sequential()
-        model.add(Dense(512, activation='relu', input_shape=(x.shape[1],)))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(64, activation='relu'))
-        model.add(Dense(32, activation='relu'))
-        model.add(Dense(y.shape[1]))
-        model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
-        # adding an early stop so that it does not overfit
-        ES = EarlyStopping(monitor='val_loss', patience=100)
-        #
-        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
-
-        return model
-
-    @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
                       demography: Optional[str] = None) -> keras.models.Model:
         """
@@ -1286,6 +1381,79 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         ModelParamPrediction.save("ModelParamPrediction.h5")
         return ModelParamPrediction
+
+    @classmethod
+    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
+                       y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+        """
+        A basic model for ANN to calculate parameters
+
+        :param x:  the x or summary statistics. can be numpy array or hdf5.
+        :param y: the parameters which produced those ss
+        :return: will return the trained model
+        """
+        model = Sequential()
+        model.add(Dense(512, activation='relu', input_shape=(x.shape[1],)))
+        model.add(Dense(128, activation='relu'))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dense(y.shape[1]))
+        model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+        # adding an early stop so that it does not overfit
+        ES = EarlyStopping(monitor='val_loss', patience=100)
+        #
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
+
+        return model
+    @classmethod
+    def wrapper_aftertrain(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                           y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
+                           scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
+                           paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
+                           csvout: bool = False) -> None:
+        """
+        The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
+        to see the power and then use a real data set to show what most likely parameters can create the real data.
+        it will use abc to give the power or standard deviation of the parameters that is predicted by nn to know how
+        much we are sure about the results. mainly it will do two parts of abc. one cv error and parameter estimation
+        ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->cls.plot_param_cv_error->
+        cls.abc_params-> Misc.removefiles->cls.csvout
+
+        :param ModelParamPrediction: The fitted keras model
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the test part of y aka parameter dataset
+        :param ssfile: the real ss file path
+        :param scale_x: the scale of ss if exist
+        :param scale_y: the scale of parameters if exist
+        :param paramfile: the path of paramter header file. default is 'params_header.csv'
+        :param method: the method to be used in r_abc. default is rejection
+        :param tol: the tolerance level to be used in r_abc. default is .005
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :return: will not return anything but print out the result and save files for plot
+        """
+        print("Evaluate with test:")
+        ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
+        params_names = pandas.read_csv(paramfile).columns
+        ss = cls.read_ss_2_series(file=ssfile)
+
+        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
+                                                                                 scale_x, scale_y, params_names, ss)
+
+        print("ANN predict")
+        print(predict4mreal.transpose())
+
+        print('correlation between params. Prior')
+        print(params_unscaled.corr().to_string())
+
+        print('correlation between predicted params. Posterior')
+        print(test_predictions.corr().to_string())
+
+        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
+                                method=method)
+        cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
+        if csvout:
+            cls.csvout(params_unscaled=params_unscaled, test_predictions=test_predictions, predict4mreal=predict4mreal)
 
     @classmethod
     def R_std_columns(cls, df: pandas.DataFrame) -> pandas.Series:
@@ -1497,97 +1665,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         predict4mreal.to_csv('ss_target.csv.gz', index=False)
         Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv'])
 
-    @classmethod
-    def wrapper_aftertrain(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
-                           y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
-                           scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
-                           paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           csvout: bool = False) -> None:
-        """
-        The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
-        to see the power and then use a real data set to show what most likely parameters can create the real data.
-        it will use abc to give the power or standard deviation of the parameters that is predicted by nn to know how
-        much we are sure about the results. mainly it will do two parts of abc. one cv error and parameter estimation
-        ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->cls.plot_param_cv_error->
-        cls.abc_params-> Misc.removefiles->cls.csvout
-
-        :param ModelParamPrediction: The fitted keras model
-        :param x_test: the test part of x aka summary statistics
-        :param y_test: the test part of y aka parameter dataset
-        :param ssfile: the real ss file path
-        :param scale_x: the scale of ss if exist
-        :param scale_y: the scale of parameters if exist
-        :param paramfile: the path of paramter header file. default is 'params_header.csv'
-        :param method: the method to be used in r_abc. default is rejection
-        :param tol: the tolerance level to be used in r_abc. default is .005
-        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
-            later by r
-        :return: will not return anything but print out the result and save files for plot
-        """
-        print("Evaluate with test:")
-        ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
-        params_names = pandas.read_csv(paramfile).columns
-        ss = cls.read_ss_2_series(file=ssfile)
-
-        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
-                                                                                 scale_x, scale_y, params_names, ss)
-
-        print("ANN predict")
-        print(predict4mreal.transpose())
-
-        print('correlation between params. Prior')
-        print(params_unscaled.corr().to_string())
-
-        print('correlation between predicted params. Posterior')
-        print(test_predictions.corr().to_string())
-
-        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
-                                method=method)
-        cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
-        if csvout:
-            cls.csvout(params_unscaled=params_unscaled, test_predictions=test_predictions, predict4mreal=predict4mreal)
-
-    @classmethod
-    def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False) -> None:
-        """
-        the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
-        real data and will predict which parameter best predict the real data.
-        wrapper_pretrain(Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5
-        ;else preparingdata->Misc.removefiles) ->wrapper_train(Misc.loading_def_4m_file -> def ANNModelCheck)->
-        wrapper_after_train(ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->
-        cls.plot_param_cv_error->cls.abc_params-> Misc.removefiles->cls.csvout)
-
-        :param info: the path of info file whose file column is the path of the file and second column defining the
-            number of  parameters. only the first line will be used
-        :param ssfile: the summary statisfic on real data set. should be csv format
-        :param chunksize: the number of rows accessed at a time.
-        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
-        :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-            as documented in the r.abc
-        :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
-            ANNModelCheck
-        :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
-            later by r
-        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
-            MinMaxscaler.
-        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
-            MinMaxscaler.
-        :return:  will not return anything but will plot and print the parameters
-        """
-
-        x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
-                                                                                              chunksize=chunksize,
-                                                                                              test_size=test_size,
-                                                                                              scaling_x=scaling_x,
-                                                                                              scaling_y=scaling_y)
-        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
-        cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
-                               ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
-                               paramfile=paramfile, method=method, tol=tol, csvout=csvout)
 
 
 class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
@@ -1595,27 +1672,56 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
     Subset of Parameter estimation. just to prepare the data for tfk.this will build stuff just before the training in
     ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
     also delete all the files that can be output from ABC-TFK thus not clashing with them
+
+    :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only first line will be used
+    :param chunksize: the number of rows accesed at a time. in case of big data
+    :param test_size: the number of test rows. everything else will be used for train. 10k is default
+    :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+        MinMaxscaler.
+    :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+        MinMaxscaler.
+    :return: will not return anything but will create x.hdf5 ,y.hdf5, scale_x, scale_x  and params_header.csv
     """
 
     def __new__(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                 scaling_x: bool = False, scaling_y: bool = False):
+        """
+        This will  call the wrapper_pre_train function from ABC_TFK_Params
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only first line will be used
+        :param chunksize: the number of rows accesed at a time. in case of big data
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :return: will not return anything but will create x.hdf5 ,y.hdf5, scale_x, scale_x  and params_header.csv
+        """
         return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scaling_x=scaling_x,
                                      scaling_y=scaling_y)
-
 
 class ABC_TFK_Params_Train(ABC_TFK_Params):
     """
     Subset for the training of parameter estimation. the slowest part of the code.it need training data set for x and y.
     can be hdf5 matrix format (HD5matrix) of keras
 
-    :param x_train: train part of x aka summary statistics
-    :param y_train: train part of all the parameters
+    :param test_rows: the number of rows kept for test data set. it will return those lines from the end
     :param demography: custom function made for keras model. the path of that .py file. should have a def has
         ANNModelParams as def in Any.py
-    :return: will not return the keras model. it will save the model in ModelParamPrediction.h5
+    :return: will not return anything but save the keras model
     """
 
     def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
+        """
+        This will call the wrapper function
+
+        :param test_rows: the number of rows kept for test data set. it will return those lines from the end
+        :param demography: custom function made for keras model. the path of that .py file. should have a def has
+            ANNModelParams as def in Any.py
+        :return: will not return anything but save the keras model
+        """
         return cls.wrapper(test_rows=test_rows, demography=demography)
 
     @classmethod
@@ -1626,12 +1732,11 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
-        :return: will not return anython but save the keras model
+        :return: will not return anything but save the keras model
         """
         y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
-
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
     """
@@ -1646,7 +1751,45 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     """
 
     def __new__(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet') -> None:
+        """
+        This will call the wrapper function
+
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :return: will not return anything but will plot the cross validation stuff for parameter estimation
+        """
         return cls.wrapper(test_size=test_size, tol=tol, method=method)
+
+    @classmethod
+    def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet') -> None:
+        """
+       Subset of Parameter estimation Specifically to calculate cross validation test. good if you dont have
+       real data
+
+       :param test_size: the number of test rows. everything else will be used for train. 10k is default
+       :param tol: the level of tolerance for abc. default is .005
+       :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+       :return: will not return anything but will plot the cross validation stuff for parameter estimation
+       """
+        ModelParamPrediction, x_test, y_test, scale_x, scale_y = cls.read_data(test_rows=test_size)
+
+        print("Evaluate with test:")
+        ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
+        test_predictions, params_unscaled = cls.preparing_for_abc(ModelParamPrediction=ModelParamPrediction,
+                                                                  x_test=x_test,
+                                                                  y_test=y_test, scale_x=scale_x, scale_y=scale_y,
+                                                                  params_names=pandas.read_csv(
+                                                                      'params_header.csv').columns)
+        print('correlation between params. Prior')
+        print(params_unscaled.corr().to_string())
+
+        print('correlation between predicted params. Posterior')
+        print(test_predictions.corr().to_string())
+
+        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
+                                method=method)
 
     @classmethod
     def read_scalex_scaley(cls) -> Tuple[Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
@@ -1713,36 +1856,6 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
 
         return test_predictions, params_unscaled
 
-    @classmethod
-    def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet') -> None:
-        """
-       Subset of Parameter estimation Specifically to calculate cross validation test. good if you dont have
-       real data
-
-       :param test_size: the number of test rows. everything else will be used for train. 10k is default
-       :param tol: the level of tolerance for abc. default is .005
-       :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-       :return: will not return anything but will plot the cross validation stuff for parameter estimation
-       """
-        ModelParamPrediction, x_test, y_test, scale_x, scale_y = cls.read_data(test_rows=test_size)
-
-        print("Evaluate with test:")
-        ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
-        test_predictions, params_unscaled = cls.preparing_for_abc(ModelParamPrediction=ModelParamPrediction,
-                                                                  x_test=x_test,
-                                                                  y_test=y_test, scale_x=scale_x, scale_y=scale_y,
-                                                                  params_names=pandas.read_csv(
-                                                                      'params_header.csv').columns)
-        print('correlation between params. Prior')
-        print(params_unscaled.corr().to_string())
-
-        print('correlation between predicted params. Posterior')
-        print(test_predictions.corr().to_string())
-
-        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
-                                method=method)
-
-
 class ABC_TFK_Params_After_Train(ABC_TFK_Params):
     """
    The subset class to test to paramter estimation. after training is done it will test on the test data set
@@ -1762,6 +1875,18 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = .01, method: str = 'neuralnet',
                 csvout: bool = False) -> None:
+        """
+        This will call the wrapper funciton
+
+       :param ssfile:  the real ss file path
+       :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+       :param tol: the level of tolerance for abc. default is .005
+       :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+       :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+       :return: will not return anything but will plot and print the parameters
+        """
         cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout)
 
     @classmethod
