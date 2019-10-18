@@ -11,7 +11,7 @@ from src.Classes import ABC
 from collections import Counter
 from keras.utils import HDF5Matrix
 import pandas
-
+import numpy
 
 def test_Classification_Pre_train():
     info='Model.info'
@@ -45,3 +45,5 @@ def test_Classification_Pre_train():
     #ncol check
     assert xshape[1]==1331, 'Column number of x.h5 do not match with expected'
     # checking y.h5 file
+    y_unique_val=list(numpy.unique(pandas.DataFrame(HDF5Matrix('y.h5', 'mydata')[:]).values.flatten()))
+    assert Counter(y_unique_val)==Counter([1,0.0]), 'y values can either be 0 or 1'
