@@ -13,6 +13,7 @@ from keras.utils import HDF5Matrix
 import pandas
 import numpy
 
+
 def test_Classification_Pre_train():
     info='Model.info'
     test_size=1
@@ -54,3 +55,8 @@ def test_Classification_Pre_train():
     y_cat_dict = eval(open('y_cat_dict.txt', 'r').read())
     modelcount=pandas.DataFrame(numpy.argmax(y[:], axis=1, out=None))[0].replace(y_cat_dict).value_counts().to_dict()
     assert modelcount=={'OOA':5,'OOA_M':5,'OOA_B':5}, 'y.h5 have a different count of names than it should'
+
+    #checking x.h5 file'
+    x = HDF5Matrix('x.h5', 'mydata')
+    xdf=pandas.DataFrame(x[:])
+    assert all (xdf[i].dtype.kind == 'f' for i in xdf), 'Not all the columns are float for x.h5'
