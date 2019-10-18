@@ -59,4 +59,8 @@ def test_Classification_Pre_train():
     #checking x.h5 file'
     x = HDF5Matrix('x.h5', 'mydata')
     xdf=pandas.DataFrame(x[:])
+    # col types in x.h5
     assert all (xdf[i].dtype.kind == 'f' for i in xdf), 'Not all the columns are float for x.h5'
+    # min and max scaler worked or noy
+    assert xdf.iloc[:, 1:-1].min().sum()==0, 'Not all the columns have 0 minimum value'
+    assert xdf.iloc[:, 1:-1].max().sum() == 1329, 'Not all the columns have 1 maximum value'
