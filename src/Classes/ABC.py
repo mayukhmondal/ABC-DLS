@@ -161,7 +161,7 @@ class ABC_TFK_Classification:
                                                                                            chunksize=chunksize,
                                                                                            test_size=test_size,
                                                                                            scale=scale)
-            f = open("y_cat_dict.txt", "w")
+           # f = open("y_cat_dict.txt", "w")
             f.write(str(y_cat_dict))
             f.close()
 
