@@ -147,9 +147,11 @@ class ABC_TFK_Classification:
              'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf'])
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
+        # header creation
         pandas.DataFrame(
-            ['models'] + list(pandas.read_csv(files[0], nrows=10).columns[paramnumbers[0]:])).transpose().to_csv(
+            ['models'] + list(pandas.read_csv(files[0], nrows=1).columns[paramnumbers[0]:])).transpose().to_csv(
             'Comparison.csv', index=False, header=False)
+        # adding line after subseting
         [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
                                        modelname=names[i]) for i in range(len(files))]
         shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output='shuf.csv')
@@ -251,10 +253,15 @@ class ABC_TFK_Classification:
         :return: will not return anything but will create or update Comparison.csv file .where all the ss with the name
             of the models are written
         """
+        if filename[-2:]=='gz':
+            command = Misc.joinginglistbyspecificstring(
+                ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, " >> Comparison.csv"])
+        else:
+            command = Misc.joinginglistbyspecificstring(
+                ["cat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, " >> Comparison.csv"])
 
-        command = Misc.joinginglistbyspecificstring(
-            ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-             '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, " >> Comparison.csv"])
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if stderr:
