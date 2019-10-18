@@ -34,7 +34,7 @@ def test_Classification_Pre_train():
 
     # h5 file checks
 
-    xshape=HDF5Matrix('x.h5', 'mydata').shape
+    xshape= HDF5Matrix('x.h5', 'mydata').shape
     yshape = HDF5Matrix('y.h5', 'mydata').shape
     # row check
     assert xshape[0]==yshape[0], 'Row numbers between x.h5 and/or y.h5 file do not match'
@@ -45,5 +45,12 @@ def test_Classification_Pre_train():
     #ncol check
     assert xshape[1]==1331, 'Column number of x.h5 do not match with expected'
     # checking y.h5 file
+    # y.h5 either 0 and 1
     y_unique_val=list(numpy.unique(pandas.DataFrame(HDF5Matrix('y.h5', 'mydata')[:]).values.flatten()))
     assert Counter(y_unique_val)==Counter([1,0.0]), 'y values can either be 0 or 1'
+
+    # the number of count  of models
+    y = HDF5Matrix('y.h5', 'mydata')
+    y_cat_dict = eval(open('y_cat_dict.txt', 'r').read())
+    modelcount=pandas.DataFrame(numpy.argmax(y[:], axis=1, out=None))[0].replace(y_cat_dict).value_counts().to_dict()
+    assert modelcount=={'OOA':5,'OOA_M':5,'OOA_B':5}, 'y.h5 have a different count of names than it should'
