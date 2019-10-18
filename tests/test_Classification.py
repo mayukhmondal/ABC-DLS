@@ -41,5 +41,4 @@ def test_Classification_Pre_train():
     #ncol check
     expectedcol=pandas.read_csv(files[0]).shape[1]-paramnumbers[0]
     assert xshape[1]==expectedcol, 'Column number of x.h5 do not match with expected'
-
     # checking y.h5 file
