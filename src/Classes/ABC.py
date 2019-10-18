@@ -152,7 +152,7 @@ class ABC_TFK_Classification:
             'Comparison.csv', index=False, header=False)
         [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
                                        modelname=names[i]) for i in range(len(files))]
-        shuffile = cls.shufling_joined_models(input='Comparison.csv', output='shuf.csv')
+        shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output='shuf.csv')
 
         if chunksize:
             x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.preparingdata_hdf5(filename=shuffile,
