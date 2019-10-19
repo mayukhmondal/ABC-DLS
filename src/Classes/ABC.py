@@ -619,7 +619,7 @@ class ABC_TFK_Classification:
         cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance)
         robjects.r['dev.off']()
         if csvout:
-            cls.csvout(modelindex=indexnn,
+            cls.outputing_csv(modelindex=indexnn,
                        ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(columns=y_cat_dict),
                        predict4mreal=predictednn.rename(columns=y_cat_dict))
 
@@ -760,7 +760,7 @@ class ABC_TFK_Classification:
                              tol=tol)
 
     @classmethod
-    def csvout(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame, predict4mreal: pandas.DataFrame):
+    def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame, predict4mreal: pandas.DataFrame):
         """
         in case of everything satisfied. this will output the test data set in csv format which then later can be used by
         r directly. if you use it, it will delete all the middle files from the current directory if exists: x_test.h5,
@@ -1471,7 +1471,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                 method=method)
         cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
         if csvout:
-            cls.csvout(params_unscaled=params_unscaled, test_predictions=test_predictions, predict4mreal=predict4mreal)
+            cls.outputing_csv(params_unscaled=params_unscaled, test_predictions=test_predictions, predict4mreal=predict4mreal)
 
     @classmethod
     def R_std_columns(cls, df: pandas.DataFrame) -> pandas.Series:
@@ -1665,7 +1665,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                 robjects.r['plot'](res, param=param, onefile=True, file=name[:-4] + '_together')
 
     @classmethod
-    def csvout(cls, params_unscaled: pandas.DataFrame, test_predictions: pandas.DataFrame,
+    def outputing_csv(cls, params_unscaled: pandas.DataFrame, test_predictions: pandas.DataFrame,
                predict4mreal: pandas.DataFrame) -> None:
         """
         in case you need csv file output of predicted params from nn, which then can be directly used by R. if you use
