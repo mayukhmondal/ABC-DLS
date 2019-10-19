@@ -32,7 +32,9 @@ def test_Classification_Pre_train():
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_PreTrain'
 
     # model name check
-    files, paramnumbers, names = ABC.ABC_TFK_Classification_PreTrain.read_info('Model.info')
+    assert eval(open('y_cat_dict.txt', 'r').read()) , 'Cant read the y_cat_dict.txt file. Look likes the' \
+                                                                   'format is not simple text dict '
+
     y_cat_names = list(eval(open('y_cat_dict.txt', 'r').read()).values())
     assert Counter(y_cat_names) == Counter(
         ['OOA', 'OOA_B', 'OOA_M']), 'Model.info model names do not match with y_cat_dict.txt'
@@ -42,7 +44,7 @@ def test_Classification_Pre_train():
                       'mydata'), 'Cant even read x.h5. The file do not looks like h5py. At least keras cant read it'
     assert HDF5Matrix('y.h5',
                       'mydata'), 'Cant even read y.h5. The file do not looks like h5py. At least keras cant read it'
-    
+
     xshape = HDF5Matrix('x.h5', 'mydata').shape
     yshape = HDF5Matrix('y.h5', 'mydata').shape
     # row check
