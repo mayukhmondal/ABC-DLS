@@ -37,6 +37,7 @@ abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
 
 class ABC_TFK_Classification:
+
     """
     Main classification class. It will distinguish between different models. with given underlying models it will
     compare with real data and will predict how much it sure about which model can bet predict the real data.
@@ -56,6 +57,16 @@ class ABC_TFK_Classification:
         later by r
     :return: will not return anything but will plot and print the power
     """
+
+    info: str
+    ssfile: str
+    demography: Optional[str] = None
+    method: str = "mnlogistic"
+    tolerance: float = .001
+    test_size: int = int(1e4)
+    chunksize: Optional[int] = int(1e4)
+    scale: bool = False
+    csvout: bool = False
 
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4),
