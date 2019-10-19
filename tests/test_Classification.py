@@ -13,6 +13,7 @@ from collections import Counter
 from keras.utils import HDF5Matrix
 import pandas
 import numpy
+import joblib
 
 
 def test_Classification_Pre_train():
@@ -32,13 +33,15 @@ def test_Classification_Pre_train():
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_PreTrain'
 
     # model name check
-    assert eval(open('y_cat_dict.txt', 'r').read()) , 'Cant read the y_cat_dict.txt file. Look likes the' \
-                                                                   'format is not simple text dict '
+    assert eval(open('y_cat_dict.txt', 'r').read()), 'Cant read the y_cat_dict.txt file. Look likes the' \
+                                                     'format is not simple text dict '
 
     y_cat_names = list(eval(open('y_cat_dict.txt', 'r').read()).values())
     assert Counter(y_cat_names) == Counter(
         ['OOA', 'OOA_B', 'OOA_M']), 'Model.info model names do not match with y_cat_dict.txt'
 
+    # checking scale file
+    assert joblib.load('scale_x.sav'), "cant read the file properly. scale_x.sav"
     # h5 file checks
     assert HDF5Matrix('x.h5',
                       'mydata'), 'Cant even read x.h5. The file do not looks like h5py. At least keras cant read it'
@@ -75,6 +78,7 @@ def test_Classification_Pre_train():
     assert xdf.iloc[:, 1:-1].min().sum() == 0, 'Not all the columns have 0 minimum value'
     assert xdf.iloc[:, 1:-1].max().sum() == 1329, 'Not all the columns have 1 maximum value'
 
+    # reading csv files
     files = ['OOA.csv', 'OOA_B.csv', 'OOA_M.csv']
     params = [7, 12, 12]
     df = pandas.DataFrame()
@@ -85,5 +89,15 @@ def test_Classification_Pre_train():
             temp = pandas.read_csv(file).iloc[:, params[i]:]
             df = pandas.concat([df, temp], ignore_index=True)
 
-    ss=df
-    
+    ss = df.astype('float32')
+    scale_x = joblib.load('scale_x.sav')
+    xss = pandas.DataFrame(scale_x.inverse_transform(xdf.values)).astype('float32')
+    xss.columns = ss.columns
+    # if x.h5 == concat csv files
+    pandas.testing.assert_frame_equal(ss.sort_values(by=list(ss.columns)).reset_index(drop=True),
+                                      xss.sort_values(by=list(xss.columns)).reset_index(
+                                          drop=True)), 'The x.h5 do not match with the test data'
+    # if x.h5 truly randomized
+    assert (ss-xss).abs().values.sum() > 0 , 'Looks like x.h5 did not reshuffled'
+
+    #y.h5 and x.h5 correspondence 
