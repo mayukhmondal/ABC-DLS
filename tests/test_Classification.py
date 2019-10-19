@@ -74,3 +74,16 @@ def test_Classification_Pre_train():
     # min and max scaler worked or noy
     assert xdf.iloc[:, 1:-1].min().sum() == 0, 'Not all the columns have 0 minimum value'
     assert xdf.iloc[:, 1:-1].max().sum() == 1329, 'Not all the columns have 1 maximum value'
+
+    files = ['OOA.csv', 'OOA_B.csv', 'OOA_M.csv']
+    params = [7, 12, 12]
+    df = pandas.DataFrame()
+    for i, file in enumerate(files):
+        if df.empty:
+            df = pandas.read_csv(file).iloc[:, params[i]:]
+        else:
+            temp = pandas.read_csv(file).iloc[:, params[i]:]
+            df = pandas.concat([df, temp], ignore_index=True)
+
+    ss=df
+    
