@@ -3,3 +3,4 @@ This folder is for testing purpose only (for developers). In case you made some 
 sh pre-commit.sh
 pytest test_Classification.py
 ```
+Use this command from this folder only. 
