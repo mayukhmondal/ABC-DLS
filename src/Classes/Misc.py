@@ -199,7 +199,7 @@ def removefiles(files: list, printing: bool = True) -> None:
     commands = removefilescommands(files)
     if printing:
         for file in files:
-            print("Removing if exist:", file)
+            print("Removing if exist:", file,flush=True)
     [os.system(command) for command in commands]
     return None
 
