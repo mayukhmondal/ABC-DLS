@@ -101,3 +101,17 @@ def test_Classification_Pre_train():
     assert (ss-xss).abs().values.sum() > 0 , 'Looks like x.h5 did not reshuffled'
 
     #y.h5 and x.h5 correspondence
+    # will do it later
+
+
+def test_Classification_Train():
+    demography = '../src/extras/ModelClass.py'
+    test_size = 0
+
+    # main check
+    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size)
+
+    # file checks
+    files = ['ModelClassification.h5']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
