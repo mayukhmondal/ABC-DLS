@@ -115,3 +115,13 @@ def test_Classification_Train():
     files = ['ModelClassification.h5']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
+
+
+def test__Classification_CV():
+    test_size: int = 15
+    tol: float = 0.5
+    method: str = 'rejection'
+
+    # main check
+    #ABC.ABC_TFK_Classification_CV(test_size=test_size,tol=tol,method=method)
+
