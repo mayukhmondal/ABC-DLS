@@ -36,8 +36,8 @@ with warnings.catch_warnings():
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
 
-class ABC_TFK_Classification:
 
+class ABC_TFK_Classification:
     """
     Main classification class. It will distinguish between different models. with given underlying models it will
     compare with real data and will predict how much it sure about which model can bet predict the real data.
@@ -264,7 +264,7 @@ class ABC_TFK_Classification:
         :return: will not return anything but will create or update Comparison.csv file .where all the ss with the name
             of the models are written
         """
-        if filename[-2:]=='gz':
+        if filename[-2:] == 'gz':
             command = Misc.joinginglistbyspecificstring(
                 ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
                  '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, " >> Comparison.csv"])
@@ -620,8 +620,9 @@ class ABC_TFK_Classification:
         robjects.r['dev.off']()
         if csvout:
             cls.outputing_csv(modelindex=indexnn,
-                       ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(columns=y_cat_dict),
-                       predict4mreal=predictednn.rename(columns=y_cat_dict))
+                              ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(
+                                  columns=y_cat_dict),
+                              predict4mreal=predictednn.rename(columns=y_cat_dict))
 
     @classmethod
     def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
@@ -668,6 +669,7 @@ class ABC_TFK_Classification:
         :param target: the target after which every thing will be print. the target will be included in the print
         :return: will not return anything but print the summary everything after a line starts with 'Data:' or target
         """
+        robjects.r.options(width=10000)
         robjects.r['sink']('temp.txt')
         robjects.r['summary'](rmodel)
         robjects.r['sink']()
@@ -690,13 +692,15 @@ class ABC_TFK_Classification:
             confusion matrix in text format
         """
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
+        # text wrapping problem in r which cant be solved by options(width=10000) in rpy2. this is abc problem
         robjects.r['sink']('temp.txt')
-        x=robjects.r['summary'](cvmodsel)
+        x = robjects.r['summary'](cvmodsel)
         robjects.r['sink']()
         line = open('temp.txt').readline()
         print(line, end='')
         os.remove('temp.txt')
-        print (x)
+        print(x)
+        # instead we could have used robjects.r['summary'](cvmodsel) if it was not bugged
         robjects.r['plot'](cvmodsel)
 
     @classmethod
@@ -766,7 +770,8 @@ class ABC_TFK_Classification:
                              tol=tol)
 
     @classmethod
-    def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame, predict4mreal: pandas.DataFrame):
+    def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame,
+                      predict4mreal: pandas.DataFrame):
         """
         in case of everything satisfied. this will output the test data set in csv format which then later can be used by
         r directly. if you use it, it will delete all the middle files from the current directory if exists: x_test.h5,
@@ -784,6 +789,7 @@ class ABC_TFK_Classification:
         predict4mreal.to_csv('ss_target.csv.gz', index=False)
         Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv',
                           'y_cat_dict.txt'])
+
 
 class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
     """
@@ -816,6 +822,7 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
 
         """
         return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale)
+
 
 class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     """
@@ -887,6 +894,7 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
             print('Could not file x.h5 ')
             sys.exit(1)
         return x_train
+
 
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     """
@@ -1042,6 +1050,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         scale_x, scale_y = cls.read_scalex_scaley()
         y_cat_dict = cls.read_y_cat_dict()
         return ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict
+
 
 class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
     """
@@ -1429,6 +1438,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
 
         return model
+
     @classmethod
     def wrapper_aftertrain(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
@@ -1477,7 +1487,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                 method=method)
         cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
         if csvout:
-            cls.outputing_csv(params_unscaled=params_unscaled, test_predictions=test_predictions, predict4mreal=predict4mreal)
+            cls.outputing_csv(params_unscaled=params_unscaled, test_predictions=test_predictions,
+                              predict4mreal=predict4mreal)
 
     @classmethod
     def R_std_columns(cls, df: pandas.DataFrame) -> pandas.Series:
@@ -1621,8 +1632,16 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                 os.remove('temp.txt')
             else:
                 cvresreg = abc.cv4abc(param=param, sumstat=ss, nval=repeats, tols=tol, method=method, trace=trace)
-            print(robjects.r['summary'](cvresreg))
+            # text wrapping problem in r which cant be solved by options(width=10000) in rpy2
+            robjects.r['sink']('temp.txt')
+            together = robjects.r['summary'](cvresreg)
+            line = open('temp.txt').readline()
+            print(line)
+            os.remove('temp.txt')
+            print(pandas.DataFrame(list(together), index=together.colnames,
+                                   columns=together.rownames).transpose().to_string())
             robjects.r['plot'](cvresreg, ask=False)
+            # instead we could have used robjects.r['summary'](cvresreg) if it was not bugged
             robjects.r['dev.off']()
 
     @classmethod
@@ -1672,7 +1691,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
     @classmethod
     def outputing_csv(cls, params_unscaled: pandas.DataFrame, test_predictions: pandas.DataFrame,
-               predict4mreal: pandas.DataFrame) -> None:
+                      predict4mreal: pandas.DataFrame) -> None:
         """
         in case you need csv file output of predicted params from nn, which then can be directly used by R. if you use
         it, it will delete all the middle files from the current directory if exists: x_test.h5, y_test.h5, x.h5, y.h5,
@@ -1688,7 +1707,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         test_predictions.to_csv('ss_predicted.csv.gz', index=False)
         predict4mreal.to_csv('ss_target.csv.gz', index=False)
         Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv'])
-
 
 
 class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
@@ -1726,6 +1744,7 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
         return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scaling_x=scaling_x,
                                      scaling_y=scaling_y)
 
+
 class ABC_TFK_Params_Train(ABC_TFK_Params):
     """
     Subset for the training of parameter estimation. the slowest part of the code.it need training data set for x and y.
@@ -1761,6 +1780,7 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
     """
@@ -1879,6 +1899,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
             params_unscaled = pandas.DataFrame(y_test[:], columns=params_names[-y_test.shape[1]:])
 
         return test_predictions, params_unscaled
+
 
 class ABC_TFK_Params_After_Train(ABC_TFK_Params):
     """
