@@ -690,7 +690,13 @@ class ABC_TFK_Classification:
             confusion matrix in text format
         """
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
-        x, y = robjects.r['summary'](cvmodsel)
+        robjects.r['sink']('temp.txt')
+        x=robjects.r['summary'](cvmodsel)
+        robjects.r['sink']()
+        line = open('temp.txt').readline()
+        print(line, end='')
+        os.remove('temp.txt')
+        print (x)
         robjects.r['plot'](cvmodsel)
 
     @classmethod
