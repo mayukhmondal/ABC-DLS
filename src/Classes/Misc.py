@@ -252,14 +252,20 @@ def loading_def_4m_file(filepath: str, defname: str) -> Optional[Callable]:
 # shell script commands
 
 
-def creatingfolders(specificfolder: str) -> None:
+def creatingfolders(specificfolder: str) -> str:
     """
-    As the name suggest it will create a folder if the folder do not exist. As simple as that
+    As the name suggest it will create a folder if the folder do not exist. As simple as that. it will also check if
+    the end is '/' as important to work later. it will return the folder it created
 
     :param specificfolder: The folder needs to be created
     :return: will not return anything. Either it will create if the folder do not exist or not return anything
     """
     import os
-    specificfolder = os.path.expanduser(specificfolder)
-    if not os.path.exists(specificfolder):
-        os.makedirs(specificfolder)
+    if specificfolder!='':
+        if specificfolder[-1] != '/':
+            specificfolder = specificfolder + '/'
+
+        specificfolder = os.path.expanduser(specificfolder)
+        if not os.path.exists(specificfolder):
+            os.makedirs(specificfolder)
+    return specificfolder

@@ -71,7 +71,7 @@ class ABC_TFK_Classification:
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4),
                 chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False, cvrepeats: int = 100,
-                folder: Optional[str] = None) -> None:
+                folder: str = '') -> None:
         """
         This will automatically call the wrapper function and to do the necessary work.
 
@@ -89,7 +89,7 @@ class ABC_TFK_Classification:
         :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
-        :param folder: to define the output folder. default is none meaning current folder
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot and print the power
         """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
@@ -100,7 +100,7 @@ class ABC_TFK_Classification:
     def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .005, test_size: int = int(1e4),
                 chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False, cvrepeats: int = 100,
-                folder: Optional[str] = None) -> None:
+                folder: str = '') -> None:
         """
         the total wrapper of the classification method. with given underlying models it will compare with real data and
         will predict how much it sure about which model can bet predict the real data.
@@ -125,7 +125,7 @@ class ABC_TFK_Classification:
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
-        :param folder: to define the output folder. default is none meaning current folder
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot and print the power
         """
 
@@ -161,14 +161,7 @@ class ABC_TFK_Classification:
         :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
             or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
-        if folder:
-            if folder[-1] == '/':
-                outfolder = folder
-            else:
-                outfolder = folder + '/'
-            Misc.creatingfolders(outfolder)
-        else:
-            outfolder = ''
+        outfolder=Misc.creatingfolders(folder)
         previousfiles = ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
                          'ModelClassification.h5',
                          'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
@@ -843,7 +836,7 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
     """
 
     def __new__(cls, info: str, test_size: int = int(1e4), chunksize: int = int(1e4), scale: bool = False,
-                folder: Optional[str] = None):
+                folder: str = ''):
         """
         Will call the wrapper_pre_train function from ABC_TFK_Classification
 
@@ -853,7 +846,7 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
             The scaling will only happen on the ss.
-        :param folder: to define the output folder. default is none meaning current folder
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
             or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
