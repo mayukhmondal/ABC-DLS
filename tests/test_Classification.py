@@ -123,5 +123,5 @@ def test__Classification_CV():
     method: str = 'rejection'
 
     # main check
-    #ABC.ABC_TFK_Classification_CV(test_size=test_size,tol=tol,method=method)
+    ABC.ABC_TFK_Classification_CV(test_size=test_size,tol=tol,method=method,cvrepeats=2)
 

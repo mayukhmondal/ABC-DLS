@@ -70,7 +70,7 @@ class ABC_TFK_Classification:
 
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4),
-                chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False):
+                chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False, cvrepeats: int = 100):
         """
         This will automatically call the wrapper function and to do the necessary work.
 
@@ -87,15 +87,16 @@ class ABC_TFK_Classification:
             scaling will only happen on the ss.
         :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will plot and print the power
         """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
-                           test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout)
+                           test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout, cvrepeats=cvrepeats)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .005, test_size: int = int(1e4),
-                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False):
+                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False, cvrepeats: int = 100):
         """
         the total wrapper of the classification method. with given underlying models it will compare with real data and
         will predict how much it sure about which model can bet predict the real data.
@@ -119,6 +120,7 @@ class ABC_TFK_Classification:
             The scaling will only happen on the ss.
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will plot and print the power
         """
 
@@ -127,7 +129,7 @@ class ABC_TFK_Classification:
         ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
-                                csvout=csvout)
+                                csvout=csvout, cvrepeats=cvrepeats)
 
     @classmethod
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
@@ -572,7 +574,7 @@ class ABC_TFK_Classification:
     def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
                             y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                             y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
-                            tolerance: float = .005, csvout: bool = False) -> None:
+                            tolerance: float = .005, csvout: bool = False, cvrepeats: int = 100) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -591,7 +593,8 @@ class ABC_TFK_Classification:
             etc. as documented in the r.abc
         :param tolerance: the level of tolerance. default is .005
         :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
-            later by r
+            later by
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
 
@@ -612,7 +615,7 @@ class ABC_TFK_Classification:
         print(predictednn)
 
         robjects.r['pdf']("NN.pdf")
-        cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method)
+        cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
         cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
                             tol=tolerance)
 
@@ -908,7 +911,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     :return: will not return anything but will plot the cross validation stuff of different models
     """
 
-    def __new__(cls, test_size=int(1e4), tol=0.05, method='rejection'):
+    def __new__(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection', cvrepeats: int = 100):
         """
         This will call the wrapper function
 
@@ -916,12 +919,14 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will plot the cross validation stuff of different models
         """
-        return cls.wrapper(test_size=test_size, tol=tol, method=method)
+        return cls.wrapper(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats)
 
     @classmethod
-    def wrapper(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection') -> None:
+    def wrapper(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
+                cvrepeats: int = 100) -> None:
         """
         this will produce do the cross validation stuff using abc on the nn predicted stuff. good in case real data is
         not available yet
@@ -930,6 +935,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will plot the cross validation stuff of different models
         """
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
@@ -942,7 +948,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
         ssnn.index = indexnn
         robjects.r['pdf']("CV.pdf")
-        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method)
+        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method, repeats=cvrepeats)
         robjects.r['dev.off']()
 
     @classmethod
@@ -1070,7 +1076,7 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
     """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
-                csvout: bool = False):
+                csvout: bool = False, cvrepeats: int = 100):
         """
         This will call the wrapper function
 
@@ -1081,13 +1087,15 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
             as documented in the r.abc
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
-        return cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout)
+        return cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout,
+                           cvrepeats=cvrepeats)
 
     @classmethod
     def wrapper(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.01, method: str = 'rejection',
-                csvout: bool = False) -> None:
+                csvout: bool = False, cvrepeats: int = 100) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -1101,12 +1109,13 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
             as documented in the r.abc
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method,
-                                tolerance=tol, csvout=csvout)
+                                tolerance=tol, csvout=csvout, cvrepeats=cvrepeats)
 
 
 # TFK parameter estimation stuff
