@@ -70,7 +70,8 @@ class ABC_TFK_Classification:
 
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4),
-                chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False, cvrepeats: int = 100):
+                chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False, cvrepeats: int = 100,
+                folder: Optional[str] = None) -> None:
         """
         This will automatically call the wrapper function and to do the necessary work.
 
@@ -88,15 +89,18 @@ class ABC_TFK_Classification:
         :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is none meaning current folder
         :return: will not return anything but will plot and print the power
         """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
-                           test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout, cvrepeats=cvrepeats)
+                           test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout, cvrepeats=cvrepeats,
+                           folder=folder)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .005, test_size: int = int(1e4),
-                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False, cvrepeats: int = 100):
+                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False, cvrepeats: int = 100,
+                folder: Optional[str] = None) -> None:
         """
         the total wrapper of the classification method. with given underlying models it will compare with real data and
         will predict how much it sure about which model can bet predict the real data.
@@ -121,11 +125,13 @@ class ABC_TFK_Classification:
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is none meaning current folder
         :return: will not return anything but will plot and print the power
         """
 
         x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.wrapper_pre_train(info=info, test_size=test_size,
-                                                                                      chunksize=chunksize, scale=scale)
+                                                                                      chunksize=chunksize, scale=scale,
+                                                                                      folder=folder)
         ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
@@ -133,7 +139,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
-                          scale: bool = False) -> \
+                          scale: bool = False, folder: Optional[str] = None) -> \
             Tuple[
                 Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix],
                 Union[
@@ -151,38 +157,51 @@ class ABC_TFK_Classification:
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
             The scaling will only happen on the ss.
+        :param folder: to define the output folder. default is none meaning current folder
         :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
             or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
-        Misc.removefiles(
-            ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelClassification.h5',
-             'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-             'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf'])
+        if folder:
+            if folder[-1] == '/':
+                outfolder = folder
+            else:
+                outfolder = folder + '/'
+            Misc.creatingfolders(outfolder)
+        else:
+            outfolder = ''
+        previousfiles = ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
+                         'ModelClassification.h5',
+                         'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
+                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf']
+        previousfilesfullpath = [outfolder + file for file in previousfiles]
+        Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
         # header creation
         pandas.DataFrame(
             ['models'] + list(pandas.read_csv(files[0], nrows=1).columns[paramnumbers[0]:])).transpose().to_csv(
+            outfolder +
             'Comparison.csv', index=False, header=False)
         # adding line after subseting
         [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
-                                       modelname=names[i]) for i in range(len(files))]
-        shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output='shuf.csv')
+                                       modelname=names[i], outfolder=outfolder) for i in range(len(files))]
+        shuffile = cls.shufling_joined_models(inputcsv=outfolder + 'Comparison.csv', output=outfolder + 'shuf.csv')
 
         if chunksize:
             x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.preparingdata_hdf5(filename=shuffile,
                                                                                            chunksize=chunksize,
                                                                                            test_size=test_size,
-                                                                                           scale=scale)
-            f = open("y_cat_dict.txt", "w")
+                                                                                           scale=scale,
+                                                                                           outfolder=outfolder)
+            f = open(outfolder + "y_cat_dict.txt", "w")
             f.write(str(y_cat_dict))
             f.close()
 
         else:
             results = pandas.read_csv(shuffile, index_col=0)
             x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.data_prep4ANN(results, test_size=test_size,
-                                                                                      scale=scale)
-        Misc.removefiles(['Comparison.csv', shuffile])
+                                                                                      scale=scale, outfolder=outfolder)
+        Misc.removefiles([outfolder + 'Comparison.csv', outfolder + shuffile])
 
         return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
@@ -251,7 +270,8 @@ class ABC_TFK_Classification:
             sys.exit(1)
 
     @classmethod
-    def subsetting_file_concating(cls, filename: str, params_number: int, nrows: int, modelname: str) -> None:
+    def subsetting_file_concating(cls, filename: str, params_number: int, nrows: int, modelname: str,
+                                  outfolder: str = '') -> None:
         """
         to read the msprime sfs out files. which has both params and sfs together. and then prepare for merging.
         this will remove the params columns (As not needed for model comparison) and make same number of rows per model
@@ -263,18 +283,20 @@ class ABC_TFK_Classification:
         :param nrows: the number of rows to include in the file. remember the nrows start with 0. thus if you want to
             include 100 line put 99. the first line is header thus ignored
         :param modelname: name of the model. string
+        :param outfolder: to define the output folder. default is current folder
         :return: will not return anything but will create or update Comparison.csv file .where all the ss with the name
             of the models are written
         """
         if filename[-2:] == 'gz':
             command = Misc.joinginglistbyspecificstring(
                 ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, " >> Comparison.csv"])
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, ">>",
+                 outfolder + "Comparison.csv"])
         else:
             command = Misc.joinginglistbyspecificstring(
                 ["cat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, " >> Comparison.csv"])
-
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, ">>",
+                 outfolder + "Comparison.csv"])
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if stderr:
@@ -294,7 +316,7 @@ class ABC_TFK_Classification:
         :param header: if the header should be kept or not. default is true
         :return: will return output which is the shuffled rows of input
         """
-        import os
+        import os, shutil
         terashuf = os.path.dirname(os.path.abspath(__file__)) + '/shuffle.py'
         Misc.creatingfolders('temp')
         if header:
@@ -325,11 +347,12 @@ class ABC_TFK_Classification:
         if stderr:
             print(stderr)
             sys.exit(1)
-        os.rmdir('temp')
+        shutil.rmtree('temp')
         return output
 
     @classmethod
-    def data_prep4ANN(cls, raw: pandas.DataFrame, test_size: int = int(1e4), scale: bool = False) -> Tuple[
+    def data_prep4ANN(cls, raw: pandas.DataFrame, test_size: int = int(1e4), scale: bool = False,
+                      outfolder: str = '') -> Tuple[
         numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Dict[
             int, str]]:
         """
@@ -338,6 +361,7 @@ class ABC_TFK_Classification:
         :param raw: raw summary statistics dataframe.
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scale: if the raw data should be scaled or not. default is false. will be scaled by MinMaxscaler
+        :param outfolder: to define the output folder. default is current folder
         :return: will return value which will be important to training ann. will return x_(train,test), y_(train,test)
             scale_x (MinMaxScaler or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
@@ -353,10 +377,53 @@ class ABC_TFK_Classification:
             x = raw.values
             scale_x = None
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size)
-        Misc.numpy2hdf5(x_test, 'x_test.h5')
-        Misc.numpy2hdf5(y_test, 'y_test.h5')
+        Misc.numpy2hdf5(x_test, outfolder + 'x_test.h5')
+        Misc.numpy2hdf5(y_test, outfolder + 'y_test.h5')
         if scale_x:
-            joblib.dump(scale_x, "scale_x.sav")
+            joblib.dump(scale_x, outfolder + "scale_x.sav")
+        return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
+
+    @classmethod
+    def preparingdata_hdf5(cls, filename: str, chunksize: int, test_size: int = int(1e4), scale: bool = False,
+                           outfolder: str = '') -> Tuple[
+        HDF5Matrix, HDF5Matrix, HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+        """
+        In case of chunk size is mentioned it will be assumed that the data is too big to save in ram and it will be
+        saved in hdf5 format and will be split it in necessary steps
+
+        :param filename: the file path of csv where the first column is the models name and rest are ss. every row
+            different simulation. header included and shuffled data. output of shufling_joined_models
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param scale: to tell if needed to be scaled or not. by default is false. if true will also save scale_x.sav to
+            be used later if needed
+        :param outfolder: to define the output folder. default is current folder
+        :return: will return train and test data fro both x and y
+        """
+
+        xfile = outfolder + "x.h5"
+        yfile = outfolder + "y.h5"
+        Misc.removefiles([xfile, yfile])
+        ss_command = Misc.joinginglistbyspecificstring(["cut -f 2- ", '-d ","', filename, ">", outfolder + "ss.csv"])
+        os.system(ss_command)
+        if scale:
+            scale_x = cls.MinMax4bigfile(csvpath=outfolder + 'ss.csv', h5path=xfile, chunksize=chunksize)
+        else:
+            scale_x = cls.MinMax4bigfile(csvpath=outfolder + 'ss.csv', h5path=xfile,
+                                         chunksize=chunksize, scaling=False)
+        x_train, x_test = cls.train_test_split_hdf5(xfile, test_rows=int(test_size))
+
+        if scale_x:
+            joblib.dump(scale_x, outfolder + "scale_x.sav")
+        models_command = Misc.joinginglistbyspecificstring(
+            ["cut -f 1 ", '-d ","', filename, ">", outfolder + "models.csv"])
+        os.system(models_command)
+        model_index = pandas.read_csv(outfolder + 'models.csv')
+        y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
+        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict))
+        Misc.numpy2hdf5(y, yfile)
+        y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
+        Misc.removefiles([outfolder + 'ss.csv', outfolder + 'models.csv'])
         return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
     @classmethod
@@ -460,46 +527,6 @@ class ABC_TFK_Classification:
         train = HDF5Matrix(path, dataset, start=0, end=rows - test_rows)
         test = HDF5Matrix(path, dataset, start=rows - test_rows, end=rows)
         return train, test
-
-    @classmethod
-    def preparingdata_hdf5(cls, filename: str, chunksize: int, test_size: int = int(1e4), scale: bool = False) -> Tuple[
-        HDF5Matrix, HDF5Matrix, HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
-        """
-        In case of chunk size is mentioned it will be assumed that the data is too big to save in ram and it will be
-        saved in hdf5 format and will be split it in necessary steps
-
-        :param filename: the file path of csv where the first column is the models name and rest are ss. every row
-            different simulation. header included and shuffled data. output of shufling_joined_models
-        :param chunksize: the number of rows accessed at a time.
-        :param test_size: the number of test rows. everything else will be used for train. 10k is default
-        :param scale: to tell if needed to be scaled or not. by default is false. if true will also save scale_x.sav to
-            be used later if needed
-        :return: will return train and test data fro both x and y
-        """
-
-        xfile = "x.h5"
-        yfile = "y.h5"
-        Misc.removefiles([xfile, yfile])
-        ss_command = Misc.joinginglistbyspecificstring(["cut -f 2- ", '-d ","', filename, "> ss.csv"])
-        os.system(ss_command)
-        if scale:
-            scale_x = cls.MinMax4bigfile(csvpath='ss.csv', h5path=xfile, chunksize=chunksize)
-        else:
-            scale_x = cls.MinMax4bigfile(csvpath='ss.csv', h5path=xfile,
-                                         chunksize=chunksize, scaling=False)
-        x_train, x_test = cls.train_test_split_hdf5(xfile, test_rows=int(test_size))
-
-        if scale_x:
-            joblib.dump(scale_x, "scale_x.sav")
-        models_command = Misc.joinginglistbyspecificstring(["cut -f 1 ", '-d ","', filename, "> models.csv"])
-        os.system(models_command)
-        model_index = pandas.read_csv('models.csv')
-        y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
-        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict))
-        Misc.numpy2hdf5(y, yfile)
-        y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
-        Misc.removefiles(['ss.csv', 'models.csv'])
-        return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
     @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
@@ -810,11 +837,13 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
     :param chunksize:  the number of rows accessed at a time.
     :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler. The
         scaling will only happen on the ss.
+    :param folder: to define the output folder. default is none meaning current folder
     :return: will not return anything but will create x.hdf5 ,y.hdf5 and scale_x so that it can be used for training
         later
     """
 
-    def __new__(cls, info, test_size=int(1e4), chunksize=int(1e4), scale=False):
+    def __new__(cls, info: str, test_size: int = int(1e4), chunksize: int = int(1e4), scale: bool = False,
+                folder: Optional[str] = None):
         """
         Will call the wrapper_pre_train function from ABC_TFK_Classification
 
@@ -824,11 +853,11 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
             The scaling will only happen on the ss.
+        :param folder: to define the output folder. default is none meaning current folder
         :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
             or None) and y_cat_dict ({0:'model1',1:'model2'..})
-
         """
-        return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale)
+        return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale, folder=folder)
 
 
 class ABC_TFK_Classification_Train(ABC_TFK_Classification):
