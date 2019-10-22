@@ -67,6 +67,7 @@ class ABC_TFK_Classification:
     chunksize: Optional[int] = int(1e4)
     scale: bool = False
     csvout: bool = False
+    folder: str = ''
 
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4),
@@ -923,7 +924,8 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     :return: will not return anything but will plot the cross validation stuff of different models
     """
 
-    def __new__(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection', cvrepeats: int = 100):
+    def __new__(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection', cvrepeats: int = 100,
+                folder: str = ''):
         """
         This will call the wrapper function
 
@@ -932,13 +934,14 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot the cross validation stuff of different models
         """
-        return cls.wrapper(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats)
+        return cls.wrapper(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
     def wrapper(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
-                cvrepeats: int = 100) -> None:
+                cvrepeats: int = 100, folder: str = '') -> None:
         """
         this will produce do the cross validation stuff using abc on the nn predicted stuff. good in case real data is
         not available yet
@@ -948,9 +951,12 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot the cross validation stuff of different models
         """
-        ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
+        folder = Misc.creatingfolders(folder)
+        ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size,
+                                                                                      folder=folder)
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
         ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
@@ -959,9 +965,28 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         else:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
         ssnn.index = indexnn
-        robjects.r['pdf']("CV.pdf")
+        robjects.r['pdf'](folder+"CV.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method, repeats=cvrepeats)
         robjects.r['dev.off']()
+
+    @classmethod
+    def read_data(cls, test_rows: int = int(1e4), folder: str = '') -> Tuple[
+        keras.models.Model, HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], Optional[
+            preprocessing.MinMaxScaler], Dict[int, str]]:
+        """
+        wrapper to read all the data before doing the abc stuff
+
+        :param test_rows: the number of rows kept for test data set. it will return those lines from the end
+        :param folder: to define the output folder. default is '' meaning current folder
+        :return: The fitted keras model, test data set of x and y, scale of x and y if exists and name of all the models
+            ({0:'model1',1:'model2'..}
+        """
+        ModelSeparation = cls.loadingkerasmodel(ModelParamPredictionFile=folder + 'ModelClassification.h5')
+        y_test = cls.reading_y_test(test_rows=test_rows, folder=folder)
+        x_test = cls.reading_x_test(test_rows=test_rows, folder=folder)
+        scale_x, scale_y = cls.read_scalex_scaley(folder=folder)
+        y_cat_dict = cls.read_y_cat_dict(folder=folder)
+        return ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict
 
     @classmethod
     def loadingkerasmodel(cls, ModelParamPredictionFile: str = 'ModelClassification.h5') -> keras.models.Model:
@@ -984,52 +1009,56 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         return model
 
     @classmethod
-    def reading_y_test(cls, test_rows: int = int(1e4)) -> HDF5Matrix:
+    def reading_y_test(cls, test_rows: int = int(1e4), folder: str = '') -> HDF5Matrix:
         """
         reading the file for y.h5/y_test.h5 and then return the y_test using hdf5matrix
 
         :param test_rows:  the number of rows kept for test data set. it will return those lines from the end
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: return y_test hdf5 format
         """
-        if os.path.isfile('y_test.h5'):
-            y_test = HDF5Matrix('y_test.h5', 'mydata')
-        elif os.path.isfile('y.h5'):
-            rows = HDF5Matrix('y.h5', 'mydata').shape[0]
-            y_test = HDF5Matrix('y.h5', 'mydata', start=rows - test_rows, end=rows)
+        if os.path.isfile(folder + 'y_test.h5'):
+            y_test = HDF5Matrix(folder + 'y_test.h5', 'mydata')
+        elif os.path.isfile(folder + 'y.h5'):
+            rows = HDF5Matrix(folder + 'y.h5', 'mydata').shape[0]
+            y_test = HDF5Matrix(folder + 'y.h5', 'mydata', start=rows - test_rows, end=rows)
         else:
             print('Could not file y.h5 or y_test.h5')
             sys.exit(1)
         return y_test
 
     @classmethod
-    def reading_x_test(cls, test_rows: int = int(1e4)) -> HDF5Matrix:
+    def reading_x_test(cls, test_rows: int = int(1e4), folder: str = '') -> HDF5Matrix:
         """
         reading the file for x.h5/x_test.h5 and then return the x_test using hdf5matrix
 
         :param test_rows:  the number of rows kept for test data set. it will return those lines from the end
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: return x_test hdf5 format
         """
 
-        if os.path.isfile('x_test.h5'):
-            x_test = HDF5Matrix('x_test.h5', 'mydata')
-        elif os.path.isfile('x.h5'):
+        if os.path.isfile(folder + 'x_test.h5'):
+            x_test = HDF5Matrix(folder + 'x_test.h5', 'mydata')
+        elif os.path.isfile(folder + 'x.h5'):
 
-            rows = HDF5Matrix('x.h5', 'mydata').shape[0]
-            x_test = HDF5Matrix('x.h5', 'mydata', start=rows - test_rows, end=rows)
+            rows = HDF5Matrix(folder + 'x.h5', 'mydata').shape[0]
+            x_test = HDF5Matrix(folder + 'x.h5', 'mydata', start=rows - test_rows, end=rows)
         else:
             print('Could not file x.h5 or x_test.h5')
             sys.exit(1)
         return x_test
 
     @classmethod
-    def read_scalex_scaley(cls) -> Tuple[Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
+    def read_scalex_scaley(cls, folder: str = '') -> Tuple[
+        Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
         """
         read if scale_x and scale_y is present in the folder and return it (MinMaxscaler)
 
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: return x_scale min max scaler if present
         """
-        if os.path.isfile('scale_x.sav'):
-            scale_x = joblib.load('scale_x.sav')
+        if os.path.isfile(folder + 'scale_x.sav'):
+            scale_x = joblib.load(folder + 'scale_x.sav')
         else:
             print('scale_x.sav not found. Assuming no scaling is required')
             scale_x = None
@@ -1037,37 +1066,20 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         return scale_x, scale_y
 
     @classmethod
-    def read_y_cat_dict(cls) -> Dict[int, str]:
+    def read_y_cat_dict(cls, folder: str = '') -> Dict[int, str]:
         """
         read the y_cat_dict.txt file in the cwd and return the dict
 
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: y_cat_dict in dict format ({0:'model1',1:'model2'..})
         """
-        if os.path.isfile('y_cat_dict.txt'):
-            y_cat_dict = eval(open('y_cat_dict.txt', 'r').read())
+        if os.path.isfile(folder + 'y_cat_dict.txt'):
+            y_cat_dict = eval(open(folder + 'y_cat_dict.txt', 'r').read())
 
         else:
             print("Could not found the y_cat_dict.txt file. Thus the population names will be remain unknown")
             y_cat_dict = None
         return y_cat_dict
-
-    @classmethod
-    def read_data(cls, test_rows: int = int(1e4)) -> Tuple[
-        keras.models.Model, HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], Optional[
-            preprocessing.MinMaxScaler], Dict[int, str]]:
-        """
-        wrapper to read all the data before doing the abc stuff
-
-        :param test_rows: the number of rows kept for test data set. it will return those lines from the end
-        :return: The fitted keras model, test data set of x and y, scale of x and y if exists and name of all the models
-            ({0:'model1',1:'model2'..}
-        """
-        ModelSeparation = cls.loadingkerasmodel()
-        y_test = cls.reading_y_test(test_rows=test_rows)
-        x_test = cls.reading_x_test(test_rows=test_rows)
-        scale_x, scale_y = cls.read_scalex_scaley()
-        y_cat_dict = cls.read_y_cat_dict()
-        return ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict
 
 
 class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
