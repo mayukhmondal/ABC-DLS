@@ -619,7 +619,8 @@ class ABC_TFK_Classification:
         cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
                             tol=tolerance)
 
-        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance)
+        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance,
+                     repeats=cvrepeats)
         robjects.r['dev.off']()
         if csvout:
             cls.outputing_csv(modelindex=indexnn,
@@ -728,7 +729,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def goodness_fit(cls, target: pandas.DataFrame, ss: pandas.DataFrame, name: str, tol: float = .005,
-                     extra: str = ''):
+                     extra: str = '', repeats: int = 100):
         """
         To test for goodness of fit of every model
 
@@ -737,9 +738,11 @@ class ABC_TFK_Classification:
         :param name: name of the demography
         :param tol: the level of tolerance. default is .005
         :param extra: internal. to add in the graph to say about the method
+        :param repeats: the number of nb.replicates to use to calculate the null
         :return: will not return anything. but will plot goodness of fit also print the summary
         """
-        fit = abc.gfit(target, ss, 100, tol=tol)
+        # gfit(target,sumstat,nb.replicate,tol)
+        fit = abc.gfit(target, ss, repeats, tol=tol)
         print(name)
         print(robjects.r['summary'](fit))
         out = name + ' ' + extra
@@ -747,7 +750,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def gfit_all(cls, observed: pandas.DataFrame, ss: pandas.DataFrame, y_cat_dict: Dict[int, str], extra: str = '',
-                 tol: float = .005) -> None:
+                 tol: float = .005, repeats: int = 100) -> None:
         """
         wrapper of goodness of fit. different goodness of fit for different models
 
@@ -756,6 +759,7 @@ class ABC_TFK_Classification:
         :param y_cat_dict: name of all the models. will be printed the pdf
         :param extra: internal. to add in the graph to say about the method
         :param tol: the level of tolerance. default is .005
+        :param repeats: the number of nb.replicates to use to calculate the null
         :return: will not return anything. rather call googness_fit to plot stuff and print the summary of gfit
         """
         best_index = int(observed.idxmax(axis=1).values)
@@ -770,7 +774,7 @@ class ABC_TFK_Classification:
                 dropping_columns = [keyother for keyother in y_cat_dict.keys() if keyother not in [key, best_index]]
             cls.goodness_fit(target=observed.drop(dropping_columns, axis=1), ss=ss_sub.drop(dropping_columns, axis=1),
                              name=y_cat_dict[key], extra=extra,
-                             tol=tol)
+                             tol=tol, repeats=repeats)
 
     @classmethod
     def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame,

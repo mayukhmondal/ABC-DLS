@@ -117,11 +117,28 @@ def test_Classification_Train():
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
 
 
-def test__Classification_CV():
+def test_Classification_CV():
     test_size: int = 15
     tol: float = 0.5
     method: str = 'rejection'
 
     # main check
     ABC.ABC_TFK_Classification_CV(test_size=test_size,tol=tol,method=method,cvrepeats=2)
+    # file checks
+    files = ['CV.pdf']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
 
+def test_Classification_After_train():
+    test_size: int = 15
+    tol: float = 0.5
+    method: str = 'rejection'
+    ssfile:str='../examples/YRI_CEU_CHB.observed.csv'
+    cvrepeats=2
+    #main check
+    ABC.ABC_TFK_Classification_After_Train(test_size=test_size,tol=tol,method=method,cvrepeats=cvrepeats,ssfile=ssfile)
+    
+    # file checks
+    files = ['NN.pdf']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
