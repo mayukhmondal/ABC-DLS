@@ -21,12 +21,13 @@ def test_Classification_Pre_train():
     test_size = 1
     chunksize = 5
     scale = True
-    outfolder='out'
+    outfolder = 'out'
 
     #
     assert ABC.ABC_TFK_Classification_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
-                                               scale=scale,folder=outfolder), 'The code even did not run properly for pretrain ' \
-                                                             'classification '
+                                               scale=scale,
+                                               folder=outfolder), 'The code even did not run properly for pretrain ' \
+                                                                  'classification '
 
     # file existen check
     files = ['out/x.h5', 'out/y.h5', 'out/y_cat_dict.txt', 'out/scale_x.sav']
@@ -35,7 +36,7 @@ def test_Classification_Pre_train():
 
     # model name check
     assert eval(open('out/y_cat_dict.txt', 'r').read()), 'Cant read the y_cat_dict.txt file. Look likes the' \
-                                                     'format is not simple text dict '
+                                                         'format is not simple text dict '
 
     y_cat_names = list(eval(open('out/y_cat_dict.txt', 'r').read()).values())
     assert Counter(y_cat_names) == Counter(
@@ -99,24 +100,23 @@ def test_Classification_Pre_train():
                                       xss.sort_values(by=list(xss.columns)).reset_index(
                                           drop=True)), 'The x.h5 do not match with the test data'
     # if x.h5 truly randomized
-    assert (ss-xss).abs().values.sum() > 0 , 'Looks like x.h5 did not reshuffled'
+    assert (ss - xss).abs().values.sum() > 0, 'Looks like x.h5 did not reshuffled'
 
-    #y.h5 and x.h5 correspondence
+    # y.h5 and x.h5 correspondence
     # will do it later
 
 
 def test_Classification_Train():
     demography = '../src/extras/ModelClass.py'
     test_size = 0
-    folder='out'
+    folder = 'out'
     # main check
-    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size,folder=folder)
+    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size, folder=folder)
 
     # file checks
     files = ['out/ModelClassification.h5']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
-
 
 # def test_Classification_CV():
 #     test_size: int = 15
