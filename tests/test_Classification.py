@@ -104,20 +104,20 @@ def test_Classification_Pre_train():
     #y.h5 and x.h5 correspondence
     # will do it later
 
-#
-# def test_Classification_Train():
-#     demography = '../src/extras/ModelClass.py'
-#     test_size = 0
-#
-#     # main check
-#     ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size)
-#
-#     # file checks
-#     files = ['ModelClassification.h5']
-#     not_exist = [file for file in files if not Path(file).exists()]
-#     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
-#
-#
+
+def test_Classification_Train():
+    demography = '../src/extras/ModelClass.py'
+    test_size = 0
+    folder='out'
+    # main check
+    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size,folder=folder)
+
+    # file checks
+    files = ['out/ModelClassification.h5']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
+
+
 # def test_Classification_CV():
 #     test_size: int = 15
 #     tol: float = 0.5

@@ -161,7 +161,7 @@ class ABC_TFK_Classification:
         :return: will return data needed for training. will return x_(train,test), y_(train,test) scale_x (MinMaxScaler
             or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
-        outfolder=Misc.creatingfolders(folder)
+        outfolder = Misc.creatingfolders(folder)
         previousfiles = ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
                          'ModelClassification.h5',
                          'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
@@ -523,7 +523,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
-                      demography: Optional[str] = None) -> keras.models.Model:
+                      demography: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
         This the wrapper for training part of the classification method. it need training data set for x and y. can be
         either numpy array or hdf5 matrix format (HD5matrix) of keras
@@ -533,9 +533,11 @@ class ABC_TFK_Classification:
         :param y_train: training part of y aka models names. should be used keras.utils.to_categorical to better result
         :param demography: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will return the keras model. it will also save the model in ModelClassification.h5
         """
-        Misc.removefiles(["ModelClassification.h5"])
+        folder = Misc.creatingfolders(folder)
+        Misc.removefiles([folder + "ModelClassification.h5"])
         if demography:
             ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
             if ANNModelCheck:
@@ -546,7 +548,7 @@ class ABC_TFK_Classification:
                 ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
             ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-        ModelSeparation.save("ModelClassification.h5")
+        ModelSeparation.save(folder + "ModelClassification.h5")
         return ModelSeparation
 
     @classmethod
@@ -864,19 +866,20 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     :return: will not return anything but will train and save the file ModelClassification.h5
     """
 
-    def __new__(cls, demography=None, test_rows=int(1e4)):
+    def __new__(cls, demography=None, test_rows=int(1e4), folder: str = ''):
         """
         This will call the wrapper function
 
         :param demography: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
-        return cls.wrapper(demography=demography, test_rows=test_rows)
+        return cls.wrapper(demography=demography, test_rows=test_rows, folder=folder)
 
     @classmethod
-    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4)) -> None:
+    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4), folder: str = '') -> None:
         """
         wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
         y.h5 present.
@@ -886,43 +889,26 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
-        y_train = cls.reading_y_train(test_rows=test_rows)
-        x_train = cls.reading_x_train(test_rows=test_rows)
-        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+        folder = Misc.creatingfolders(folder)
+        y_train = cls.reading_train(file=folder + 'y.h5', test_rows=test_rows)
+        x_train = cls.reading_train(file=folder + 'x.h5', test_rows=test_rows)
+        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
 
     @classmethod
-    def reading_y_train(cls, test_rows: int = int(1e4)) -> HDF5Matrix:
+    def reading_train(cls, file: str, test_rows: int = int(1e4)) -> HDF5Matrix:
         """
         reading the file for y.h5 and then return the y_train using hdf5matrix
 
         :param test_rows: the number of rows kept for test data set. it will remove those lines from the end
         :return: return y_train hdf5 format
         """
-        if os.path.isfile('y.h5'):
-            rows = HDF5Matrix('y.h5', 'mydata').shape[0]
-            y_train = HDF5Matrix('y.h5', 'mydata', start=0, end=rows - test_rows)
+        if os.path.isfile(file):
+            rows = HDF5Matrix(file, 'mydata').shape[0]
+            train = HDF5Matrix(file, 'mydata', start=0, end=rows - test_rows)
         else:
-            print('Could not find file y.h5')
+            print('Could not find file ', file)
             sys.exit(1)
-        return y_train
-
-    @classmethod
-    def reading_x_train(cls, test_rows: int = int(1e4)) -> HDF5Matrix:
-        """
-        reading the file for x.h5 and then return the x_train using hdf5matrix
-
-        :param test_rows:  the number of rows kept for test data set. it will remove those lines from the end
-        :return:  return x_train hdf5 format
-        """
-        if os.path.isfile('x.h5'):
-
-            rows = HDF5Matrix('x.h5', 'mydata').shape[0]
-
-            x_train = HDF5Matrix('x.h5', 'mydata', start=0, end=rows - test_rows)
-        else:
-            print('Could not file x.h5 ')
-            sys.exit(1)
-        return x_train
+        return train
 
 
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
