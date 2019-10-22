@@ -129,14 +129,14 @@ class ABC_TFK_Classification:
         :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot and print the power
         """
-
+        folder = Misc.creatingfolders(folder)
         x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.wrapper_pre_train(info=info, test_size=test_size,
                                                                                       chunksize=chunksize, scale=scale,
                                                                                       folder=folder)
-        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
-                                csvout=csvout, cvrepeats=cvrepeats)
+                                csvout=csvout, cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
@@ -597,7 +597,8 @@ class ABC_TFK_Classification:
     def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
                             y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                             y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
-                            tolerance: float = .005, csvout: bool = False, cvrepeats: int = 100) -> None:
+                            tolerance: float = .005, csvout: bool = False, cvrepeats: int = 100,
+                            folder: str = '') -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -618,6 +619,7 @@ class ABC_TFK_Classification:
         :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
             later by
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output/input folder. default is '' meaning current folder
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
 
@@ -637,7 +639,7 @@ class ABC_TFK_Classification:
         print(sorted(y_cat_dict.items()))
         print(predictednn)
 
-        robjects.r['pdf']("NN.pdf")
+        robjects.r['pdf'](folder + "NN.pdf")
         cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
         cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
                             tol=tolerance)
@@ -649,7 +651,7 @@ class ABC_TFK_Classification:
             cls.outputing_csv(modelindex=indexnn,
                               ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(
                                   columns=y_cat_dict),
-                              predict4mreal=predictednn.rename(columns=y_cat_dict))
+                              predict4mreal=predictednn.rename(columns=y_cat_dict), folder=folder)
 
     @classmethod
     def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
@@ -801,7 +803,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame,
-                      predict4mreal: pandas.DataFrame):
+                      predict4mreal: pandas.DataFrame, folder: str = ''):
         """
         in case of everything satisfied. this will output the test data set in csv format which then later can be used by
         r directly. if you use it, it will delete all the middle files from the current directory if exists: x_test.h5,
@@ -810,15 +812,18 @@ class ABC_TFK_Classification:
         :param modelindex: the model indexes in pandas series format
         :param ss_predictions: the predicted ss by nn on simulation[meaning nn(ss)]
         :param predict4mreal: the predicted ss by nn on real data [meaning nn(ss_real))]
+        :param folder: to define the output/input folder. default is '' meaning current folder
         :return: will not return anything but will create files model_index.csv.gz,ss_predicted.csv.gz,ss_target.csv.gz
             and will remove x_test.h5, y_test.h5, x.h5, y.h5, scale_x.sav, scale_y.sav, params_header.csv
         """
         modelindex = modelindex.rename('model_name')
-        modelindex.to_csv('model_index.csv.gz', index=False, header=True)
-        ss_predictions.to_csv('ss_predicted.csv.gz', index=False)
-        predict4mreal.to_csv('ss_target.csv.gz', index=False)
-        Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv',
-                          'y_cat_dict.txt'])
+        modelindex.to_csv(folder + 'model_index.csv.gz', index=False, header=True)
+        ss_predictions.to_csv(folder + 'ss_predicted.csv.gz', index=False)
+        predict4mreal.to_csv(folder + 'ss_target.csv.gz', index=False)
+        filesremove = ['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv',
+                       'y_cat_dict.txt']
+        filesremove = [folder + file for file in filesremove]
+        Misc.removefiles(filesremove)
 
 
 class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
@@ -965,7 +970,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         else:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
         ssnn.index = indexnn
-        robjects.r['pdf'](folder+"CV.pdf")
+        robjects.r['pdf'](folder + "CV.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method, repeats=cvrepeats)
         robjects.r['dev.off']()
 
@@ -1096,11 +1101,12 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
         documented in the r.abc
     :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used  later
         by r
+    :param folder: to define the output/input folder. default is '' meaning current folder
     :return: will not return anything but will produce the graphs and print out how much it is sure about any model
     """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
-                csvout: bool = False, cvrepeats: int = 100):
+                csvout: bool = False, cvrepeats: int = 100, folder: str = ''):
         """
         This will call the wrapper function
 
@@ -1112,14 +1118,15 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output/input folder. default is '' meaning current folder
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         return cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout,
-                           cvrepeats=cvrepeats)
+                           cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
     def wrapper(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.01, method: str = 'rejection',
-                csvout: bool = False, cvrepeats: int = 100) -> None:
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -1134,12 +1141,15 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output/input folder. default is '' meaning current folder
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
-        ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size)
+        folder = Misc.creatingfolders(folder)
+        ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size,
+                                                                                      folder=folder)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method,
-                                tolerance=tol, csvout=csvout, cvrepeats=cvrepeats)
+                                tolerance=tol, csvout=csvout, cvrepeats=cvrepeats, folder=folder)
 
 
 # TFK parameter estimation stuff
