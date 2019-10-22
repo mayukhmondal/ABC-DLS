@@ -137,7 +137,7 @@ def test_Classification_After_train():
     cvrepeats=2
     #main check
     ABC.ABC_TFK_Classification_After_Train(test_size=test_size,tol=tol,method=method,cvrepeats=cvrepeats,ssfile=ssfile)
-    
+
     # file checks
     files = ['NN.pdf']
     not_exist = [file for file in files if not Path(file).exists()]
