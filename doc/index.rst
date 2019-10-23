@@ -16,7 +16,7 @@ Guide
    :maxdepth: 2
    :caption: Contents:
 
-   README
+   MainREADME
    Examples
 
 Source Code Documentation
