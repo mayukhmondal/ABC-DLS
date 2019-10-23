@@ -254,8 +254,8 @@ def loading_def_4m_file(filepath: str, defname: str) -> Optional[Callable]:
 
 def creatingfolders(specificfolder: str) -> str:
     """
-    As the name suggest it will create a folder if the folder do not exist. As simple as that. it will also check if
-    the end is '/' as important to work later. it will return the folder it created
+    As the name suggest it will create a folder if the folder do not exist. it will also check if the end is '/' and add
+     it if not there. it will return the folder it created
 
     :param specificfolder: The folder needs to be created
     :return: will not return anything. Either it will create if the folder do not exist or not return anything
