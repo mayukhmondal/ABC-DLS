@@ -16,14 +16,9 @@ import numpy
 import joblib
 
 
-def test_Classification_Pre_train():
-    info = 'Model.info'
-    test_size = 1
-    chunksize = 5
-    scale = True
-    outfolder = 'out'
-
-    #
+def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
+                                  outfolder: str = 'out'):
+    # main check
     assert ABC.ABC_TFK_Classification_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
                                                scale=scale,
                                                folder=outfolder), 'The code even did not run properly for pretrain ' \
@@ -106,10 +101,7 @@ def test_Classification_Pre_train():
     # will do it later
 
 
-def test_Classification_Train():
-    demography = '../src/extras/ModelClass.py'
-    test_size = 0
-    folder = 'out'
+def test_Classification_Train(demography: str = '../src/extras/ModelClass.py', test_size: int = 0, folder: str = 'out'):
     # main check
     ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size, folder=folder)
 
@@ -119,12 +111,7 @@ def test_Classification_Train():
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
 
 
-def test_Classification_CV():
-    test_size: int = 15
-    tol: float = 0.5
-    method: str = 'rejection'
-    folder: str = 'out'
-
+def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 'rejection', folder: str = 'out'):
     # main check
     ABC.ABC_TFK_Classification_CV(test_size=test_size, tol=tol, method=method, cvrepeats=2, folder=folder)
     # file checks
@@ -133,13 +120,9 @@ def test_Classification_CV():
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
 
 
-def test_Classification_After_train():
-    test_size: int = 15
-    tol: float = 0.5
-    method: str = 'rejection'
-    ssfile: str = '../examples/YRI_CEU_CHB.observed.csv'
-    cvrepeats = 2
-    folder: str = 'out'
+def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'rejection',
+                                    ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
+                                    folder: str = 'out'):
     # main check
     ABC.ABC_TFK_Classification_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
                                            ssfile=ssfile, folder=folder)
@@ -148,3 +131,12 @@ def test_Classification_After_train():
     files = ['out/NN.pdf']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
+
+
+# def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
+#                                   outfolder: str = 'out'):
+#
+#     # main check
+#     assert ABC.ABC_TFK_Params_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
+#                                                scaling_x=scale,scaling_y=scale), 'The code even did not run properly for pretrain ' \
+#                                                                   'classification '
