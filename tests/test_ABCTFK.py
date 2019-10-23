@@ -133,10 +133,24 @@ def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, metho
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
 
 
-# def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
-#                                   outfolder: str = 'out'):
-#
-#     # main check
-#     assert ABC.ABC_TFK_Params_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
-#                                                scaling_x=scale,scaling_y=scale), 'The code even did not run properly for pretrain ' \
-#                                                                   'classification '
+def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
+                          outfolder: str = 'out'):
+    # main check
+    assert ABC.ABC_TFK_Params_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
+                                       scaling_x=scale,
+                                       scaling_y=scale), 'The code did not even run properly for pretrain ' \
+                                                         'parameter estimation '
+    # file existen check
+    files = ['x.h5', 'y.h5', 'scale_x.sav','scale_y.sav']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_PreTrain'
+
+def test_Params_Train(demography: str = '../src/extras/ModelParams.py', test_size: int = 0, folder: str = 'out'):
+
+    #main check
+    ABC.ABC_TFK_Params_Train(demography=demography, test_rows=test_size)
+
+    # file checks
+    files = ['ModelParamPrediction.h5']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train'

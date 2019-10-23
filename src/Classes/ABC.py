@@ -1820,8 +1820,8 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
             ANNModelParams as def in Any.py
         :return: will not return anything but save the keras model
         """
-        y_train = ABC_TFK_Classification_Train.reading_y_train(test_rows=test_rows)
-        x_train = ABC_TFK_Classification_Train.reading_x_train(test_rows=test_rows)
+        y_train = ABC_TFK_Classification_Train.reading_train(file='y.h5',test_rows=test_rows)
+        x_train = ABC_TFK_Classification_Train.reading_train(file='x.h5',test_rows=test_rows)
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
 
 
