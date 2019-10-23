@@ -163,11 +163,11 @@ class ABC_TFK_Classification:
             or None) and y_cat_dict ({0:'model1',1:'model2'..})
         """
         outfolder = Misc.creatingfolders(folder)
-        previousfiles = ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
+        previousfiles = ('scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
                          'ModelClassification.h5',
                          'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf']
-        previousfilesfullpath = [outfolder + file for file in previousfiles]
+                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf')
+        previousfilesfullpath = tuple(outfolder + file for file in previousfiles)
         Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
         minlines = min([Misc.getting_line_count(file) for file in files]) - 1
@@ -930,7 +930,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     """
 
     def __new__(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection', cvrepeats: int = 100,
-                folder: str = '')-> None:
+                folder: str = '') -> None:
         """
         This will call the wrapper function
 
@@ -1174,6 +1174,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
     :param cvrepeats: the number of repeats will be used for CV calculations
+    :param folder: to define the output folder. default is '' meaning current folder
     :return:  will not return anything but will plot and print the parameters
 
     """
@@ -1181,7 +1182,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False,cvrepeats:int=100) -> None:
+                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         This will call the wrapper function
 
@@ -1202,16 +1203,18 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return:  will not return anything but will plot and print the parameters
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y,cvrepeats=cvrepeats)
+                           demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y,
+                           cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False,cvrepeats:int=100) -> None:
+                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
@@ -1237,22 +1240,25 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return:  will not return anything but will plot and print the parameters
         """
-
+        folder = Misc.creatingfolders(folder)
         x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
                                                                                               chunksize=chunksize,
                                                                                               test_size=test_size,
                                                                                               scaling_x=scaling_x,
-                                                                                              scaling_y=scaling_y)
-        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+                                                                                              scaling_y=scaling_y,
+                                                                                              folder=folder)
+        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
-                               paramfile=paramfile, method=method, tol=tol, csvout=csvout,cvrepeats=cvrepeats)
+                               paramfile=paramfile, method=method, tol=tol, csvout=csvout, cvrepeats=cvrepeats,
+                               folder=folder)
 
     @classmethod
     def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                          scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
+                          scaling_x: bool = False, scaling_y: bool = False, folder: str = '') -> Tuple[
         Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
             numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
         """
@@ -1270,31 +1276,35 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will return (x_train, x_test, scale_x), (y_train, y_test, scale_y) and  header file path
             (params_header.csv)
         """
-
-        Misc.removefiles(
-            ['scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
-             'params.csv', 'ss.csv', 'params_header.csv'])
+        folder = Misc.creatingfolders(folder)
+        previousfiles = (
+            'scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
+            'params.csv', 'ss.csv', 'params_header.csv')
+        previousfilesfullpath = tuple(folder + file for file in previousfiles)
+        Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
         if len(files) > 1:
             print("there are more than one file. Only will work with the first file:", files[0])
-        paramfile, simss = cls.separation_param_ss(filename=files[0], params_number=paramnumbers[0])
+        paramfile, simss = cls.separation_param_ss(filename=files[0], params_number=paramnumbers[0], folder=folder)
         if chunksize:
             x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata_hdf5(paramfile=paramfile,
                                                                                         simss=simss,
                                                                                         chunksize=chunksize,
                                                                                         test_size=test_size,
                                                                                         scaling_x=scaling_x,
-                                                                                        scaling_y=scaling_y)
+                                                                                        scaling_y=scaling_y,
+                                                                                        folder=folder)
         else:
             x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata(paramfile=paramfile,
                                                                                    simssfile=simss,
                                                                                    test_size=test_size,
                                                                                    scaling_x=scaling_x,
-                                                                                   scaling_y=scaling_y)
-        header = 'params_header.csv'
+                                                                                   scaling_y=scaling_y, folder=folder)
+        header = folder + 'params_header.csv'
         pandas.DataFrame(index=pandas.read_csv(paramfile, nrows=10).columns).transpose().to_csv(header,
                                                                                                 index=False)
         Misc.removefiles([simss, paramfile])
@@ -1302,19 +1312,20 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return x_train, x_test, scale_x, y_train, y_test, scale_y, header
 
     @classmethod
-    def separation_param_ss(cls, filename: str, params_number: int) -> Tuple[str, str]:
+    def separation_param_ss(cls, filename: str, params_number: int, folder: str = '') -> Tuple[str, str]:
         """
         It will separate the parameters and ss in two different csv files. which then can be read by
         pandas.read_csv
 
         :param filename: the path of info or csv file. can be both csv or gz
         :param params_number: the number of parameters
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will produce params.csv and ss.csv file
         """
         import os
-        paramfile = 'params.csv'
+        paramfile = folder + 'params.csv'
+        ssfile = folder + 'ss.csv'
 
-        ssfile = 'ss.csv'
         if filename[-3:] == '.gz':
             paramcommand = Misc.joinginglistbyspecificstring(
                 ["zcat", filename, '|', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
@@ -1331,25 +1342,27 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return paramfile, ssfile
 
     @classmethod
-    def save_scale(cls, scale_x: preprocessing.MinMaxScaler, scale_y: Optional[preprocessing.MinMaxScaler]) -> None:
+    def save_scale(cls, scale_x: preprocessing.MinMaxScaler, scale_y: Optional[preprocessing.MinMaxScaler],
+                   folder: str = '') -> None:
         """
         As the name suggest it will save the scaling if scaling is done (MinMaxscaler) in a file. sklearn scaling will
         be saved.
 
         :param scale_x: scaled for x
         :param scale_y: scaled for y
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will save in  scale_x.sav, scale_y.sav file. will return nothing
         """
-        scaler_filename = "scale_x.sav"
+        scaler_filename = folder + "scale_x.sav"
         if scale_x:
             joblib.dump(scale_x, scaler_filename)
-        scaler_filename = "scale_y.sav"
+        scaler_filename = folder + "scale_y.sav"
         if scale_y:
             joblib.dump(scale_y, scaler_filename)
 
     @classmethod
     def preparingdata_hdf5(cls, paramfile: str, simss: str, chunksize: int = 100, test_size: int = int(1e4),
-                           scaling_x: bool = False, scaling_y: bool = False) -> Tuple[
+                           scaling_x: bool = False, scaling_y: bool = False, folder: str = '') -> Tuple[
         HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], HDF5Matrix, HDF5Matrix, Optional[
             preprocessing.MinMaxScaler]]:
         """
@@ -1364,12 +1377,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will return train and test data for both x and y in hdf5 matrix format with scale_x and scale_y if
             required
         """
 
-        xfile = "x.h5"
-        yfile = "y.h5"
+        xfile = folder + "x.h5"
+        yfile = folder + "y.h5"
         Misc.removefiles([xfile, yfile])
         if scaling_x:
             scale_x = cls.MinMax4bigfile(csvpath=simss, h5path=xfile, chunksize=chunksize)
@@ -1382,12 +1396,12 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         else:
             scale_y = cls.MinMax4bigfile(csvpath=paramfile, h5path=yfile, chunksize=chunksize, scaling=False)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
-        cls.save_scale(scale_x, scale_y)
+        cls.save_scale(scale_x, scale_y, folder=folder)
         return x_train, x_test, scale_x, y_train, y_test, scale_y
 
     @classmethod
     def preparingdata(cls, paramfile: str, simssfile: str, test_size: int = int(1e4), scaling_x: bool = False,
-                      scaling_y: bool = False) -> Tuple[
+                      scaling_y: bool = False, folder: str = '') -> Tuple[
         numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], numpy.ndarray, numpy.ndarray, Optional[
             preprocessing.MinMaxScaler]]:
         """
@@ -1401,6 +1415,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will return train and test data fro both x and y in numpy format with scale_x and scale_y if required
         """
         from sklearn.model_selection import train_test_split
@@ -1423,17 +1438,17 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size)
 
-        cls.save_scale(scale_x, scale_y)
-        x_test_file = "x_test.h5"
-        y_test_file = "y_test.h5"
+        cls.save_scale(scale_x, scale_y, folder=folder)
+        x_test_file = folder + "x_test.h5"
+        y_test_file = folder + "y_test.h5"
         Misc.removefiles([x_test_file, y_test_file])
-        Misc.numpy2hdf5(x_test, 'x_test.h5')
-        Misc.numpy2hdf5(y_test, 'y_test.h5')
+        Misc.numpy2hdf5(x_test, x_test_file)
+        Misc.numpy2hdf5(y_test, y_test_file)
         return x_train, x_test, scale_x, y_train, y_test, scale_y
 
     @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
-                      demography: Optional[str] = None) -> keras.models.Model:
+                      demography: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
         This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need trainging
         data set for x and y. can be either numpy array or hdf5 matrix format (HD5matrix) of keras
@@ -1443,9 +1458,10 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param y_train: train part of all the parameters
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
         """
-        Misc.removefiles(["ModelParamPrediction.h5"])
+        Misc.removefiles([folder + "ModelParamPrediction.h5"])
         if demography:
             ANNModelParams = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelParams')
             if ANNModelParams:
@@ -1457,7 +1473,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         else:
             ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
 
-        ModelParamPrediction.save("ModelParamPrediction.h5")
+        ModelParamPrediction.save(folder + "ModelParamPrediction.h5")
         return ModelParamPrediction
 
     @classmethod
@@ -1489,7 +1505,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           csvout: bool = False,cvrepeats:int=100) -> None:
+                           csvout: bool = False, cvrepeats: int = 100,folder:str='') -> None:
         """
         The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -1510,11 +1526,12 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but print out the result and save files for plot
         """
         print("Evaluate with test:")
         ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
-        params_names = pandas.read_csv(paramfile).columns
+        params_names = pandas.read_csv(folder+paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
 
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
@@ -1529,12 +1546,12 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         print('correlation between predicted params. Posterior')
         print(test_predictions.corr().to_string())
 
-        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
-                                method=method,repeats=cvrepeats)
-        cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
+        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name=folder+'nnparamcv.pdf', tol=tol,
+                                method=method, repeats=cvrepeats)
+        cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol,name=folder+'paramposterior.pdf')
         if csvout:
             cls.outputing_csv(params_unscaled=params_unscaled, test_predictions=test_predictions,
-                              predict4mreal=predict4mreal)
+                              predict4mreal=predict4mreal,folder=folder)
 
     @classmethod
     def R_std_columns(cls, df: pandas.DataFrame) -> pandas.Series:
@@ -1736,7 +1753,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
     @classmethod
     def outputing_csv(cls, params_unscaled: pandas.DataFrame, test_predictions: pandas.DataFrame,
-                      predict4mreal: pandas.DataFrame) -> None:
+                      predict4mreal: pandas.DataFrame,folder:str='') -> None:
         """
         in case you need csv file output of predicted params from nn, which then can be directly used by R. if you use
         it, it will delete all the middle files from the current directory if exists: x_test.h5, y_test.h5, x.h5, y.h5,
@@ -1745,13 +1762,16 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param test_predictions: the predicted values dataframe from ANN model
         :param predict4mreal: the predicted value from the real data
         :param params_unscaled: the real parameters to produce the ss
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but save 3 files params.csv.gz, ss_predicted.csv.gz, ss_target.csv.gz which
             can be used for further in R for in depth abc
         """
-        params_unscaled.to_csv('params.csv.gz', index=False)
-        test_predictions.to_csv('ss_predicted.csv.gz', index=False)
-        predict4mreal.to_csv('ss_target.csv.gz', index=False)
-        Misc.removefiles(['x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv'])
+        params_unscaled.to_csv(folder+'params.csv.gz', index=False)
+        test_predictions.to_csv(folder+'ss_predicted.csv.gz', index=False)
+        predict4mreal.to_csv(folder+'ss_target.csv.gz', index=False)
+        notrequired=('x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv')
+        notrequired=tuple(folder + file for file in notrequired)
+        Misc.removefiles(notrequired)
 
 
 class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
@@ -1768,11 +1788,12 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
         MinMaxscaler.
     :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
         MinMaxscaler.
+    :param folder: to define the output folder. default is '' meaning current folder
     :return: will not return anything but will create x.hdf5 ,y.hdf5, scale_x, scale_x  and params_header.csv
     """
 
     def __new__(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
-                scaling_x: bool = False, scaling_y: bool = False):
+                scaling_x: bool = False, scaling_y: bool = False, folder: str = ''):
         """
         This will  call the wrapper_pre_train function from ABC_TFK_Params
 
@@ -1784,10 +1805,11 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
             MinMaxscaler.
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will create x.hdf5 ,y.hdf5, scale_x, scale_x  and params_header.csv
         """
         return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scaling_x=scaling_x,
-                                     scaling_y=scaling_y)
+                                     scaling_y=scaling_y, folder=folder)
 
 
 class ABC_TFK_Params_Train(ABC_TFK_Params):
@@ -1798,33 +1820,37 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
     :param test_rows: the number of rows kept for test data set. it will return those lines from the end
     :param demography: custom function made for keras model. the path of that .py file. should have a def has
         ANNModelParams as def in Any.py
+    :param folder: to define the output folder. default is '' meaning current folder
     :return: will not return anything but save the keras model
     """
 
-    def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
+    def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '') -> None:
         """
         This will call the wrapper function
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but save the keras model
         """
-        return cls.wrapper(test_rows=test_rows, demography=demography)
+        return cls.wrapper(test_rows=test_rows, demography=demography, folder=folder)
 
     @classmethod
-    def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None) -> None:
+    def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '') -> None:
         """
         This is the wrapper. Will write later
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but save the keras model
         """
-        y_train = ABC_TFK_Classification_Train.reading_train(file='y.h5',test_rows=test_rows)
-        x_train = ABC_TFK_Classification_Train.reading_train(file='x.h5',test_rows=test_rows)
-        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
+        folder = Misc.creatingfolders(folder)
+        y_train = ABC_TFK_Classification_Train.reading_train(file=folder + 'y.h5', test_rows=test_rows)
+        x_train = ABC_TFK_Classification_Train.reading_train(file=folder + 'x.h5', test_rows=test_rows)
+        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
 
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
@@ -1836,10 +1862,12 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     :param tol: the level of tolerance for abc. default is .005
     :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
         as documented in the r.abc
+    :param folder: to define the output folder. default is '' meaning current folder
     :return: will not return anything but will plot the cross validation stuff for parameter estimation
     """
 
-    def __new__(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet', cvrepeats: int = 100) -> None:
+    def __new__(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet',
+                cvrepeats: int = 100, folder: str = '') -> None:
         """
         This will call the wrapper function
 
@@ -1848,12 +1876,14 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot the cross validation stuff for parameter estimation
         """
-        return cls.wrapper(test_size=test_size, tol=tol, method=method,cvrepeats=cvrepeats)
+        return cls.wrapper(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
-    def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet',cvrepeats:int=100) -> None:
+    def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet',
+                cvrepeats: int = 100, folder: str = '') -> None:
         """
        Subset of Parameter estimation Specifically to calculate cross validation test. good if you dont have
        real data
@@ -1861,61 +1891,66 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
        :param test_size: the number of test rows. everything else will be used for train. 10k is default
        :param tol: the level of tolerance for abc. default is .005
        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
-        :param cvrepeats: the number of repeats will be used for CV calculations
+       :param cvrepeats: the number of repeats will be used for CV calculations
+       :param folder: to define the output folder. default is '' meaning current folder
        :return: will not return anything but will plot the cross validation stuff for parameter estimation
        """
-        ModelParamPrediction, x_test, y_test, scale_x, scale_y = cls.read_data(test_rows=test_size)
+        folder = Misc.creatingfolders(folder)
+        ModelParamPrediction, x_test, y_test, scale_x, scale_y = cls.read_data(test_rows=test_size, folder=folder)
 
         print("Evaluate with test:")
         ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
         test_predictions, params_unscaled = cls.preparing_for_abc(ModelParamPrediction=ModelParamPrediction,
                                                                   x_test=x_test,
                                                                   y_test=y_test, scale_x=scale_x, scale_y=scale_y,
-                                                                  params_names=pandas.read_csv(
-                                                                      'params_header.csv').columns)
+                                                                  params_names=pandas.read_csv(folder +
+                                                                                               'params_header.csv').columns)
         print('correlation between params. Prior')
         print(params_unscaled.corr().to_string())
 
         print('correlation between predicted params. Posterior')
         print(test_predictions.corr().to_string())
 
-        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
-                                method=method,repeats=cvrepeats)
+        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name=folder + 'nnparamcv.pdf', tol=tol,
+                                method=method, repeats=cvrepeats)
 
     @classmethod
-    def read_scalex_scaley(cls) -> Tuple[Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
-        """
-        this to read if scale_x and scale_y is present in the folder and return it (MinMaxscaler)
-
-        :return: return x_scale and y_scale min max scaler if present
-        """
-        if os.path.isfile('scale_x.sav'):
-            scale_x = joblib.load('scale_x.sav')
-        else:
-            print('scale_x.sav not found. Assuming no scaling is required for x ')
-            scale_x = None
-        if os.path.isfile('scale_y.sav'):
-            scale_y = joblib.load('scale_y.sav')
-        else:
-            print('scale_y.sav not found. Assuming no scaling is required for y')
-            scale_y = None
-        return scale_x, scale_y
-
-    @classmethod
-    def read_data(cls, test_rows: int = int(1e4)) -> Tuple[
+    def read_data(cls, test_rows: int = int(1e4), folder: str = '') -> Tuple[
         keras.models.Model, Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[
             preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
         """
         to read all the data before doing the abc stuff
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: The fitted keras model, test data set of x and y, scale of x and y if exists
         """
-        ModelParamPrediction = ABC_TFK_Classification_CV.loadingkerasmodel('ModelParamPrediction.h5')
-        y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows)
-        x_test = ABC_TFK_Classification_CV.reading_x_test(test_rows=test_rows)
-        scale_x, scale_y = cls.read_scalex_scaley()
+        ModelParamPrediction = ABC_TFK_Classification_CV.loadingkerasmodel(folder + 'ModelParamPrediction.h5')
+        y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows, folder=folder)
+        x_test = ABC_TFK_Classification_CV.reading_x_test(test_rows=test_rows, folder=folder)
+        scale_x, scale_y = cls.read_scalex_scaley(folder=folder)
         return ModelParamPrediction, x_test, y_test, scale_x, scale_y
+
+    @classmethod
+    def read_scalex_scaley(cls, folder: str = '') -> Tuple[
+        Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
+        """
+        this to read if scale_x and scale_y is present in the folder and return it (MinMaxscaler)
+
+        :param folder: to define the output folder. default is '' meaning current folder
+        :return: return x_scale and y_scale min max scaler if present
+        """
+        if os.path.isfile(folder + 'scale_x.sav'):
+            scale_x = joblib.load(folder + 'scale_x.sav')
+        else:
+            print('scale_x.sav not found. Assuming no scaling is required for x ')
+            scale_x = None
+        if os.path.isfile(folder + 'scale_y.sav'):
+            scale_y = joblib.load(folder + 'scale_y.sav')
+        else:
+            print('scale_y.sav not found. Assuming no scaling is required for y')
+            scale_y = None
+        return scale_x, scale_y
 
     @classmethod
     def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
@@ -1963,11 +1998,12 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
    :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
     :param cvrepeats: the number of repeats will be used for CV calculations
+    :param folder: to define the output folder. default is '' meaning current folder
    :return: will not return anything but will plot and print the parameters
    """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = .01, method: str = 'neuralnet',
-                csvout: bool = False,cvrepeats:int=100) -> None:
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         This will call the wrapper funciton
 
@@ -1978,14 +2014,16 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
             as documented in the r.abc
        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
-        :param cvrepeats: the number of repeats will be used for CV calculations
+       :param cvrepeats: the number of repeats will be used for CV calculations
+       :param folder: to define the output folder. default is '' meaning current folder
        :return: will not return anything but will plot and print the parameters
         """
-        cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout,cvrepeats=cvrepeats)
+        cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout, cvrepeats=cvrepeats,
+                    folder=folder)
 
     @classmethod
     def wrapper(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.01, method: str = 'neuralnet',
-                csvout: bool = False,cvrepeats:int=100) -> None:
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2000,9 +2038,12 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but will plot and print the parameters
         """
-        ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_TFK_Params_CV.read_data(test_rows=test_size)
+        folder = Misc.creatingfolders(folder)
+        ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_TFK_Params_CV.read_data(test_rows=test_size,
+                                                                                             folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, ssfile=ssfile, x_test=x_test, y_test=y_test,
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
-                               csvout=csvout,cvrepeats=cvrepeats)
+                               csvout=csvout, cvrepeats=cvrepeats,folder=folder)
