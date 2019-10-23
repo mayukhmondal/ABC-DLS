@@ -111,7 +111,7 @@ def test_Classification_Train(demography: str = '../src/extras/ModelClass.py', t
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
 
 
-def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 'rejection', folder: str = 'out'):
+def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic', folder: str = 'out'):
     # main check
     ABC.ABC_TFK_Classification_CV(test_size=test_size, tol=tol, method=method, cvrepeats=2, folder=folder)
     # file checks
@@ -120,7 +120,7 @@ def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
 
 
-def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'rejection',
+def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic',
                                     ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
                                     folder: str = 'out'):
     # main check
@@ -141,7 +141,7 @@ def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksiz
                                        scaling_y=scale), 'The code did not even run properly for pretrain ' \
                                                          'parameter estimation '
     # file existen check
-    files = ['x.h5', 'y.h5', 'scale_x.sav','scale_y.sav']
+    files = ['x.h5', 'y.h5', 'scale_x.sav','scale_y.sav','params_header.csv']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_PreTrain'
 
@@ -154,3 +154,24 @@ def test_Params_Train(demography: str = '../src/extras/ModelParams.py', test_siz
     files = ['ModelParamPrediction.h5']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train'
+
+def test_Params_CV(test_size: int = 5, tol: float = 0.5, method: str = 'rejection', folder: str = 'out',cvrepeats:int=1):
+    # main check
+    ABC.ABC_TFK_Params_CV(test_size=test_size, tol=tol, method=method,cvrepeats=cvrepeats)
+
+    # file checks
+    files = ['nnparamcv.pdf','nnparamcv_together.pdf']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_CV'
+
+def test_Params_After_train(test_size: int = 5, tol: float = 0.5, method: str = 'rejection',
+                                    ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
+                                    folder: str = 'out'):
+    # main check
+    ABC.ABC_TFK_Params_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
+                                           ssfile=ssfile)
+
+    # file checks
+    files = ['paramposterior.pdf']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_After_Train'

@@ -930,7 +930,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     """
 
     def __new__(cls, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection', cvrepeats: int = 100,
-                folder: str = ''):
+                folder: str = '')-> None:
         """
         This will call the wrapper function
 
@@ -1171,9 +1171,9 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
         later by r
     :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by MinMaxscaler.
-
     :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+    :param cvrepeats: the number of repeats will be used for CV calculations
     :return:  will not return anything but will plot and print the parameters
 
     """
@@ -1181,7 +1181,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False) -> None:
+                scaling_y: bool = False,cvrepeats:int=100) -> None:
         """
         This will call the wrapper function
 
@@ -1201,16 +1201,17 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return:  will not return anything but will plot and print the parameters
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y)
+                           demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y,cvrepeats=cvrepeats)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False) -> None:
+                scaling_y: bool = False,cvrepeats:int=100) -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
@@ -1235,6 +1236,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return:  will not return anything but will plot and print the parameters
         """
 
@@ -1246,7 +1248,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
-                               paramfile=paramfile, method=method, tol=tol, csvout=csvout)
+                               paramfile=paramfile, method=method, tol=tol, csvout=csvout,cvrepeats=cvrepeats)
 
     @classmethod
     def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
@@ -1487,7 +1489,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           csvout: bool = False) -> None:
+                           csvout: bool = False,cvrepeats:int=100) -> None:
         """
         The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -1507,6 +1509,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param tol: the tolerance level to be used in r_abc. default is .005
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but print out the result and save files for plot
         """
         print("Evaluate with test:")
@@ -1527,7 +1530,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         print(test_predictions.corr().to_string())
 
         cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
-                                method=method)
+                                method=method,repeats=cvrepeats)
         cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol)
         if csvout:
             cls.outputing_csv(params_unscaled=params_unscaled, test_predictions=test_predictions,
@@ -1652,7 +1655,6 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param name: the ouput save file name
         :return: will not return anything but save the plot and also print out summary of cv
         """
-
         trace = False
         if method == 'rejection' or method == 'loclinear':
             robjects.r['pdf'](name)
@@ -1837,7 +1839,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     :return: will not return anything but will plot the cross validation stuff for parameter estimation
     """
 
-    def __new__(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet') -> None:
+    def __new__(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet', cvrepeats: int = 100) -> None:
         """
         This will call the wrapper function
 
@@ -1845,12 +1847,13 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will plot the cross validation stuff for parameter estimation
         """
-        return cls.wrapper(test_size=test_size, tol=tol, method=method)
+        return cls.wrapper(test_size=test_size, tol=tol, method=method,cvrepeats=cvrepeats)
 
     @classmethod
-    def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet') -> None:
+    def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet',cvrepeats:int=100) -> None:
         """
        Subset of Parameter estimation Specifically to calculate cross validation test. good if you dont have
        real data
@@ -1858,6 +1861,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
        :param test_size: the number of test rows. everything else will be used for train. 10k is default
        :param tol: the level of tolerance for abc. default is .005
        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param cvrepeats: the number of repeats will be used for CV calculations
        :return: will not return anything but will plot the cross validation stuff for parameter estimation
        """
         ModelParamPrediction, x_test, y_test, scale_x, scale_y = cls.read_data(test_rows=test_size)
@@ -1876,7 +1880,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         print(test_predictions.corr().to_string())
 
         cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name='nnparamcv.pdf', tol=tol,
-                                method=method)
+                                method=method,repeats=cvrepeats)
 
     @classmethod
     def read_scalex_scaley(cls) -> Tuple[Optional[preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
@@ -1932,7 +1936,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
             params_unscaled [y_test_unscaled y]
         """
         if scale_y:
-            test_predictions = scale_y.inverse_transform(ModelParamPrediction.predict(x_test))
+            test_predictions = scale_y.inverse_transform(ModelParamPrediction.predict(x_test[:]))
             test_predictions = pandas.DataFrame(test_predictions, columns=params_names[:y_test.shape[1]])
             params_unscaled = pandas.DataFrame(scale_y.inverse_transform(y_test[:]),
                                                columns=params_names[-y_test.shape[1]:])
@@ -1958,11 +1962,12 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         as documented in the r.abc
    :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
+    :param cvrepeats: the number of repeats will be used for CV calculations
    :return: will not return anything but will plot and print the parameters
    """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = .01, method: str = 'neuralnet',
-                csvout: bool = False) -> None:
+                csvout: bool = False,cvrepeats:int=100) -> None:
         """
         This will call the wrapper funciton
 
@@ -1973,13 +1978,14 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
             as documented in the r.abc
        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
        :return: will not return anything but will plot and print the parameters
         """
-        cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout)
+        cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout,cvrepeats=cvrepeats)
 
     @classmethod
     def wrapper(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.01, method: str = 'neuralnet',
-                csvout: bool = False) -> None:
+                csvout: bool = False,cvrepeats:int=100) -> None:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -1993,9 +1999,10 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
             as documented in the r.abc
         :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
         :return: will not return anything but will plot and print the parameters
         """
         ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_TFK_Params_CV.read_data(test_rows=test_size)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, ssfile=ssfile, x_test=x_test, y_test=y_test,
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
-                               csvout=csvout)
+                               csvout=csvout,cvrepeats=cvrepeats)
