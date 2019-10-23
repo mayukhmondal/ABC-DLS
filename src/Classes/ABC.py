@@ -195,7 +195,7 @@ class ABC_TFK_Classification:
             results = pandas.read_csv(shuffile, index_col=0)
             x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.data_prep4ANN(results, test_size=test_size,
                                                                                       scale=scale, outfolder=outfolder)
-        Misc.removefiles([outfolder + 'Comparison.csv', outfolder + shuffile])
+        Misc.removefiles([outfolder + 'Comparison.csv', outfolder + 'shuf.csv'])
 
         return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
 
