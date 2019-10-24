@@ -26,11 +26,12 @@ from . import Misc
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     # tensorflow stuff
-    from tensorflow.python import keras
-    from tensorflow.python.keras.models import Sequential
-    from tensorflow.python.keras.layers import Dense, Lambda
+    from tensorflow import keras
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Lambda
     from keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
+    from tensorflow.keras.callbacks import ModelCheckpoint
 
 # activating R
 abc = Misc.importr_tryhard('abc')
@@ -166,7 +167,7 @@ class ABC_TFK_Classification:
         previousfiles = ('scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
                          'ModelClassification.h5',
                          'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf')
+                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf','Checkpoint.h5')
         previousfilesfullpath = tuple(outfolder + file for file in previousfiles)
         Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
@@ -549,7 +550,9 @@ class ABC_TFK_Classification:
                 ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
         else:
             ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-        ModelSeparation.save(folder + "ModelClassification.h5")
+
+        cls.check_save_tfk_model(model=ModelSeparation, output=folder + "ModelClassification.h5",
+                                 check_point='Checkpoint.h5')
         return ModelSeparation
 
     @classmethod
@@ -586,12 +589,33 @@ class ABC_TFK_Classification:
         model.add(Dense(y.shape[1], activation='softmax'))
 
         model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
+
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
-        #
-        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
+        # checkpoint
+        CP = ModelCheckpoint('Checkpoint.h5', verbose=1, save_best_only=True)
+
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP], validation_split=.2)
 
         return model
+
+    @classmethod
+    def check_save_tfk_model(cls, model: keras.models.Model, output: str = 'Model.h5',
+                             check_point: str = 'Checkpoint.h5') -> None:
+        """
+        This will save the keras model as a h5 file. It will also check if check_point (default=Checkpoint.h5)  was
+        created before. In case check point was created before it will rename that as output. In case no checkpoint it
+        will save the model. Needed in case demography (model train) do not create checkpoint.
+
+        :param model: trained model by keras tf
+        :param output: output file name for h5. default Model.h5
+        :param check: check point file name. default Checkpoint.h5
+        :return: wil not return anything but will save the model
+        """
+        if os.path.isfile(check_point):
+            os.rename(check_point, output)
+        else:
+            model.save(output)
 
     @classmethod
     def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
@@ -1283,7 +1307,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         folder = Misc.creatingfolders(folder)
         previousfiles = (
             'scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
-            'params.csv', 'ss.csv', 'params_header.csv')
+            'params.csv', 'ss.csv', 'params_header.csv','Checkpoint.h5')
         previousfilesfullpath = tuple(folder + file for file in previousfiles)
         Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
@@ -1472,8 +1496,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                 ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
         else:
             ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
-
-        ModelParamPrediction.save(folder + "ModelParamPrediction.h5")
+        cls.check_save_tfk_model(model=ModelParamPrediction, output=folder + "ModelParamPrediction.h5",
+                                 check_point='Checkpoint.h5')
         return ModelParamPrediction
 
     @classmethod
@@ -1495,8 +1519,10 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
-        #
-        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
+        # checkpoint
+        CP = ModelCheckpoint('Checkpoint.h5', verbose=1, save_best_only=True)
+
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP], validation_split=.2)
 
         return model
 
@@ -1505,7 +1531,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           csvout: bool = False, cvrepeats: int = 100,folder:str='') -> None:
+                           csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -1531,7 +1557,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         """
         print("Evaluate with test:")
         ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
-        params_names = pandas.read_csv(folder+paramfile).columns
+        params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
 
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
@@ -1546,12 +1572,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         print('correlation between predicted params. Posterior')
         print(test_predictions.corr().to_string())
 
-        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name=folder+'nnparamcv.pdf', tol=tol,
+        cls.plot_param_cv_error(param=params_unscaled, ss=test_predictions, name=folder + 'nnparamcv.pdf', tol=tol,
                                 method=method, repeats=cvrepeats)
-        cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol,name=folder+'paramposterior.pdf')
+        cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, method=method, tol=tol,
+                       name=folder + 'paramposterior.pdf')
         if csvout:
             cls.outputing_csv(params_unscaled=params_unscaled, test_predictions=test_predictions,
-                              predict4mreal=predict4mreal,folder=folder)
+                              predict4mreal=predict4mreal, folder=folder)
 
     @classmethod
     def R_std_columns(cls, df: pandas.DataFrame) -> pandas.Series:
@@ -1753,7 +1780,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
     @classmethod
     def outputing_csv(cls, params_unscaled: pandas.DataFrame, test_predictions: pandas.DataFrame,
-                      predict4mreal: pandas.DataFrame,folder:str='') -> None:
+                      predict4mreal: pandas.DataFrame, folder: str = '') -> None:
         """
         in case you need csv file output of predicted params from nn, which then can be directly used by R. if you use
         it, it will delete all the middle files from the current directory if exists: x_test.h5, y_test.h5, x.h5, y.h5,
@@ -1766,11 +1793,11 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return: will not return anything but save 3 files params.csv.gz, ss_predicted.csv.gz, ss_target.csv.gz which
             can be used for further in R for in depth abc
         """
-        params_unscaled.to_csv(folder+'params.csv.gz', index=False)
-        test_predictions.to_csv(folder+'ss_predicted.csv.gz', index=False)
-        predict4mreal.to_csv(folder+'ss_target.csv.gz', index=False)
-        notrequired=('x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv')
-        notrequired=tuple(folder + file for file in notrequired)
+        params_unscaled.to_csv(folder + 'params.csv.gz', index=False)
+        test_predictions.to_csv(folder + 'ss_predicted.csv.gz', index=False)
+        predict4mreal.to_csv(folder + 'ss_target.csv.gz', index=False)
+        notrequired = ('x_test.h5', 'y_test.h5', 'x.h5', 'y.h5', 'scale_x.sav', 'scale_y.sav', 'params_header.csv')
+        notrequired = tuple(folder + file for file in notrequired)
         Misc.removefiles(notrequired)
 
 
@@ -2046,4 +2073,4 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
                                                                                              folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, ssfile=ssfile, x_test=x_test, y_test=y_test,
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
-                               csvout=csvout, cvrepeats=cvrepeats,folder=folder)
+                               csvout=csvout, cvrepeats=cvrepeats, folder=folder)
