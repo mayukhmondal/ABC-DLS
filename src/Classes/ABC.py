@@ -539,20 +539,24 @@ class ABC_TFK_Classification:
         :return: will return the keras model. it will also save the model in ModelClassification.h5
         """
         folder = Misc.creatingfolders(folder)
-        Misc.removefiles([folder + "ModelClassification.h5"])
+
+        Misc.removefiles((folder + "ModelClassification.h5",folder + "Checkpoint.h5"))
         if demography:
             ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
-            if ANNModelCheck:
-                ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
-            else:
+            if ANNModelCheck is None:
                 print('Could not find the ANNModelCheck in', demography,
                       '. Please check. Now using the default ANNModelCheck')
-                ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-        else:
-            ModelSeparation = cls.ANNModelCheck(x=x_train, y=y_train)
-
-        cls.check_save_tfk_model(model=ModelSeparation, output=folder + "ModelClassification.h5",
+                ANNModelCheck = cls.ANNModelCheck
+        # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
+        # another variable 'folder'
+        if folder!='':
+            os.chdir(folder)
+        ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
+        cls.check_save_tfk_model(model=ModelSeparation, output= "ModelClassification.h5",
                                  check_point='Checkpoint.h5')
+        # same as above to change back to previous stage
+        if folder!='':
+            os.chdir('../')
         return ModelSeparation
 
     @classmethod
