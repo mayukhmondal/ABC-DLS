@@ -668,7 +668,11 @@ class ABC_TFK_Classification:
         print('Predicted by NN')
         print(sorted(y_cat_dict.items()))
         print(predictednn)
-
+        if indexnn.value_counts().min()< cvrepeats:
+            print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
+                  'lesser number.')
+            print (indexnn.value_counts())
+            sys.exit(1)
         robjects.r['pdf'](folder + "NN.pdf")
         cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
         cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
@@ -992,16 +996,23 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         folder = Misc.creatingfolders(folder)
         ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict = cls.read_data(test_rows=test_size,
                                                                                       folder=folder)
+
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
+
         ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
         if y_cat_dict:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         else:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
         ssnn.index = indexnn
+        if indexnn.value_counts().min()< cvrepeats:
+            print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
+                  'lesser number.')
+            print (indexnn.value_counts())
+            sys.exit(1)
         robjects.r['pdf'](folder + "CV.pdf")
-        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tol, method=method, repeats=cvrepeats)
+        cls.plot_power_of_ss(ss=ssnn, index=pandas.Series(ssnn.index.values), tol=tol, method=method, repeats=cvrepeats)
         robjects.r['dev.off']()
 
     @classmethod

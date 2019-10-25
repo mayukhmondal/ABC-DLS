@@ -37,6 +37,8 @@ sp.add_argument('--method',
                      ' rejection" ',
                 default='rejection', choices=["rejection", "mnlogistic", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .005 ', default=.005, type=float)
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+                default=100, type=int)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
@@ -72,6 +74,8 @@ sp.add_argument('--method',
                      ' rejection" ',
                 default='rejection', choices=["rejection", "mnlogistic", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .005 ', default=.005, type=float)
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+                default=100, type=int)
 
 sp = subparsers.add_parser('After_train', help='This is to run the ABC analysis after the training part is done')
 sp.set_defaults(cmd='After_train')
@@ -84,6 +88,8 @@ sp.add_argument('--method',
                      ' rejection" ',
                 default='rejection', choices=["rejection", "mnlogistic", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .005 ', default=.005, type=float)
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+                default=100, type=int)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
@@ -95,7 +101,8 @@ if args.cmd == 'All':
         args.chunksize = int(args.chunksize)
     ABC.ABC_TFK_Classification(info=args.info, ssfile=args.ssfile, chunksize=args.chunksize,
                                demography=args.demography, method=args.method,
-                               tolerance=args.tolerance, test_size=args.test_size, scale=args.scale, csvout=args.csvout)
+                               tolerance=args.tolerance, test_size=args.test_size, scale=args.scale, csvout=args.csvout,
+                               cvrepeats=args.cvrepeats)
 elif args.cmd == 'Pre_train':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
@@ -105,8 +112,9 @@ elif args.cmd == 'Train':
     ABC.ABC_TFK_Classification_Train(demography=args.demography, test_rows=args.test_size)
 
 elif args.cmd == 'CV':
-    ABC.ABC_TFK_Classification_CV(test_size=args.test_size, tol=args.tolerance, method=args.method)
+    ABC.ABC_TFK_Classification_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,
+                                  cvrepeats=args.cvrepeats)
 
 elif args.cmd == 'After_train':
     ABC.ABC_TFK_Classification_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance,
-                                           method=args.method, csvout=args.csvout)
+                                           method=args.method, csvout=args.csvout, cvrepeats=args.cvrepeats)
