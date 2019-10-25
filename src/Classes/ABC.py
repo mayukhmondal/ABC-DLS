@@ -547,6 +547,8 @@ class ABC_TFK_Classification:
                 print('Could not find the ANNModelCheck in', demography,
                       '. Please check. Now using the default ANNModelCheck')
                 ANNModelCheck = cls.ANNModelCheck
+        else:
+            ANNModelCheck = cls.ANNModelCheck
         # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
         # another variable 'folder'
         if folder!='':
