@@ -5,7 +5,7 @@ This file to run ABC-TFK for parameter estimation of a given model
 """
 import argparse
 import os
-
+import sys
 from Classes import ABC
 
 # input argument is done
@@ -38,6 +38,8 @@ sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters)",
                 default='n', choices=["n", "x", "y", "b"])
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+                default=100, type=int)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
@@ -77,6 +79,8 @@ sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .01 ', default=.01, type=float)
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+                default=100, type=int)
 
 sp = subparsers.add_parser('After_train', help='This is to run the ABC analysis after the training part is done')
 sp.set_defaults(cmd='After_train')
@@ -89,6 +93,8 @@ sp.add_argument('--method',
                      'is "loclinear" ',
                 default='loclinear', choices=["rejection", "loclinear", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .01 ', default=.01, type=float)
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+                default=100, type=int)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
@@ -112,11 +118,17 @@ if args.cmd == 'All':
     elif args.scale == 'b':
         scaling_x = True
         scaling_y = True
+
+    if args.cvrepeats > args.test_size:
+        print('CV repeats has to be smaller than the sample size (test_size)')
+        print('CV:', args.cvrepeats)
+        print('test_size:', args.test_size)
+        sys.exit(1)
     # running
     ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography,
                        method=args.method, tol=args.tolerance, test_size=args.test_size,
                        chunksize=args.chunksize,
-                       csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y)
+                       csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y,cvrepeats=args.cvrepeats)
 elif args.cmd == 'Pre_train':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
@@ -137,9 +149,20 @@ elif args.cmd == 'Pre_train':
 elif args.cmd == 'Train':
     ABC.ABC_TFK_Params_Train(demography=args.demography, test_rows=args.test_size)
 elif args.cmd == 'CV':
-    ABC.ABC_TFK_Params_CV(test_size=args.test_size, tol=args.tolerance, method=args.method)
+    if args.cvrepeats<=args.test_size:
+        ABC.ABC_TFK_Params_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,cvrepeats=args.cvrepeats)
+    else:
+        print ('CV repeats has to be smaller than the sample size (test_size)')
+        print ('CV:',args.cvrepeats)
+        print ('test_size:',args.test_size)
+        sys.exit(1)
 elif args.cmd == 'After_train':
     if not os.path.isfile(args.ssfile):
         print("The sfs file could not be found please check")
+    if args.cvrepeats>args.test_size:
+        print('CV repeats has to be smaller than the sample size (test_size)')
+        print('CV:', args.cvrepeats)
+        print('test_size:', args.test_size)
+        sys.exit(1)
     ABC.ABC_TFK_Params_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance, method=args.method,
-                                   csvout=args.csvout)
+                                   csvout=args.csvout,cvrepeats=args.cvrepeats)
