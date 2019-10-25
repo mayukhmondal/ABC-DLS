@@ -1489,19 +1489,26 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param folder: to define the output folder. default is '' meaning current folder
         :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
         """
-        Misc.removefiles([folder + "ModelParamPrediction.h5"])
+        folder = Misc.creatingfolders(folder)
+        Misc.removefiles((folder + "ModelParamPrediction.h5",folder + "Checkpoint.h5"))
         if demography:
             ANNModelParams = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelParams')
-            if ANNModelParams:
-                ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
-            else:
+            if ANNModelParams is None:
                 print('Could not find the ANNModelParams in', demography,
                       '. Please check. Now using the default ANNModelParams')
-                ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
+                ANNModelParams = cls.ANNModelParams
         else:
-            ModelParamPrediction = cls.ANNModelParams(x=x_train, y=y_train)
-        cls.check_save_tfk_model(model=ModelParamPrediction, output=folder + "ModelParamPrediction.h5",
+            ANNModelParams = cls.ANNModelParams
+        # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
+        # another variable 'folder'
+        if folder != '':
+            os.chdir(folder)
+        ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
+        cls.check_save_tfk_model(model=ModelParamPrediction, output="ModelParamPrediction.h5",
                                  check_point='Checkpoint.h5')
+        # same as above to change back to previous stage
+        if folder != '':
+            os.chdir('../')
         return ModelParamPrediction
 
     @classmethod
