@@ -167,7 +167,8 @@ class ABC_TFK_Classification:
         previousfiles = ('scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
                          'ModelClassification.h5',
                          'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
-                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf','Checkpoint.h5')
+                         'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf',
+                         'Checkpoint.h5')
         previousfilesfullpath = tuple(outfolder + file for file in previousfiles)
         Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
@@ -540,7 +541,7 @@ class ABC_TFK_Classification:
         """
         folder = Misc.creatingfolders(folder)
 
-        Misc.removefiles((folder + "ModelClassification.h5",folder + "Checkpoint.h5"))
+        Misc.removefiles((folder + "ModelClassification.h5", folder + "Checkpoint.h5"))
         if demography:
             ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
             if ANNModelCheck is None:
@@ -551,13 +552,13 @@ class ABC_TFK_Classification:
             ANNModelCheck = cls.ANNModelCheck
         # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
         # another variable 'folder'
-        if folder!='':
+        if folder != '':
             os.chdir(folder)
         ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
-        cls.check_save_tfk_model(model=ModelSeparation, output= "ModelClassification.h5",
+        cls.check_save_tfk_model(model=ModelSeparation, output="ModelClassification.h5",
                                  check_point='Checkpoint.h5')
         # same as above to change back to previous stage
-        if folder!='':
+        if folder != '':
             os.chdir('../')
         return ModelSeparation
 
@@ -668,10 +669,10 @@ class ABC_TFK_Classification:
         print('Predicted by NN')
         print(sorted(y_cat_dict.items()))
         print(predictednn)
-        if indexnn.value_counts().min()< cvrepeats:
+        if indexnn.value_counts().min() < cvrepeats:
             print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
                   'lesser number.')
-            print (indexnn.value_counts())
+            print(indexnn.value_counts())
             sys.exit(1)
         robjects.r['pdf'](folder + "NN.pdf")
         cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
@@ -1006,10 +1007,10 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         else:
             indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0]
         ssnn.index = indexnn
-        if indexnn.value_counts().min()< cvrepeats:
+        if indexnn.value_counts().min() < cvrepeats:
             print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
                   'lesser number.')
-            print (indexnn.value_counts())
+            print(indexnn.value_counts())
             sys.exit(1)
         robjects.r['pdf'](folder + "CV.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=pandas.Series(ssnn.index.values), tol=tol, method=method, repeats=cvrepeats)
@@ -1294,7 +1295,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
-                               paramfile=paramfile, method=method, tol=tol, csvout=csvout, cvrepeats=cvrepeats,
+                               paramfile='params_header.csv', method=method, tol=tol, csvout=csvout,
+                               cvrepeats=cvrepeats,
                                folder=folder)
 
     @classmethod
@@ -1324,7 +1326,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         folder = Misc.creatingfolders(folder)
         previousfiles = (
             'scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
-            'params.csv', 'ss.csv', 'params_header.csv','Checkpoint.h5')
+            'params.csv', 'ss.csv', 'params_header.csv', 'Checkpoint.h5')
         previousfilesfullpath = tuple(folder + file for file in previousfiles)
         Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
@@ -1503,7 +1505,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
         """
         folder = Misc.creatingfolders(folder)
-        Misc.removefiles((folder + "ModelParamPrediction.h5",folder + "Checkpoint.h5"))
+        Misc.removefiles((folder + "ModelParamPrediction.h5", folder + "Checkpoint.h5"))
         if demography:
             ANNModelParams = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelParams')
             if ANNModelParams is None:
