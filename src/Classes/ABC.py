@@ -181,7 +181,8 @@ class ABC_TFK_Classification:
         # adding line after subseting
         [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
                                        modelname=names[i], outfolder=outfolder) for i in range(len(files))]
-        shuffile = cls.shufling_joined_models(inputcsv=outfolder + 'Comparison.csv', output=outfolder + 'shuf.csv')
+        shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output= 'shuf.csv',
+                                              outfolder=outfolder)
 
         if chunksize:
             x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.preparingdata_hdf5(filename=shuffile,
@@ -302,7 +303,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def shufling_joined_models(cls, inputcsv: str = "Comparison.csv", output: str = 'shuffle.csv',
-                               header: bool = True) -> str:
+                               header: bool = True, outfolder: str = '') -> str:
         """
         it will shuffle the line of joined csv model (file Comparison.csv) and read it in pandas format for further
         evaluation
@@ -314,6 +315,8 @@ class ABC_TFK_Classification:
         """
         import os, shutil
         terashuf = os.path.dirname(os.path.abspath(__file__)) + '/shuffle.py'
+        if outfolder != '':
+            os.chdir(outfolder)
         Misc.creatingfolders('temp')
         if header:
             if os.path.exists(terashuf):
@@ -344,7 +347,9 @@ class ABC_TFK_Classification:
             print(stderr)
             sys.exit(1)
         shutil.rmtree('temp')
-        return output
+        if outfolder != '':
+            os.chdir('../')
+        return outfolder+output
 
     @classmethod
     def data_prep4ANN(cls, raw: pandas.DataFrame, test_size: int = int(1e4), scale: bool = False,
