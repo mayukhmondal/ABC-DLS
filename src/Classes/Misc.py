@@ -4,7 +4,7 @@ This file is for miscellaneous def
 """
 import os
 # type hint for readability
-from typing import Tuple, Optional, Callable
+from typing import Tuple, Optional, Callable, Union
 
 
 # R package check
@@ -175,7 +175,7 @@ def joinginglistbyspecificstring(listinput: list, string: str = " ") -> str:
 # del files
 
 
-def removefilescommands(files: list) -> list:
+def removefilescommands(files: Union[list,Tuple]) -> list:
     """
     Giving a list of files it will give back the commands necessary for deleting such files.
 
@@ -186,7 +186,7 @@ def removefilescommands(files: list) -> list:
     return ['rm -f ' + file for file in files]
 
 
-def removefiles(files: list, printing: bool = True) -> None:
+def removefiles(files: Union[list,Tuple], printing: bool = True) -> None:
     """
     Its the wrapper of removefiles commands. if you want ot remove the files right now. also print it is removing.
     good to know which files are getting removed always. It will print remove even if the file do not exist in the first
