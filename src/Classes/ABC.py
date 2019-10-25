@@ -181,7 +181,7 @@ class ABC_TFK_Classification:
         # adding line after subseting
         [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
                                        modelname=names[i], outfolder=outfolder) for i in range(len(files))]
-        shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output= 'shuf.csv',
+        shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output='shuf.csv',
                                               outfolder=outfolder)
 
         if chunksize:
@@ -319,27 +319,15 @@ class ABC_TFK_Classification:
             os.chdir(outfolder)
         Misc.creatingfolders('temp')
         if header:
-            if os.path.exists(terashuf):
-                command = Misc.joinginglistbyspecificstring(['cat <(head -n 1', inputcsv, ') <(tail -n+2', inputcsv,
-                                                             ' | python ' + terashuf + ' ) > ',
-                                                             os.getcwd() + '/' + output]).strip()
-            else:
-                print(
-                    "terashuf is not found. will use shuf. in case out of memory. please install it and put it in the "
-                    "classes folder")
-                command = Misc.joinginglistbyspecificstring(
-                    ['cat <(head -n 1', inputcsv, ') <(tail -n+2', inputcsv, ' | shuf ) > ',
-                     os.getcwd() + '/' + output]).strip()
-        else:
-            if os.path.exists(terashuf):
-                command = Misc.joinginglistbyspecificstring(
-                    ['python ', terashuf, inputcsv, ">", output])
-            else:
-                print(
-                    "terashuf is not found. will use shuf. in case out of memory. please install it and put it in the "
-                    "classes folder")
 
-                command = Misc.joinginglistbyspecificstring(["shuf ", inputcsv, ">", output])
+            command = Misc.joinginglistbyspecificstring(['cat <(head -n 1', inputcsv, ') <(tail -n+2', inputcsv,
+                                                         ' | python ' + terashuf + ' ) > ',
+                                                         os.getcwd() + '/' + output]).strip()
+
+        else:
+
+            command = Misc.joinginglistbyspecificstring(['python ', terashuf, inputcsv, ">", output])
+
         p = subprocess.Popen([command], executable='/bin/bash', stdout=subprocess.PIPE, shell=True,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
@@ -349,7 +337,7 @@ class ABC_TFK_Classification:
         shutil.rmtree('temp')
         if outfolder != '':
             os.chdir('../')
-        return outfolder+output
+        return outfolder + output
 
     @classmethod
     def data_prep4ANN(cls, raw: pandas.DataFrame, test_size: int = int(1e4), scale: bool = False,
