@@ -622,7 +622,7 @@ class ABC_TFK_Classification:
                             y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                             y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
                             tolerance: float = .005, csvout: bool = False, cvrepeats: int = 100,
-                            folder: str = '') -> None:
+                            folder: str = '',pred_repeat:int=1) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -644,21 +644,32 @@ class ABC_TFK_Classification:
             later by
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output/input folder. default is '' meaning current folder
+        :param pred_repeat: in case you want to run multiple run of prediction on observed data. if you use it your
+            training must need some randomization like the custom Gaussiannoise i have implemented here. The idea is by
+            using random noise you are producing multiple run of the same observed data
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
 
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
-
-        ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=100)
+        if pred_repeat > 1:
+            ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=pred_repeat)
+        else:
+            ssnn=pandas.DataFrame(ModelSeparation.predict(x_test[:]))
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         ssnn.index = indexnn
         sfs = cls.read_ss_2_series(file=ssfile)
         cls.check_results(results=[x_test[0:2]], observed=sfs)
         if scale_x:
-            predictednn = cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
+            if pred_repeat > 1:
+                predictednn = cls.predict_repeats_mean(ModelSeparation, scale_x.transform(sfs.values.reshape(1, -1)))
+            else:
+                predictednn=pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
         else:
-            predictednn = cls.predict_repeats_mean(ModelSeparation, sfs.values.reshape(1, -1))
+            if pred_repeat > 1:
+                predictednn = cls.predict_repeats_mean(ModelSeparation, sfs.values.reshape(1, -1))
+            else:
+                predictednn =pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         print('Predicted by NN')
         print(sorted(y_cat_dict.items()))
         print(predictednn)
