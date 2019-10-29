@@ -735,12 +735,14 @@ class ABC_TFK_Classification:
         :param target: the target after which every thing will be print. the target will be included in the print
         :return: will not return anything but print the summary everything after a line starts with 'Data:' or target
         """
+        import tempfile
+        temp_name = next(tempfile._get_candidate_names())
         robjects.r.options(width=10000)
-        robjects.r['sink']('temp.txt')
+        robjects.r['sink'](temp_name)
         robjects.r['summary'](rmodel)
         robjects.r['sink']()
-        cls.print_after_match_linestart('temp.txt', target)
-        os.remove('temp.txt')
+        cls.print_after_match_linestart(temp_name, target)
+        os.remove(temp_name)
 
     @classmethod
     def plot_power_of_ss(cls, ss: pandas.DataFrame, index: pandas.Series, tol: float = .005, repeats: int = 100,
@@ -759,12 +761,14 @@ class ABC_TFK_Classification:
         """
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
         # text wrapping problem in r which cant be solved by options(width=10000) in rpy2. this is abc problem
-        robjects.r['sink']('temp.txt')
+        import tempfile
+        temp_name = next(tempfile._get_candidate_names())
+        robjects.r['sink'](temp_name)
         x = robjects.r['summary'](cvmodsel)
         robjects.r['sink']()
-        line = open('temp.txt').readline()
+        line = open(temp_name).readline()
         print(line, end='')
-        os.remove('temp.txt')
+        os.remove(temp_name)
         print(x)
         # instead we could have used robjects.r['summary'](cvmodsel) if it was not bugged
         robjects.r['plot'](cvmodsel)
@@ -1728,6 +1732,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return: will not return anything but save the plot and also print out summary of cv
         """
         trace = False
+        import tempfile
+        temp_name = next(tempfile._get_candidate_names())
         if method == 'rejection' or method == 'loclinear':
             robjects.r['pdf'](name)
             print('Cv error independently')
@@ -1743,18 +1749,18 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             print('Cv error together')
             robjects.r['pdf'](name[:-4] + '_together.pdf')
             if method == 'neuralnet':
-                robjects.r['sink']('temp.txt')
+                robjects.r['sink'](temp_name)
                 cvresreg = abc.cv4abc(param=param, sumstat=ss, nval=repeats, tols=tol, method=method, trace=trace)
                 robjects.r['sink']()
-                os.remove('temp.txt')
+                os.remove(temp_name)
             else:
                 cvresreg = abc.cv4abc(param=param, sumstat=ss, nval=repeats, tols=tol, method=method, trace=trace)
             # text wrapping problem in r which cant be solved by options(width=10000) in rpy2
-            robjects.r['sink']('temp.txt')
+            robjects.r['sink'](temp_name)
             together = robjects.r['summary'](cvresreg)
-            line = open('temp.txt').readline()
+            line = open(temp_name).readline()
             print(line)
-            os.remove('temp.txt')
+            os.remove(temp_name)
             print(pandas.DataFrame(list(together), index=together.colnames,
                                    columns=together.rownames).transpose().to_string())
             robjects.r['plot'](cvresreg, ask=False)
@@ -1776,7 +1782,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param name: the ouput save file name
         :return: will not return anything but save the plot and print out the summary
         """
-
+        import tempfile
+        temp_name = next(tempfile._get_candidate_names())
         if method == 'rejection' or method == 'loclinear':
             print('Separately')
             robjects.r['pdf'](name)
@@ -1794,10 +1801,10 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         if method == 'rejection' or method == 'neuralnet':
             print('together')
             if method == 'neuralnet':
-                robjects.r['sink']('temp.txt')
+                robjects.r['sink'](temp_name)
                 res = abc.abc(target=target, param=param, sumstat=ss, method=method, tol=tol)
                 robjects.r['sink']()
-                os.remove('temp.txt')
+                os.remove(temp_name)
             else:
                 res = abc.abc(target=target, param=param, sumstat=ss, method=method, tol=tol)
             cls.r_summary(res)
