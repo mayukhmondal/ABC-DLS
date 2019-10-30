@@ -168,7 +168,8 @@ class ABC_TFK_Classification:
                          'ModelClassification.h5',
                          'Comparison.csv', 'shuf.csv', 'models.csv', 'ss.csv', 'y_cat_dict.txt', 'model_index.csv.gz',
                          'params.csv.gz', 'ss_predicted.csv.gz', 'ss_target.csv.gz', 'NN.pdf', 'CV.pdf',
-                         'Checkpoint.h5')
+                         'Checkpoint.h5', 'nnparamcv.pdf', 'nnparamcv_together.pdf', 'paramposterior.pdf',
+                         'paramposterior_together.pdf')
         previousfilesfullpath = tuple(outfolder + file for file in previousfiles)
         Misc.removefiles(previousfilesfullpath)
         files, paramnumbers, names = cls.read_info(info=info)
