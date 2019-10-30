@@ -28,7 +28,7 @@ with warnings.catch_warnings():
     # tensorflow stuff
     from tensorflow import keras
     from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import Dense, Lambda
+    from tensorflow.keras.layers import Dense, GaussianNoise
     from keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import ModelCheckpoint
@@ -560,7 +560,8 @@ class ABC_TFK_Classification:
         """
         Gaussian noise to the input data. Same as Keras.GaussianNoise but it will not only work with training part but
         will work on test data set and observed data. Thus every time it will run will give slightly different results.
-        Good to produce a distribution from a single observation
+        Good to produce a distribution from a single observation. This is not used anymore but i still kept it in case
+        needed use model.add(Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)))
 
         :param input_layer: tensorflow input layer
         :param sd: the standard deviation present will be present in the noise random normal distribution
@@ -581,7 +582,8 @@ class ABC_TFK_Classification:
         :return: will return the trained model
         """
         model = Sequential()
-        model.add(Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)))
+        # model.add(Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)))
+        model.add(GaussianNoise(0.01, input_shape=(x.shape[1],)))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(128, activation='relu'))
@@ -1051,10 +1053,11 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         """
         from tensorflow.keras.models import load_model
         if os.path.isfile(ModelParamPredictionFile):
-            try:
-                model = load_model(ModelParamPredictionFile)
-            except AttributeError:
-                model = load_model(ModelParamPredictionFile, custom_objects={'Gaussian_noise': cls.Gaussian_noise})
+            # try:
+            #     model = load_model(ModelParamPredictionFile)
+            # except AttributeError:
+            #     model = load_model(ModelParamPredictionFile, custom_objects={'Gaussian_noise': cls.Gaussian_noise})
+            model = load_model(ModelParamPredictionFile)
 
         else:
             print('The ANN model file could not be found please check. ', ModelParamPredictionFile)
