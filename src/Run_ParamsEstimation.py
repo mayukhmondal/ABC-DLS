@@ -40,7 +40,7 @@ sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .01 '
 sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters)",
-                default='n', choices=["n", "x", "y", "b"])
+                default='x', choices=["n", "x", "y", "b"])
 sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
                 default=100, type=int)
 sp.add_argument('--csvout',
@@ -61,7 +61,7 @@ sp.add_argument('--chunksize',
 sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters)",
-                default='n', choices=["n", "x", "y", "b"])
+                default='x', choices=["n", "x", "y", "b"])
 
 sp = subparsers.add_parser('Train', help='The training part of the ANN. Should be done after Pre_train part')
 sp.set_defaults(cmd='Train')

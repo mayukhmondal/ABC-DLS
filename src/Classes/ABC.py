@@ -1546,7 +1546,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return: will return the trained model
         """
         model = Sequential()
-        model.add(Dense(512, activation='relu', input_shape=(x.shape[1],)))
+        model.add(GaussianNoise(0.01, input_shape=(x.shape[1],)))
+        model.add(Dense(512, activation='relu'))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(32, activation='relu'))
