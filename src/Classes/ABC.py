@@ -801,27 +801,6 @@ class ABC_TFK_Classification:
         return None
 
     @classmethod
-    def goodness_fit(cls, target: pandas.DataFrame, ss: pandas.DataFrame, name: str, tol: float = .005,
-                     extra: str = '', repeats: int = 100):
-        """
-        To test for goodness of fit of every model
-
-        :param target:  the observed summary statistic in a dataframe format with single line
-        :param ss:  the simulated summary statics in dataframe format.
-        :param name: name of the demography
-        :param tol: the level of tolerance. default is .005
-        :param extra: internal. to add in the graph to say about the method
-        :param repeats: the number of nb.replicates to use to calculate the null
-        :return: will not return anything. but will plot goodness of fit also print the summary
-        """
-        # gfit(target,sumstat,nb.replicate,tol)
-        fit = abc.gfit(target, ss, repeats, tol=tol)
-        print(name)
-        print(robjects.r['summary'](fit))
-        out = name + ' ' + extra
-        robjects.r['plot'](fit, main="Histogram under H0:" + out)
-
-    @classmethod
     def gfit_all(cls, observed: pandas.DataFrame, ss: pandas.DataFrame, y_cat_dict: Dict[int, str], extra: str = '',
                  tol: float = .005, repeats: int = 100) -> None:
         """
@@ -848,6 +827,27 @@ class ABC_TFK_Classification:
             cls.goodness_fit(target=observed.drop(dropping_columns, axis=1), ss=ss_sub.drop(dropping_columns, axis=1),
                              name=y_cat_dict[key], extra=extra,
                              tol=tol, repeats=repeats)
+
+    @classmethod
+    def goodness_fit(cls, target: pandas.DataFrame, ss: pandas.DataFrame, name: str, tol: float = .005,
+                     extra: str = '', repeats: int = 100):
+        """
+        To test for goodness of fit of every model
+
+        :param target:  the observed summary statistic in a dataframe format with single line
+        :param ss:  the simulated summary statics in dataframe format.
+        :param name: name of the demography
+        :param tol: the level of tolerance. default is .005
+        :param extra: internal. to add in the graph to say about the method
+        :param repeats: the number of nb.replicates to use to calculate the null
+        :return: will not return anything. but will plot goodness of fit also print the summary
+        """
+        # gfit(target,sumstat,nb.replicate,tol)
+        fit = abc.gfit(target, ss, repeats, tol=tol)
+        print(name)
+        print(robjects.r['summary'](fit))
+        out = name + ' ' + extra
+        robjects.r['plot'](fit, main="Histogram under H0:" + out)
 
     @classmethod
     def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame,
