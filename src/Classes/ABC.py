@@ -1553,9 +1553,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         model = Sequential()
         model.add(GaussianNoise(0.01, input_shape=(x.shape[1],)))
         model.add(Dense(512, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(128, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(64, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(32, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(y.shape[1]))
         model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
         # adding an early stop so that it does not overfit
