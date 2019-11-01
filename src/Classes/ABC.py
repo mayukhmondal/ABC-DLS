@@ -28,7 +28,7 @@ with warnings.catch_warnings():
     # tensorflow stuff
     from tensorflow import keras
     from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import Dense, GaussianNoise
+    from tensorflow.keras.layers import Dense, GaussianNoise, Dropout
     from keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import ModelCheckpoint
@@ -586,9 +586,13 @@ class ABC_TFK_Classification:
         # model.add(Lambda(cls.Gaussian_noise, input_shape=(x.shape[1],)))
         model.add(GaussianNoise(0.01, input_shape=(x.shape[1],)))
         model.add(Dense(128, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(128, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(128, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(128, activation='relu'))
+        model.add(Dropout(.01))
         model.add(Dense(y.shape[1], activation='softmax'))
 
         model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
