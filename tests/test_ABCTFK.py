@@ -15,9 +15,11 @@ import pandas
 import numpy
 import joblib
 import shutil
-
-shutil.rmtree('cls')
-shutil.rmtree('par')
+import os
+if os.path.isdir('cls'):
+    shutil.rmtree('cls')
+if os.path.isdir('par'):
+    shutil.rmtree('par')
 
 def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                                   outfolder: str = 'cls'):

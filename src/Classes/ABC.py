@@ -595,7 +595,7 @@ class ABC_TFK_Classification:
         model.add(Dropout(.01))
         model.add(Dense(y.shape[1], activation='softmax'))
 
-        model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
+        model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['categorical_accuracy'])
 
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
