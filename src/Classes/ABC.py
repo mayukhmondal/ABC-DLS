@@ -32,6 +32,7 @@ with warnings.catch_warnings():
     from keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import ModelCheckpoint
+    from tensorflow.keras.callbacks import ReduceLROnPlateau
 
 # activating R
 abc = Misc.importr_tryhard('abc')
@@ -601,8 +602,10 @@ class ABC_TFK_Classification:
         ES = EarlyStopping(monitor='val_loss', patience=100)
         # checkpoint
         CP = ModelCheckpoint('Checkpoint.h5', verbose=1, save_best_only=True)
+        # Reduce learning rate
+        RL = ReduceLROnPlateau(factor=0.5)
 
-        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP], validation_split=.2)
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP, RL], validation_split=.2)
 
         return model
 
