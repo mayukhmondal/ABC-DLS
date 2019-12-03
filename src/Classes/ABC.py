@@ -317,6 +317,7 @@ class ABC_TFK_Classification:
         """
         import os, shutil
         terashuf = os.path.dirname(os.path.abspath(__file__)) + '/shuffle.py'
+        parentfolder = os.getcwd()
         if outfolder != '':
             os.chdir(outfolder)
         Misc.creatingfolders('temp')
@@ -338,7 +339,7 @@ class ABC_TFK_Classification:
             sys.exit(1)
         shutil.rmtree('temp')
         if outfolder != '':
-            os.chdir('../')
+            os.chdir(parentfolder)
         return outfolder + output
 
     @classmethod
@@ -547,6 +548,7 @@ class ABC_TFK_Classification:
             ANNModelCheck = cls.ANNModelCheck
         # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
         # another variable 'folder'
+        parentfolder = os.getcwd()
         if folder != '':
             os.chdir(folder)
         ModelSeparation = ANNModelCheck(x=x_train, y=y_train)
@@ -554,7 +556,7 @@ class ABC_TFK_Classification:
                                  check_point='Checkpoint.h5')
         # same as above to change back to previous stage
         if folder != '':
-            os.chdir('../')
+            os.chdir(parentfolder)
         return ModelSeparation
 
     @classmethod
@@ -1529,6 +1531,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             ANNModelParams = cls.ANNModelParams
         # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
         # another variable 'folder'
+        parentfolder = os.getcwd()
         if folder != '':
             os.chdir(folder)
         ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
@@ -1536,7 +1539,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                  check_point='Checkpoint.h5')
         # same as above to change back to previous stage
         if folder != '':
-            os.chdir('../')
+            os.chdir(parentfolder)
         return ModelParamPrediction
 
     @classmethod
