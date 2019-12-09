@@ -771,6 +771,7 @@ class ABC_TFK_Classification:
         # text wrapping problem in r which cant be solved by options(width=10000) in rpy2. this is abc problem
         import tempfile
         temp_name = next(tempfile._get_candidate_names())
+        robjects.r.options(width=10000)
         robjects.r['sink'](temp_name)
         x = robjects.r['summary'](cvmodsel)
         robjects.r['sink']()
