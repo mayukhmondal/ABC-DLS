@@ -2,29 +2,8 @@
 from tensorflow.python import keras
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.layers import *
-from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping,ModelCheckpoint,ReduceLROnPlateau
 
-class myCallback(Callback):
-    def on_epoch_end(self, epoch, logs={}):
-        if(logs.get('acc')>0.99):
-            print("\nReached 99% accuracy so cancelling training!")
-            self.model.stop_training = True
-
-
-
-def Gaussian_noise(input_layer, sd: float = .01):
-    """
-    Gaussian noise to the input data. Same as Keras.GaussianNoise but it will not only work with training part but
-    will work on test data set and observed data. Thus every time it will run will give slightly different results.
-    Good to produce a distribution from a single observation
-    :param input_layer: tensorflow input layer
-    :param sd: the standard deviation present will be present in the noise random normal distribution
-    :return: will add the noise to the input_layer
-    """
-    import tensorflow as tf
-    noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=sd, dtype=tf.float32)
-    return input_layer + noise
 
 
 def ANNModelCheck(x, y):
@@ -34,10 +13,10 @@ def ANNModelCheck(x, y):
     :param y: the y or model names or classification
     :return: will return the trained model
     """
-    
-    x_0 = Input(shape=(x.shape[1],))
+    x_0 = Input(shape=(x.shape[1],))    
     # Dense
-    den=Lambda(Gaussian_noise)(x_0)
+    den=GaussianNoise(0.05)(x_0)
+    den=ReLU()(den)
     den = Dense(128, activation='relu')(den)
     den = Dense(64, activation='relu')(den)
     den = Dense(32, activation='relu')(den)
@@ -45,7 +24,8 @@ def ANNModelCheck(x, y):
     den=Model(inputs=x_0,outputs=den)
     # CNN
     sfsdim=(11,11,11,1)
-    cnn=Lambda(Gaussian_noise)(x_0)
+    cnn=GaussianNoise(0.05)(x_0)
+    cnn=ReLU()(cnn)
     cnn=Reshape(sfsdim)(cnn)
     cnn=Conv3D(14, (3, 3, 3), activation='relu', padding='same')(cnn)
     cnn=MaxPooling3D((3, 3, 3), padding='same')(cnn)
@@ -57,14 +37,17 @@ def ANNModelCheck(x, y):
     # togehter
     combined=Concatenate()([den.output,cnn.output])
     combined=Dense(16, activation='relu')(combined)
-    combined=Dense(8, activation='relu')(combined)
-    combined=Dense(4, activation='relu')(combined)
+    combined=Dense(8, activation='relu')(combined)    
     combined=Dense(y.shape[1], activation='softmax')(combined)
     model=Model(inputs=x_0,outputs=combined)
-    model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
-    ###adding an early stop so that it does not overfit
-    ES = EarlyStopping(monitor='val_loss', patience=100)
-    ####
-    model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.2)
+    
+    model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['categorical_accuracy'])
+    # adding an early stop so that it does not overfit
+    ES = EarlyStopping(monitor='val_loss', patience=20)
+    # checkpoint
+    CP = ModelCheckpoint('Checkpoint.h5', verbose=1, save_best_only=True)
+    # Reduce learning rate
+    RL = ReduceLROnPlateau(factor=0.2,patience=5)
 
+    model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP, RL], validation_split=.2)
     return model
