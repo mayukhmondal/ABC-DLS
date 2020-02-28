@@ -6,7 +6,7 @@ from tensorflow.keras.callbacks import EarlyStopping,ModelCheckpoint,ReduceLROnP
 
 
 
-def ANNModelCheck(x, y):
+def ANNModelParams(x, y):
     """
     The Tensor flow for model check
     :param x: the x or summary statistics
