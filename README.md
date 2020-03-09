@@ -42,5 +42,7 @@ python src/Run_ParamsEstimation.py --help
 For Model selection and for parameters estimation respectively. The first time you run it will also try to install abc from r package manager (automatically).   
 Please see [examples/Examples.md](examples/Examples.md) for a detailed guide how to use the codes.
 Right now this code are written and checked in linux system. I can not guarantee it will work on other system but you are welcome to try. 
+### Installation Issues 
+In case you try to install it to already existed conda environment which has already R (r-base), it can conflict with the rpy2 when it tries to automatically download abc package from R saying abc package do not exist. In that case create a new environement. 
 ## Contact 
 The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact <mondal.mayukh@gmail.com>
