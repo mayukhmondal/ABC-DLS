@@ -29,7 +29,7 @@ with warnings.catch_warnings():
     from tensorflow import keras
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import Dense, GaussianNoise, Dropout
-    from keras.utils import HDF5Matrix
+    from tensorflow.keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import ModelCheckpoint
     from tensorflow.keras.callbacks import ReduceLROnPlateau
