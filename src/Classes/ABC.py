@@ -289,18 +289,33 @@ class ABC_TFK_Classification:
         if filename[-2:] == 'gz':
             command = Misc.joinginglistbyspecificstring(
                 ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, ">>",
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows,'|grep -v ",,"', ">>",
                  outfolder + "Comparison.csv"])
         else:
             command = Misc.joinginglistbyspecificstring(
                 ["cat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, ">>",
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows,'|grep -v ",,"', ">>",
                  outfolder + "Comparison.csv"])
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if stderr:
             print(stderr)
             sys.exit(1)
+        ##checking for nan in csvs
+        if filename[-2:] == 'gz':
+            nancheckcommand = Misc.joinginglistbyspecificstring(['zcat ', filename, '| grep ",,"|wc -l '])
+        else:
+            nancheckcommand = Misc.joinginglistbyspecificstring(['cat ', filename, '| grep ",,"|wc -l '])
+        p = subprocess.Popen(nancheckcommand, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if stderr:
+            print(stderr)
+            sys.exit(1)
+        if int(stdout) > 0:
+            print(filename, "has nan elements in ", int(stdout),
+                  "rows. They are automatically removed. ", "Small number of removed is ok.",
+                  "But if they are huge, they can create problem in the downstream as the number of models are not equal")
+
         return None
 
     @classmethod
