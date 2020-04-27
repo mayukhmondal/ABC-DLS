@@ -1387,14 +1387,14 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         if filename[-3:] == '.gz':
             paramcommand = Misc.joinginglistbyspecificstring(
-                ["zcat", filename, '|', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
+                ["zcat", filename, '|', 'grep -v ",," |','cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
             sscommand = Misc.joinginglistbyspecificstring(
-                ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","', ' > ', ssfile])
+                ["zcat", filename, '|', 'grep -v ",," |','cut -f' + str(params_number + 1) + '-', '-d ","', ' > ', ssfile])
         else:
             paramcommand = Misc.joinginglistbyspecificstring(
-                ["cat", filename, '|', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
+                ["cat", filename, '|','grep -v ",," |', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
             sscommand = Misc.joinginglistbyspecificstring(
-                ["cat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","', ' > ', ssfile])
+                ["cat", filename, '|', 'grep -v ",," |','cut -f' + str(params_number + 1) + '-', '-d ","', ' > ', ssfile])
         os.system(paramcommand)
         os.system(sscommand)
 
