@@ -289,12 +289,12 @@ class ABC_TFK_Classification:
         if filename[-2:] == 'gz':
             command = Misc.joinginglistbyspecificstring(
                 ["zcat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows,'|grep -v ",,"', ">>",
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, '|grep -v ",,"', ">>",
                  outfolder + "Comparison.csv"])
         else:
             command = Misc.joinginglistbyspecificstring(
                 ["cat", filename, '|', 'cut -f' + str(params_number + 1) + '-', '-d ","',
-                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows,'|grep -v ",,"', ">>",
+                 '''|awk '$0="''' + modelname + ""","$0'""", "|tail -n+2", "|head -n", nrows, '|grep -v ",,"', ">>",
                  outfolder + "Comparison.csv"])
         p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
@@ -1241,6 +1241,9 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         as documented in the r.abc
     :param demography:  custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
+    :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
     :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
         later by r
     :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by MinMaxscaler.
@@ -1254,7 +1257,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
+                demography: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
                 scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         This will call the wrapper function
@@ -1269,6 +1272,9 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             as documented in the r.abc
         :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
             ANNModelCheck
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
@@ -1280,13 +1286,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return:  will not return anything but will plot and print the parameters
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           demography=demography, csvout=csvout, scaling_x=scaling_x, scaling_y=scaling_y,
-                           cvrepeats=cvrepeats, folder=folder)
+                           demography=demography, together=together, csvout=csvout, scaling_x=scaling_x,
+                           scaling_y=scaling_y, cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, csvout: bool = False, scaling_x: bool = False,
+                demography: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
                 scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
@@ -1323,7 +1329,12 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                                                                               scaling_x=scaling_x,
                                                                                               scaling_y=scaling_y,
                                                                                               folder=folder)
-        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+        if together:
+            ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+                                                     demography=demography, folder=folder)
+        else:
+            ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
+                                                     folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
                                paramfile='params_header.csv', method=method, tol=tol, csvout=csvout,
@@ -1402,14 +1413,16 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         if filename[-3:] == '.gz':
             paramcommand = Misc.joinginglistbyspecificstring(
-                ["zcat", filename, '|', 'grep -v ",," |','cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
+                ["zcat", filename, '|', 'grep -v ",," |', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
             sscommand = Misc.joinginglistbyspecificstring(
-                ["zcat", filename, '|', 'grep -v ",," |','cut -f' + str(params_number + 1) + '-', '-d ","', ' > ', ssfile])
+                ["zcat", filename, '|', 'grep -v ",," |', 'cut -f' + str(params_number + 1) + '-', '-d ","', ' > ',
+                 ssfile])
         else:
             paramcommand = Misc.joinginglistbyspecificstring(
-                ["cat", filename, '|','grep -v ",," |', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
+                ["cat", filename, '|', 'grep -v ",," |', 'cut -f-' + str(params_number), '-d ","', ' > ', paramfile])
             sscommand = Misc.joinginglistbyspecificstring(
-                ["cat", filename, '|', 'grep -v ",," |','cut -f' + str(params_number + 1) + '-', '-d ","', ' > ', ssfile])
+                ["cat", filename, '|', 'grep -v ",," |', 'cut -f' + str(params_number + 1) + '-', '-d ","', ' > ',
+                 ssfile])
         os.system(paramcommand)
         os.system(sscommand)
 
@@ -1521,7 +1534,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         return x_train, x_test, scale_x, y_train, y_test, scale_y
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix, tuple],
+                      y_train: Union[numpy.ndarray, HDF5Matrix, tuple],
                       demography: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
         This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need trainging
@@ -1915,7 +1929,8 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
     :return: will not return anything but save the keras model
     """
 
-    def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '') -> None:
+    def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '',
+                together: bool = False) -> None:
         """
         This will call the wrapper function
 
@@ -1923,12 +1938,16 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but save the keras model
         """
-        return cls.wrapper(test_rows=test_rows, demography=demography, folder=folder)
+        return cls.wrapper(test_rows=test_rows, demography=demography, folder=folder,together=together)
 
     @classmethod
-    def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '') -> None:
+    def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '',
+                together: bool = False) -> None:
         """
         This is the wrapper. Will write later
 
@@ -1936,12 +1955,24 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         :param demography: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but save the keras model
         """
         folder = Misc.creatingfolders(folder)
         y_train = ABC_TFK_Classification_Train.reading_train(file=folder + 'y.h5', test_rows=test_rows)
         x_train = ABC_TFK_Classification_Train.reading_train(file=folder + 'x.h5', test_rows=test_rows)
-        ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+        if together:
+            y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows, folder=folder)
+            x_test = ABC_TFK_Classification_CV.reading_x_test(test_rows=test_rows, folder=folder)
+
+            ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+                                                     demography=demography, folder=folder)
+
+        else:
+            ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
+                                                     folder=folder)
 
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):

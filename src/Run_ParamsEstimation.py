@@ -32,6 +32,11 @@ sp.add_argument('--ssfile', help="The summary statistics file from real data", r
 sp.add_argument('--demography',
                 help='The demography.py file full path. If this is given it will assume it has better function cater '
                      'to your own demography. The def ANNModelCheck should be inside')
+sp.add_argument('--together',
+                help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
+                     " validation test set. need a specific format for demography.py. Look at Extra/Dynamic.py. Should "
+                     "not be used for big test data as it loads in the memory",
+                action="store_true")
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "loclinear", and "neuralnet". default'
                      ' is "neuralnet" ',
@@ -73,6 +78,11 @@ sp.add_argument('--demography',
 sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
+sp.add_argument('--together',
+                help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
+                     " validation test set. need a specific format for demography.py. Look at Extra/Dynamic.py. Should "
+                     "not be used for big test data as it loads in the memory",
+                action="store_true")
 
 sp = subparsers.add_parser('CV',
                            help='After the training only to get the result of cross validation test. Good for '
@@ -136,7 +146,7 @@ if args.cmd == 'All':
         print('test_size:', args.test_size)
         sys.exit(1)
     # running
-    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography,
+    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography,together=args.together,
                        method=args.method, tol=args.tolerance, test_size=args.test_size,
                        chunksize=args.chunksize,
                        csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y, cvrepeats=args.cvrepeats,
@@ -159,7 +169,8 @@ elif args.cmd == 'Pre_train':
     ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scaling_x=scaling_x,
                                 scaling_y=scaling_y, folder=args.folder)
 elif args.cmd == 'Train':
-    ABC.ABC_TFK_Params_Train(demography=args.demography, test_rows=args.test_size, folder=args.folder)
+    ABC.ABC_TFK_Params_Train(demography=args.demography, test_rows=args.test_size, folder=args.folder,
+                             together=args.together)
 elif args.cmd == 'CV':
     if args.cvrepeats <= args.test_size:
         ABC.ABC_TFK_Params_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,

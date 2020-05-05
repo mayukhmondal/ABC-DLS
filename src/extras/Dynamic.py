@@ -1,7 +1,7 @@
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-import numpy
+import numpy,os
 
 def ANNModelParams(x, y):
     """
@@ -11,8 +11,11 @@ def ANNModelParams(x, y):
     :return: will return the trained model
     """
     ####
+
     x_train, x_test = x
     y_train, y_test = y
+    print(x_train.shape)
+    print(y_test.shape)
 
     model = Sequential()
     model.add(GaussianNoise(0.01, input_shape=(x_train.shape[1],)))
