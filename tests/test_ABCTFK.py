@@ -11,7 +11,7 @@ from pathlib import Path
 from src.Classes import ABC
 from src.Classes import Misc
 from collections import Counter
-from keras.utils import HDF5Matrix
+from tensorflow.keras.utils import HDF5Matrix
 import pandas
 import numpy
 import joblib
@@ -181,26 +181,23 @@ def test_Params_After_train(test_size: int = 5, tol: float = 0.5, method: str = 
     files = ['par/paramposterior.pdf','par/params.csv.gz','par/ss_predicted.csv.gz','par/ss_target.csv.gz']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_After_Train'
-#
-# def test_Params_Train_together(demography: str = '../src/extras/Dynamic.py', test_size: int = 1000, folder: str = 'par'):
-#
-#     #main check
-#     if os.path.isdir('par'):
-#         shutil.rmtree('par')
-#     from tensorflow.keras import backend
-#     backend.clear_session()
-#     ABC.ABC_TFK_Params_PreTrain(info='Model2.info', chunksize=100,
-#                                 scaling_x=True,
-#                                 scaling_y=True, folder=folder)
-#     y_train = ABC.ABC_TFK_Classification_Train.reading_train(file=folder + '/y.h5', test_rows=test_size)
-#     assert 1000==y_train.shape[0]
-#
-#     ABC.ABC_TFK_Params_Train(demography=demography, test_rows=test_size,folder=folder,together=True)
-#
-#     # file checks
-#     files = ['par/ModelParamPrediction.h5']
-#     not_exist = [file for file in files if not Path(file).exists()]
-#     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train_together'
+if os.path.isdir('par2'):
+    shutil.rmtree('par2')
+def test_Params_Train_together(demography: str = '../src/extras/Dynamic.py', test_size: int = 1000, folder: str = 'par2'):
+
+    #main check
+    ABC.ABC_TFK_Params_PreTrain(info='Model2.info', chunksize=100,
+                                scaling_x=True,
+                                scaling_y=True, folder=folder)
+    y_train = ABC.ABC_TFK_Classification_Train.reading_train(file=folder + '/y.h5', test_rows=test_size)
+    assert 1000==y_train.shape[0]
+
+    ABC.ABC_TFK_Params_Train(demography=demography, test_rows=test_size,folder=folder,together=True)
+
+    # file checks
+    files = ['par2/ModelParamPrediction.h5']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train_together'
 
 # if os.path.isdir('cls'):
 #     shutil.rmtree('cls')

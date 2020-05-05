@@ -966,7 +966,7 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
 
     @classmethod
-    def reading_train(cls, file: str, test_rows: int = int(1e4)) -> HDF5Matrix:
+    def reading_train(cls,file: str, test_rows: int = int(1e4)) -> HDF5Matrix:
         """
         reading the file for y.h5 and then return the y_train using hdf5matrix
 
