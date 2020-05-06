@@ -427,7 +427,7 @@ class ABC_TFK_Classification:
         os.system(models_command)
         model_index = pandas.read_csv(outfolder + 'models.csv')
         y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
-        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict))
+        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict),'uint8')
         Misc.numpy2hdf5(y, yfile)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
         Misc.removefiles([outfolder + 'ss.csv', outfolder + 'models.csv'])
