@@ -29,11 +29,10 @@ with warnings.catch_warnings():
     from tensorflow import keras
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import Dense, GaussianNoise, Dropout
-    from tensorflow.keras.utils import HDF5Matrix
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import ModelCheckpoint
     from tensorflow.keras.callbacks import ReduceLROnPlateau
-
+    from tensorflow.keras.utils import HDF5Matrix
 # activating R
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
@@ -427,7 +426,7 @@ class ABC_TFK_Classification:
         os.system(models_command)
         model_index = pandas.read_csv(outfolder + 'models.csv')
         y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
-        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict),'uint8')
+        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict), 'uint8')
         Misc.numpy2hdf5(y, yfile)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
         Misc.removefiles([outfolder + 'ss.csv', outfolder + 'models.csv'])
@@ -520,20 +519,25 @@ class ABC_TFK_Classification:
         return scale
 
     @classmethod
-    def train_test_split_hdf5(cls, path: str, dataset: str = 'mydata', test_rows: int = int(1e4)) -> Tuple[
+    def train_test_split_hdf5(cls, file: str, dataset: str = 'mydata', test_rows: int = int(1e4)) -> Tuple[
         HDF5Matrix, HDF5Matrix]:
         """
         Special way to train test split for hdf5. will take the first n-test_rows for training and rest for test
 
-        :param path: the path of .h5 file
+        :param file: the path of .h5 file
         :param dataset: the name of the dataset of h5py file. default 'mydata'
         :param test_rows: the number of rows for test every thing will be left for training. default is 10k
         :return: will return the test, train split for hdf5
         """
-        rows = HDF5Matrix(path, dataset).shape[0]
-        train = HDF5Matrix(path, dataset, start=0, end=rows - test_rows)
-        test = HDF5Matrix(path, dataset, start=rows - test_rows, end=rows)
-        return train, test
+        if os.path.isfile(file):
+            with h5py.File(file, 'r') as f:
+                rows = f[dataset].shape[0]
+                train = f[dataset][:rows - test_rows]
+                test = f[dataset][rows - test_rows: rows]
+                return train, test
+        else:
+            print('Could not find file ', file)
+            sys.exit(1)
 
     @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
@@ -961,25 +965,9 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
         folder = Misc.creatingfolders(folder)
-        y_train = cls.reading_train(file=folder + 'y.h5', test_rows=test_rows)
-        x_train = cls.reading_train(file=folder + 'x.h5', test_rows=test_rows)
+        y_train, _ = cls.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
+        x_train, _ = cls.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
         ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
-
-    @classmethod
-    def reading_train(cls,file: str, test_rows: int = int(1e4)) -> HDF5Matrix:
-        """
-        reading the file for y.h5 and then return the y_train using hdf5matrix
-
-        :param test_rows: the number of rows kept for test data set. it will remove those lines from the end
-        :return: return y_train hdf5 format
-        """
-        if os.path.isfile(file):
-            rows = HDF5Matrix(file, 'mydata').shape[0]
-            train = HDF5Matrix(file, 'mydata', start=0, end=rows - test_rows)
-        else:
-            print('Could not find file ', file)
-            sys.exit(1)
-        return train
 
 
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
@@ -1096,10 +1084,9 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :return: return y_test hdf5 format
         """
         if os.path.isfile(folder + 'y_test.h5'):
-            y_test = HDF5Matrix(folder + 'y_test.h5', 'mydata')
+            y_test, _ = cls.train_test_split_hdf5(file=folder + 'y_test.h5', dataset='mydata', test_rows=0)
         elif os.path.isfile(folder + 'y.h5'):
-            rows = HDF5Matrix(folder + 'y.h5', 'mydata').shape[0]
-            y_test = HDF5Matrix(folder + 'y.h5', 'mydata', start=rows - test_rows, end=rows)
+            _, y_test = cls.train_test_split_hdf5(file=folder + 'y.h5', dataset='mydata', test_rows=test_rows)
         else:
             print('Could not file y.h5 or y_test.h5')
             sys.exit(1)
@@ -1114,13 +1101,10 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :param folder: to define the output folder. default is '' meaning current folder
         :return: return x_test hdf5 format
         """
-
         if os.path.isfile(folder + 'x_test.h5'):
-            x_test = HDF5Matrix(folder + 'x_test.h5', 'mydata')
+            x_test, _ = cls.train_test_split_hdf5(file=folder + 'x_test.h5', dataset='mydata', test_rows=0)
         elif os.path.isfile(folder + 'x.h5'):
-
-            rows = HDF5Matrix(folder + 'x.h5', 'mydata').shape[0]
-            x_test = HDF5Matrix(folder + 'x.h5', 'mydata', start=rows - test_rows, end=rows)
+            _, x_test = cls.train_test_split_hdf5(file=folder + 'x.h5', dataset='mydata', test_rows=test_rows)
         else:
             print('Could not file x.h5 or x_test.h5')
             sys.exit(1)
@@ -1943,7 +1927,7 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
             should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but save the keras model
         """
-        return cls.wrapper(test_rows=test_rows, demography=demography, folder=folder,together=together)
+        return cls.wrapper(test_rows=test_rows, demography=demography, folder=folder, together=together)
 
     @classmethod
     def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '',
@@ -1961,8 +1945,8 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         :return: will not return anything but save the keras model
         """
         folder = Misc.creatingfolders(folder)
-        y_train = ABC_TFK_Classification_Train.reading_train(file=folder + 'y.h5', test_rows=test_rows)
-        x_train = ABC_TFK_Classification_Train.reading_train(file=folder + 'x.h5', test_rows=test_rows)
+        y_train, _ = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
+        x_train, _ = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
         if together:
             y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows, folder=folder)
             x_test = ABC_TFK_Classification_CV.reading_x_test(test_rows=test_rows, folder=folder)

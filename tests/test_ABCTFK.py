@@ -189,8 +189,8 @@ def test_Params_Train_together(demography: str = '../src/extras/Dynamic.py', tes
     ABC.ABC_TFK_Params_PreTrain(info='Model.info', chunksize=1,
                                 scaling_x=True,
                                 scaling_y=True, folder=folder)
-    y_train = ABC.ABC_TFK_Classification_Train.reading_train(file=folder + '/y.h5', test_rows=test_size)
-    # assert 1000==y_train.shape[0]
+    y_train,_ = ABC.ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
+    assert 4==y_train.shape[0]
 
     ABC.ABC_TFK_Params_Train(demography=demography, test_rows=test_size,folder=folder,together=True)
 
