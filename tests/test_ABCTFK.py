@@ -138,6 +138,20 @@ def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, metho
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
 
+def test_Classification_Train_together(demography: str = '../src/extras/ModelClassTogether.py', test_size: int = 3, folder: str = 'cls'):
+
+    #main check
+    ABC.ABC_TFK_Classification_PreTrain(info='Model.info', chunksize=1,scale=True, folder=folder)
+    y_train,_ = ABC.ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
+    assert 12==y_train.shape[0]
+
+    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size,folder=folder,together=True)
+
+    # file checks
+    files = ['cls/ModelClassification.h5']
+    not_exist = [file for file in files if not Path(file).exists()]
+    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train_together'
+
 
 def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                           folder: str = 'par'):

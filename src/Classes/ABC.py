@@ -71,8 +71,8 @@ class ABC_TFK_Classification:
     folder: str = ''
 
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
-                tolerance: float = .001, test_size: int = int(1e4),
-                chunksize: Optional[int] = int(1e4), scale: bool = False, csvout: bool = False, cvrepeats: int = 100,
+                tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
+                scale: bool = False, csvout: bool = False, cvrepeats: int = 100, together: bool = False,
                 folder: str = '') -> None:
         """
         This will automatically call the wrapper function and to do the necessary work.
@@ -88,6 +88,9 @@ class ABC_TFK_Classification:
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
             scaling will only happen on the ss.
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
@@ -95,14 +98,14 @@ class ABC_TFK_Classification:
         :return: will not return anything but will plot and print the power
         """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
-                           test_size=test_size, chunksize=chunksize, scale=scale, csvout=csvout, cvrepeats=cvrepeats,
-                           folder=folder)
+                           test_size=test_size, chunksize=chunksize, scale=scale, together=together, csvout=csvout,
+                           cvrepeats=cvrepeats, folder=folder)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
-                tolerance: float = .005, test_size: int = int(1e4),
-                chunksize: Optional[int] = None, scale: bool = False, csvout: bool = False, cvrepeats: int = 100,
-                folder: str = '') -> None:
+                tolerance: float = .005, test_size: int = int(1e4), chunksize: Optional[int] = None,
+                scale: bool = False,
+                together: bool = False, csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
         the total wrapper of the classification method. with given underlying models it will compare with real data and
         will predict how much it sure about which model can bet predict the real data.
@@ -124,6 +127,9 @@ class ABC_TFK_Classification:
         :param chunksize:  the number of rows accessed at a time.
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
             The scaling will only happen on the ss.
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
@@ -134,7 +140,12 @@ class ABC_TFK_Classification:
         x_train, x_test, y_train, y_test, scale_x, y_cat_dict = cls.wrapper_pre_train(info=info, test_size=test_size,
                                                                                       chunksize=chunksize, scale=scale,
                                                                                       folder=folder)
-        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+        if together:
+            ModelSeparation = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+                                                demography=demography, folder=folder)
+        else:
+            ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
                                 csvout=csvout, cvrepeats=cvrepeats, folder=folder)
@@ -938,10 +949,13 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     :param demography: custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
     :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+    :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
     :return: will not return anything but will train and save the file ModelClassification.h5
     """
 
-    def __new__(cls, demography=None, test_rows=int(1e4), folder: str = ''):
+    def __new__(cls, demography=None, test_rows=int(1e4), folder: str = '', together: bool = False):
         """
         This will call the wrapper function
 
@@ -949,12 +963,16 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
             ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :param folder: to define the output folder. default is '' meaning current folder
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
-        return cls.wrapper(demography=demography, test_rows=test_rows, folder=folder)
+        return cls.wrapper(demography=demography, test_rows=test_rows, folder=folder,together=together)
 
     @classmethod
-    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4), folder: str = '') -> None:
+    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4), folder: str = '',
+                together: bool = False) -> None:
         """
         wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
         y.h5 present.
@@ -962,12 +980,20 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         :param demography: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+        :param together: in case you want to send both train and test together (for validation data set). important if
+            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
         folder = Misc.creatingfolders(folder)
-        y_train, _ = cls.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
-        x_train, _ = cls.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
-        ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+        y_train, y_test = cls.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
+        x_train, x_test = cls.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
+        if together:
+            cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+                              demography=demography, folder=folder)
+        else:
+
+            cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
 
 
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
@@ -1947,17 +1973,15 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         :return: will not return anything but save the keras model
         """
         folder = Misc.creatingfolders(folder)
-        y_train, _ = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
-        x_train, _ = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
+        y_train, y_test = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
+        x_train, x_test= ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
         if together:
-            y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows, folder=folder)
-            x_test = ABC_TFK_Classification_CV.reading_x_test(test_rows=test_rows, folder=folder)
 
-            ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+            cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
                                                      demography=demography, folder=folder)
 
         else:
-            ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
+            cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
                                                      folder=folder)
 
 

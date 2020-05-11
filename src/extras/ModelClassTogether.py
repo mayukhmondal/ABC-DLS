@@ -1,9 +1,10 @@
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-import numpy,os
+import numpy
+from tensorflow import keras
 
-def ANNModelParams(x, y):
+def ANNModelCheck(x, y):
     """
     The Tensor flow for model check
     :param x: the x or summary statistics
@@ -11,6 +12,7 @@ def ANNModelParams(x, y):
     :return: will return the trained model
     """
     ####
+
     x_train, x_test = x
     y_train, y_test = y
 
@@ -24,8 +26,9 @@ def ANNModelParams(x, y):
     model.add(Dropout(.01))
     model.add(Dense(32, activation='relu'))
     model.add(Dropout(.01))
-    model.add(Dense(y_train.shape[1]))
-    model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+    model.add(Dense(y_train.shape[1], activation='softmax'))
+
+    model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
     # adding an early stop so that it does not overfit
     ES = EarlyStopping(monitor='val_loss', patience=100)
     # checkpoint
