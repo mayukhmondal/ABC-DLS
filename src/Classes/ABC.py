@@ -1296,6 +1296,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             as documented in the r.abc
         :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
             ANNModelCheck
+        :param togehter: If you want to send both train and test together in tfk model (train). Useful for validation
+            test set in early stopping . need a specific format for demography.py. Look at Extra/Dynamic.py
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
