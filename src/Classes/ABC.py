@@ -354,7 +354,7 @@ class ABC_TFK_Classification:
 
         else:
 
-            command = Misc.joinginglistbyspecificstring(['python ', terashuf, inputcsv, ">", output])
+            command = Misc.joinginglistbyspecificstring(['cat',inputcsv,'|','python ', terashuf,  ">", output])
 
         p = subprocess.Popen([command], executable='/bin/bash', stdout=subprocess.PIPE, shell=True,
                              stderr=subprocess.PIPE)
