@@ -354,7 +354,7 @@ class ABC_TFK_Classification:
 
         else:
 
-            command = Misc.joinginglistbyspecificstring(['cat',inputcsv,'|','python ', terashuf,  ">", output])
+            command = Misc.joinginglistbyspecificstring(['cat', inputcsv, '|', 'python ', terashuf, ">", output])
 
         p = subprocess.Popen([command], executable='/bin/bash', stdout=subprocess.PIPE, shell=True,
                              stderr=subprocess.PIPE)
@@ -715,10 +715,8 @@ class ABC_TFK_Classification:
             print(indexnn.value_counts())
             sys.exit(1)
         robjects.r['pdf'](folder + "NN.pdf")
-        cls.plot_power_of_ss(ss=ssnn.iloc[:, 1:], index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
-        cls.model_selection(target=predictednn.iloc[:, 1:], index=ssnn.index, ss=ssnn.iloc[:, 1:], method=method,
-                            tol=tolerance)
-
+        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
+        cls.model_selection(target=predictednn, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
         cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance,
                      repeats=cvrepeats)
         robjects.r['dev.off']()
@@ -846,19 +844,11 @@ class ABC_TFK_Classification:
         :param repeats: the number of nb.replicates to use to calculate the null
         :return: will not return anything. rather call googness_fit to plot stuff and print the summary of gfit
         """
-        best_index = int(observed.idxmax(axis=1).values)
+        # best_index = int(observed.idxmax(axis=1).values)
         for key in y_cat_dict:
             modelindex = ss.reset_index(drop=True).index[pandas.Series(ss.index) == y_cat_dict[key]].values
             ss_sub = ss.iloc[modelindex]
-            if best_index == key:
-                dropping_columns = [keyother for keyother in y_cat_dict.keys() if keyother not in [key]]
-                if len(dropping_columns) > 1:
-                    dropping_columns = dropping_columns[1:]
-            else:
-                dropping_columns = [keyother for keyother in y_cat_dict.keys() if keyother not in [key, best_index]]
-            cls.goodness_fit(target=observed.drop(dropping_columns, axis=1), ss=ss_sub.drop(dropping_columns, axis=1),
-                             name=y_cat_dict[key], extra=extra,
-                             tol=tol, repeats=repeats)
+            cls.goodness_fit(target=observed, ss=ss_sub, name=y_cat_dict[key], extra=extra, tol=tol, repeats=repeats)
 
     @classmethod
     def goodness_fit(cls, target: pandas.DataFrame, ss: pandas.DataFrame, name: str, tol: float = .005,
@@ -968,7 +958,7 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
             should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
-        return cls.wrapper(demography=demography, test_rows=test_rows, folder=folder,together=together)
+        return cls.wrapper(demography=demography, test_rows=test_rows, folder=folder, together=together)
 
     @classmethod
     def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4), folder: str = '',
@@ -1974,15 +1964,15 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         """
         folder = Misc.creatingfolders(folder)
         y_train, y_test = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
-        x_train, x_test= ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
+        x_train, x_test = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
         if together:
 
             cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                                                     demography=demography, folder=folder)
+                              demography=demography, folder=folder)
 
         else:
             cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
-                                                     folder=folder)
+                              folder=folder)
 
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
