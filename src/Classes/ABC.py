@@ -795,6 +795,13 @@ class ABC_TFK_Classification:
         :return: will plot it the folder to see the confusion matrix. also print out the summary of the model to see the
             confusion matrix in text format
         """
+        if method != 'rejection':
+            print(
+                "Adding small noises if method rejection was not used. As 0 standard deviation in columns can create "
+                "error in ABC_CV")
+            noise = numpy.random.normal(0, 1e-4, ss.shape)
+            ss = (ss + noise).clip(0)
+
         cvmodsel = abc.cv4postpr(index=index, sumstat=ss, nval=repeats, tol=tol, method=method)
         # text wrapping problem in r which cant be solved by options(width=10000) in rpy2. this is abc problem
         import tempfile
