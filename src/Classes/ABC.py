@@ -708,7 +708,8 @@ class ABC_TFK_Classification:
 
         print('Predicted by NN')
         print(sorted(y_cat_dict.items()))
-        print(predictednn)
+        with numpy.printoptions(threshold=numpy.inf):
+            print(predictednn)
         if indexnn.value_counts().min() < cvrepeats:
             print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
                   'lesser number.')
