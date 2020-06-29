@@ -705,7 +705,10 @@ class ABC_TFK_Classification:
                 predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         ssnn.index = indexnn
-
+        # prepare for R as it do not like very small numbers
+        ssnn = ssnn.round(5)
+        predictednn = predictednn.round(5)
+        # abc and plot by r
         print('Predicted by NN')
         print(sorted(y_cat_dict.items()))
         with numpy.printoptions(threshold=numpy.inf):
