@@ -853,7 +853,9 @@ class ABC_TFK_Classification:
         :param repeats: the number of nb.replicates to use to calculate the null
         :return: will not return anything. rather call googness_fit to plot stuff and print the summary of gfit
         """
-        # best_index = int(observed.idxmax(axis=1).values)
+        # abc complains if there is no std in the data columns (ss)
+        noise = numpy.random.normal(0, 1e-4, ss.shape)
+        ss = (ss + noise).clip(0)
         for key in y_cat_dict:
             modelindex = ss.reset_index(drop=True).index[pandas.Series(ss.index) == y_cat_dict[key]].values
             ss_sub = ss.iloc[modelindex]
