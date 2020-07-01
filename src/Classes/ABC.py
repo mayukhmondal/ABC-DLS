@@ -835,6 +835,9 @@ class ABC_TFK_Classification:
          etc. as docuemented in the r.abc
         :return: will not return anything but will print summary of model selection
         """
+        if method != 'rejection':
+            noise = numpy.random.normal(0, 1e-4, ss.shape)
+            ss = (ss + noise).clip(0)
         modsel = abc.postpr(target=target, index=index, sumstat=ss, tol=tol, method=method)
         cls.r_summary(modsel)
         return None
