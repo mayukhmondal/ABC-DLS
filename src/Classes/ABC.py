@@ -2313,9 +2313,10 @@ class ABC_TFK_NS(ABC_TFK_Params):
         newrange.to_csv('Newrange.csv', header=False)
         #
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
-        print(newrange.max-newrange.min)
-        print(params.max()-params.min())
-        newrange['imp']=(newrange.max-newrange.min)/(params.max()-params.min())
+        oldrange=pandas.concat([params.min(),params.max()],axis=1)
+        oldrange.column=['min','max']
+        print(oldrange)
+        newrange['imp']=(newrange['max']-newrange['min'])/(oldrange['max']-oldrange['min'])
 
         linenumbers = cls.narrowing_params(params=params, min=min, max=max)
         inputfiles, _, _ = cls.read_info(info=info)
