@@ -2183,3 +2183,282 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, ssfile=ssfile, x_test=x_test, y_test=y_test,
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
                                csvout=csvout, cvrepeats=cvrepeats, folder=folder)
+
+class ABC_TFK_NS(ABC_TFK_Params):
+
+    @classmethod
+    def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
+                tol: float = .005, method: str = 'rejection',demography: Optional[str] = None,  scaling_x: bool = False,
+                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+        """
+        the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
+        real data and will predict which parameter best predict the real data.
+        wrapper_pretrain(Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5
+        ;else preparingdata->Misc.removefiles) ->wrapper_train(Misc.loading_def_4m_file -> def ANNModelCheck)->
+        wrapper_after_train(ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->
+        cls.plot_param_cv_error->cls.abc_params-> Misc.removefiles->cls.csvout)
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only the first line will be used
+        :param ssfile: the summary statistic on real data set. should be csv format
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
+            ANNModelCheck
+        :param togehter: If you want to send both train and test together in tfk model (train). Useful for validation
+            test set in early stopping . need a specific format for demography.py. Look at Extra/Dynamic.py
+        :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
+        :return:  will not return anything but will plot and print the parameters
+        """
+        folder = Misc.creatingfolders(folder)
+        x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
+                                                                                              chunksize=chunksize,
+                                                                                              test_size=test_size,
+                                                                                              scaling_x=scaling_x,
+                                                                                              scaling_y=scaling_y,
+                                                                                              folder=folder)
+
+        ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+                                                 demography=demography, folder=folder)
+
+        return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
+                               ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,info=info,
+                               paramfile='params_header.csv', method=method, tol=tol, folder=folder)
+
+    @classmethod
+    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
+                       y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+        """
+        A basic model for ANN to calculate parameters
+
+        :param x:  the x or summary statistics. can be numpy array or hdf5.
+        :param y: the parameters which produced those ss
+        :return: will return the trained model
+        """
+        x_train, x_test = x
+        y_train, y_test = y
+
+        model = Sequential()
+        model.add(GaussianNoise(0.05, input_shape=(x_train.shape[1],)))
+        model.add(Dense(256, activation='relu'))
+        model.add(Dense(128, activation='relu'))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(32, activation='relu'))
+        model.add(Dense(y_train.shape[1], activation='softmax'))
+
+        model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+        # adding an early stop so that it does not overfit
+        ES = EarlyStopping(monitor='val_loss', patience=100)
+        # checkpoint
+        CP = ModelCheckpoint('Checkpoint.h5', verbose=0, save_best_only=True)
+        # Reduce learning rate
+        RL = ReduceLROnPlateau(factor=0.2)
+
+        model.fit(x_train, y_train, epochs=2, verbose=0, shuffle="batch", callbacks=[ES, CP, RL],
+                  validation_data=(numpy.array(x_test), numpy.array(y_test)))
+
+        return model
+
+    @classmethod
+    def wrapper_aftertrain(cls, info: str,ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+                           y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
+                           scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
+                           paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
+                           folder: str = '') -> None:
+        """
+        The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
+        to see the power and then use a real data set to show what most likely parameters can create the real data.
+        it will use abc to give the power or standard deviation of the parameters that is predicted by nn to know how
+        much we are sure about the results. mainly it will do two parts of abc. one cv error and parameter estimation
+        ModelParamPrediction.evaluate-> cls.read_ss_2_series-> cls.preparing_for_abc->cls.plot_param_cv_error->
+        cls.abc_params-> Misc.removefiles->cls.csvout
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only the first line will be used
+        :param ModelParamPrediction: The fitted keras model
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the test part of y aka parameter dataset
+        :param ssfile: the real ss file path
+        :param scale_x: the scale of ss if exist
+        :param scale_y: the scale of parameters if exist
+        :param paramfile: the path of paramter header file. default is 'params_header.csv'
+        :param method: the method to be used in r_abc. default is rejection
+        :param tol: the tolerance level to be used in r_abc. default is .005
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param cvrepeats: the number of repeats will be used for CV calculations
+        :param folder: to define the output folder. default is '' meaning current folder
+        :return: will not return anything but print out the result and save files for plot
+        """
+
+        params_names = pandas.read_csv(folder + paramfile).columns
+        ss = cls.read_ss_2_series(file=ssfile)
+
+        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
+                                                                                 scale_x, scale_y, params_names, ss)
+        min, max = cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,method=method)
+        newrange=pandas.concat([min, max],axis=1)
+        newrange.index=params_names
+        newrange.columns=['min','max']
+        newrange.to_csv('Newrange.csv', header=False)
+        #
+        params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
+        print(newrange.max-newrange.min)
+        print(params.max()-params.min())
+        newrange['imp']=(newrange.max-newrange.min)/(params.max()-params.min())
+
+        linenumbers = cls.narrowing_params(params=params, min=min, max=max)
+        inputfiles, _, _ = cls.read_info(info=info)
+        temp = cls.extracting_by_linenumber(file=inputfiles[0], linenumbers=linenumbers, outputfile='Narrows.csv')
+        if Misc.getting_line_count(temp) > 0:
+            _ = cls.shufling_joined_models(inputcsv=temp, output=folder+'Narrowed.csv', header=False)
+            Misc.removefiles(['Narrows.csv'], printing=False)
+        else:
+            os.rename(temp, folder+'Narrowed.csv')
+        return newrange
+
+    @classmethod
+    def abc_params(cls, target, param, ss, tol=.01, method="rejection"):
+        """
+        this will calculated the abc for parameters. it will only report min max which is only needed for dynamic part
+        for full part see ABC.ABC_TFK_Params.abc_params
+        :param target: the real ss in a pandas  data frame format
+        :param param: the parameter data frame format (y_test)
+        :param ss: the summary statics in dataframe format
+        :param tol: the tolerance level. default is .01
+        :param method: the method to be used. can be "rejection", "loclinear", and "neuralnet" default is rejection as
+        we have less data for the dynamic. it is preferable to use rejection method
+        :return: will return min and max possible values for exach parameters in Series format
+        """
+        # print('abc_params', flush=True)
+        min = []
+        max = []
+        if method == 'loclinear' or method == 'rejection':
+            for colnum in range(param.shape[1]):
+                res = abc.abc(target=pandas.DataFrame(target.iloc[:, colnum]),
+                              param=pandas.DataFrame(param.iloc[:, colnum]),
+                              sumstat=pandas.DataFrame(ss.iloc[:, colnum]),
+                              method=method, tol=tol)
+                mincol, maxcol = cls.r_summary_min_max_single(res)
+                min.append(mincol)
+                max.append(maxcol)
+            min = pandas.Series(min)
+            max = pandas.Series(max)
+        elif method == 'neuralnet':
+            print('Together')
+            res = abc.abc(target=target, param=param, sumstat=ss, method=method, tol=tol)
+            min, max = cls.r_summary_min_max_all(res)
+        return min, max
+
+    @classmethod
+    def r_summary_min_max_single(cls, rmodel):
+        """
+        Min max extraction for individual pamaters using summary() of abc model
+        :param rmodel: the abc model
+        :return: will return the minimum values and maximum values that pass through tolerance. both in list format
+        """
+        # print('r_sum_min_max', flush=True)
+        import tempfile
+        temp_name = next(tempfile._get_candidate_names())
+        robjects.r.options(width=10000)
+        robjects.r['sink'](temp_name)
+        min = robjects.r['summary'](rmodel)[0]
+        robjects.r['sink']()
+        robjects.r.options(width=10000)
+        robjects.r['sink'](temp_name)
+        max = robjects.r['summary'](rmodel)[6]
+        robjects.r['sink']()
+        os.remove(temp_name)
+        return min, max
+
+    @classmethod
+    def r_summary_min_max_all(cls, rmodel):
+        """
+        Min max extraction for all pamaters using summary() of abc model
+        :param rmodel: the abc model
+        :return: will return the minimum values and maximum values that pass through tolerance. both in series format
+        """
+        # print('r_summary_min_max_all', flush=True)
+        import tempfile
+        temp_name = next(tempfile._get_candidate_names())
+        robjects.r.options(width=10000)
+        robjects.r['sink'](temp_name)
+        min = pandas.DataFrame(numpy.array(robjects.r['summary'](rmodel))).iloc[0, :]
+        robjects.r['sink']()
+        robjects.r.options(width=10000)
+        robjects.r['sink'](temp_name)
+        max = pandas.DataFrame(numpy.array(robjects.r['summary'](rmodel))).iloc[-1, :]
+        robjects.r['sink']()
+        os.remove(temp_name)
+        return min, max
+
+    @classmethod
+    def extracting_params(cls, variable_names, scale_y=None, yfile='y.h5'):
+        """
+        reading all the parameters so that we can use for new range filter and not completely delete the old csv.gz file.
+        this is just a reverse func for func-1(y,scaling_y)=params (where scaling_y(params)=y was used before)
+        :param variable_names: name of the variables in list format
+        :param scale_y: the scaling that was used to scale the parameters in the first place. none suggest no scaling
+        was done on parameters
+        :param yfile: the path of the y.h5 file.
+        :return: will return the parameters in pandas.dataframe format
+        """
+        y, _ = cls.train_test_split_hdf5(yfile, test_rows=0)
+        if scale_y:
+            params = pandas.DataFrame(scale_y.inverse_transform(y[:]),
+                                      columns=variable_names[-y.shape[1]:])
+        else:
+            params = pandas.DataFrame(y[:], columns=variable_names[-y.shape[1]:])
+        return params
+
+    @classmethod
+    def narrowing_params(cls, params, min, max):
+        """
+        with given min max and where it was improved you can narrow the paramerters with the new range. and return the
+        linenumber of such new range so that it can be reused for the next run
+        :param params: the parameters in dataframe format. on which new range will be used. parameters in column and
+        rows are different repeats
+        :param min: the min for a given parameters coming from abc. in pandas series format with index are names of
+        those parameters
+        :param max: the max for a given parameters coming from abc. in pandas series format with index are names of
+        those parameters
+        :param imp: the improvement that is happened per parameters. again in a series format
+        :return: it will look at min max and check if any improvement needed if needed then it will subset for new min
+        max. the imp is required as min max sometime can come from random chance but unless there is more than 5%
+        improvement those are meaning full which can be found in imp
+        """
+        for index in range(params.shape[1]):
+            params = params[params.iloc[:, index].between(min[index], max[index])]
+        linenumbers = params.index.values + 2
+        return linenumbers
+
+    @classmethod
+    def extracting_by_linenumber(cls, file, linenumbers, outputfile='out.txt'):
+        """
+        extacting a text file by a given line number
+        :param file: the input file
+        :param linenumbers: the number of lines to extract. in list format
+        :param outputfile: the out put file name where it will be extracted. default is out.txt
+        :return: will not return anything but will create the output file
+        """
+        import linecache
+        if file[-3:] == '.gz':
+            os.system("zcat " + file + " > temp.csv ")
+            file = 'temp.csv'
+
+        output = open(outputfile, 'w')
+        for ln in linenumbers:
+            print(linecache.getline(file, ln), file=output, end='')
+        output.close()
+        Misc.removefiles(['temp.csv'], printing=False)
+        return outputfile
