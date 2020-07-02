@@ -2314,7 +2314,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         #
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
         oldrange=pandas.concat([params.min(),params.max()],axis=1)
-        oldrange.column=['min','max']
+        oldrange.columns=['min','max']
         print(oldrange)
         newrange['imp']=(newrange['max']-newrange['min'])/(oldrange['max']-oldrange['min'])
 
