@@ -41,7 +41,11 @@ sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters). deafult is b",
                 default='b', choices=["n", "x", "y", "b"])
-
+sp.add_argument('--csvout',
+                help="If you want reuse the simulations with new updated range",
+                action="store_true")
+sp.add_argument('--imp', help='minimum amount of improvement needed to register as true. default is .95. lower means '
+                              'stronger filter ', default=.95, type=float)
 args = parser.parse_args()
 scaling_x, scaling_y = False, False
 # checking inputs
@@ -65,7 +69,7 @@ if args.cmd == 'All':
     # running
     newrange = ABC.ABC_TFK_NS.wrapper(info=args.info, ssfile=args.ssfile, demography=args.demography,
                                       method=args.method, tol=args.tolerance, test_size=args.test_size,
-                                      chunksize=args.chunksize,
-                                      scaling_x=scaling_x, scaling_y=scaling_y,
+                                      chunksize=args.chunksize,csvout=args.csvout,
+                                      scaling_x=scaling_x, scaling_y=scaling_y,imp=args.imp,
                                       folder=args.folder)
     print(newrange)

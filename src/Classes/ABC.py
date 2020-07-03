@@ -2184,12 +2184,13 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
                                csvout=csvout, cvrepeats=cvrepeats, folder=folder)
 
+
 class ABC_TFK_NS(ABC_TFK_Params):
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                tol: float = .005, method: str = 'rejection',demography: Optional[str] = None,  scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '',imp:float=0.95) -> None:
+                tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95) -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
@@ -2232,8 +2233,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
                                                  demography=demography, folder=folder)
 
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
-                               ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,info=info,csvout=csvout,
-                               paramfile='params_header.csv', method=method, tol=tol, folder=folder,imp=imp)
+                                      ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
+                                      paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp)
 
     @classmethod
     def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
@@ -2270,11 +2271,12 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return model
 
     @classmethod
-    def wrapper_aftertrain(cls, info: str,ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
+    def wrapper_aftertrain(cls, info: str, ModelParamPrediction: keras.models.Model,
+                           x_test: Union[numpy.ndarray, HDF5Matrix],
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '',csvout: bool = False,imp:float=0.95) -> None:
+                           folder: str = '', csvout: bool = False, imp: float = 0.95) -> None:
         """
         The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2300,7 +2302,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param folder: to define the output folder. default is '' meaning current folder
         :return: will not return anything but print out the result and save files for plot
         """
-
+        Misc.removefiles([folder + 'Narrows.csv', folder + 'Narrowed.csv'], printing=False)
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
 
@@ -2318,8 +2320,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
 
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
         newrange.to_csv('Newrange.csv', header=False)
-
-        _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
+        if csvout:
+            _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
         return newrange
 
     @classmethod
@@ -2417,7 +2419,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return params
 
     @classmethod
-    def updating_newrange(cls,newrange, oldrange, imp=.95):
+    def updating_newrange(cls, newrange, oldrange, imp=.95):
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
 
         newrange.loc[newrange['imp'] > imp, :2] = oldrange[newrange['imp'] > imp]
@@ -2425,7 +2427,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return newrange
 
     @classmethod
-    def narrowing_input(cls,info, params, newrange, folder=''):
+    def narrowing_input(cls, info, params, newrange, folder=''):
         linenumbers = cls.narrowing_params(params=params, min=newrange['min'], max=newrange['max'])
         inputfiles, _, _ = cls.read_info(info=info)
         temp = cls.extracting_by_linenumber(file=inputfiles[0], linenumbers=linenumbers,
@@ -2436,6 +2438,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         else:
             os.rename(temp, folder + 'Narrowed.csv')
         return folder + 'Narrowed.csv'
+
     @classmethod
     def narrowing_params(cls, params, min, max):
         """
