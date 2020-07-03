@@ -2189,7 +2189,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',demography: Optional[str] = None,  scaling_x: bool = False,
-                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                scaling_y: bool = False, csvout: bool = False, folder: str = '',imp:float=0.95) -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
@@ -2232,8 +2232,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
                                                  demography=demography, folder=folder)
 
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
-                               ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,info=info,
-                               paramfile='params_header.csv', method=method, tol=tol, folder=folder)
+                               ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,info=info,csvout=csvout,
+                               paramfile='params_header.csv', method=method, tol=tol, folder=folder,imp=imp)
 
     @classmethod
     def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
@@ -2274,7 +2274,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '') -> None:
+                           folder: str = '',csvout: bool = False,imp:float=0.95) -> None:
         """
         The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2306,26 +2306,20 @@ class ABC_TFK_NS(ABC_TFK_Params):
 
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
-        min, max = cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,method=method)
-        newrange=pandas.concat([min, max],axis=1)
-        newrange.index=params_names
-        newrange.columns=['min','max']
-        newrange.to_csv('Newrange.csv', header=False)
-        #
-        params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
-        oldrange=pandas.concat([params.min(),params.max()],axis=1)
-        oldrange.columns=['min','max']
-        print(oldrange)
-        newrange['imp']=(newrange['max']-newrange['min'])/(oldrange['max']-oldrange['min'])
+        min, max = cls.abc_params(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,
+                                  method=method)
 
-        linenumbers = cls.narrowing_params(params=params, min=min, max=max)
-        inputfiles, _, _ = cls.read_info(info=info)
-        temp = cls.extracting_by_linenumber(file=inputfiles[0], linenumbers=linenumbers, outputfile='Narrows.csv')
-        if Misc.getting_line_count(temp) > 0:
-            _ = cls.shufling_joined_models(inputcsv=temp, output=folder+'Narrowed.csv', header=False)
-            Misc.removefiles(['Narrows.csv'], printing=False)
-        else:
-            os.rename(temp, folder+'Narrowed.csv')
+        newrange = pandas.concat([min, max], axis=1)
+        newrange.index = params_names
+        newrange.columns = ['min', 'max']
+        params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
+        oldrange = pandas.concat([params.min(), params.max()], axis=1)
+        oldrange.columns = ['min', 'max']
+
+        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
+        newrange.to_csv('Newrange.csv', header=False)
+
+        _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
         return newrange
 
     @classmethod
@@ -2422,6 +2416,26 @@ class ABC_TFK_NS(ABC_TFK_Params):
             params = pandas.DataFrame(y[:], columns=variable_names[-y.shape[1]:])
         return params
 
+    @classmethod
+    def updating_newrange(cls,newrange, oldrange, imp=.95):
+        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+
+        newrange.loc[newrange['imp'] > imp, :2] = oldrange[newrange['imp'] > imp]
+        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        return newrange
+
+    @classmethod
+    def narrowing_input(cls,info, params, newrange, folder=''):
+        linenumbers = cls.narrowing_params(params=params, min=newrange['min'], max=newrange['max'])
+        inputfiles, _, _ = cls.read_info(info=info)
+        temp = cls.extracting_by_linenumber(file=inputfiles[0], linenumbers=linenumbers,
+                                            outputfile=folder + 'Narrows.csv')
+        if Misc.getting_line_count(temp) > 0:
+            _ = cls.shufling_joined_models(inputcsv=temp, output=folder + 'Narrowed.csv', header=False)
+            Misc.removefiles([folder + 'Narrows.csv'], printing=False)
+        else:
+            os.rename(temp, folder + 'Narrowed.csv')
+        return folder + 'Narrowed.csv'
     @classmethod
     def narrowing_params(cls, params, min, max):
         """
