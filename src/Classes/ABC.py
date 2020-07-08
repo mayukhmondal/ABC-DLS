@@ -2191,6 +2191,22 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95) -> None:
+        """
+        
+        :param info:
+        :param ssfile:
+        :param chunksize:
+        :param test_size:
+        :param tol:
+        :param method:
+        :param demography:
+        :param scaling_x:
+        :param scaling_y:
+        :param csvout:
+        :param folder:
+        :param imp:
+        :return:
+        """
 
         folder = Misc.creatingfolders(folder)
         x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
