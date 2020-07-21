@@ -1092,12 +1092,14 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         :return: will return the model
         """
         from tensorflow.keras.models import load_model
+        import tensorflow
         if os.path.isfile(ModelParamPredictionFile):
-            # try:
-            #     model = load_model(ModelParamPredictionFile)
+            try:
+                model = load_model(ModelParamPredictionFile)
             # except AttributeError:
             #     model = load_model(ModelParamPredictionFile, custom_objects={'Gaussian_noise': cls.Gaussian_noise})
-            model = load_model(ModelParamPredictionFile)
+            except NameError:
+                model = load_model(ModelParamPredictionFile, custom_objects={'tensorflow': tensorflow})
 
         else:
             print('The ANN model file could not be found please check. ', ModelParamPredictionFile)
