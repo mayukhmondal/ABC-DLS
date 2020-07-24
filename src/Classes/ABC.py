@@ -1626,7 +1626,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
         """
-        The wrapper to test how the traingin usin ANN works. after training is done it will test on the test  data set
+        The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
         it will use abc to give the power or standard deviation of the parameters that is predicted by nn to know how
         much we are sure about the results. mainly it will do two parts of abc. one cv error and parameter estimation
@@ -2192,24 +2192,32 @@ class ABC_TFK_NS(ABC_TFK_Params):
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95) -> None:
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95) -> pandas.DataFrame:
         """
-        
-        :param info:
-        :param ssfile:
-        :param chunksize:
-        :param test_size:
-        :param tol:
-        :param method:
-        :param demography:
-        :param scaling_x:
-        :param scaling_y:
-        :param csvout:
-        :param folder:
-        :param imp:
-        :return:
-        """
+        The main wrapper for for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
+        real data and will predict minima and maxima with in the parameter range can be for real data
 
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param folder: to define the output folder. default is '' meaning current folder
+        :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
+            simulations which are within that new range
+        """
         folder = Misc.creatingfolders(folder)
         x_train, x_test, scale_x, y_train, y_test, scale_y, paramfile = cls.wrapper_pre_train(info=info,
                                                                                               chunksize=chunksize,
@@ -2226,8 +2234,17 @@ class ABC_TFK_NS(ABC_TFK_Params):
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp)
 
     @classmethod
-    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
-                       y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
+                       y: Tuple[
+                           Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]) -> keras.models.Model:
+        """
+        A basic model for ANN to calculate parameters. to make it more efficient train and test together. but make it
+        more memory inefficient
+
+        :param x: the x_train and x_test of summary statistics. can be numpy array or hdf5 of tupple
+        :param y: the x_train and x_test of the parameters which produced those ss. can be numpy array or hdf5 of tupple
+        :return: will return the trained model
+        """
 
         x_train, x_test = x
         y_train, y_test = y
@@ -2259,7 +2276,32 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '', csvout: bool = False, imp: float = 0.95) -> None:
+                           folder: str = '', csvout: bool = False, imp: float = 0.95) ->  pandas.DataFrame:
+        """
+        The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
+        to see the power and then use a real data set to show what most likely parameters can create the real data.
+        it will use abc to give the lower minima and upper maxima that can create observed SFS. This is the main
+        difference from parameter estimation part of ABC-TFK. Other part before are ver similar. It will also produce
+        a narrowed csv so that the models ,which are with in the new limit, can be reused.
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param ModelParamPrediction: The fitted keras model
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the test part of y aka parameter dataset
+        :param ssfile: the real ss file path
+        :param scale_x: the scale of ss if exist
+        :param scale_y: the scale of parameters if exist
+        :param paramfile: the path of paramter header file. default is 'params_header.csv'
+        :param method: the method to be used in r_abc. default is rejection
+        :param tol: the tolerance level to be used in r_abc. default is .005
+        :param folder: to define the output folder. default is '' meaning current folder
+        :param csvout: n case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
+            simulations which are within that new range
+        """
 
         Misc.removefiles([folder + 'Narrows.csv', folder + 'Narrowed.csv'], printing=False)
         params_names = pandas.read_csv(folder + paramfile).columns
@@ -2268,7 +2310,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
         min, max = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,
-                                  method=method)
+                                          method=method)
 
         newrange = pandas.concat([min, max], axis=1)
         newrange.index = params_names
