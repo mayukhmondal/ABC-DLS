@@ -2276,7 +2276,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '', csvout: bool = False, imp: float = 0.95) ->  pandas.DataFrame:
+                           folder: str = '', csvout: bool = False, imp: float = 0.95) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2326,8 +2326,19 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return newrange
 
     @classmethod
-    def abc_params_min_max(cls, target, param, ss, tol=.01, method="rejection"):
+    def abc_params_min_max(cls, target: pandas.DataFrame, param: pandas.DataFrame, ss: pandas.DataFrame,
+                           tol: float = .01, method: str = "rejection") -> [pandas.Series, pandas.Series]:
+        """
+        Calculating the min max range for parameters using ABC
 
+        :param target: the real ss in a pandas  data frame format
+        :param param: the parameter data frame format (y_test)
+        :param ss: the summary statics in dataframe format
+        :param tol: the tolerance level. default is .001
+        :param method: the method to calculate abc cv error. can be "rejection", "loclinear", and "neuralnet". default
+            rejection
+        :return: will return min and max ranges in pandas Series format
+        """
         min = []
         max = []
         if method == 'loclinear' or method == 'rejection':
@@ -2348,8 +2359,13 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return min, max
 
     @classmethod
-    def r_summary_min_max_single(cls, rmodel):
+    def r_summary_min_max_single(cls, rmodel) -> Tuple[float, float]:
+        """
+        reading summary statistics coming from r and converting it for pandas. this is for per parameters
 
+        :param rmodel: the rmodel of abc
+        :return: will return min and maxima of the parameter in tuple format
+        """
         import tempfile
         temp_name = next(tempfile._get_candidate_names())
         robjects.r.options(width=10000)
@@ -2364,8 +2380,13 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return min, max
 
     @classmethod
-    def r_summary_min_max_all(cls, rmodel):
+    def r_summary_min_max_all(cls, rmodel) -> Tuple[pandas.DataFrame, pandas.DataFrame]:
+        """
+        reading summary statistics coming from r and converting it for pandas. this is for all parameters together
 
+        :param rmodel: the rmodel of abc
+        :return: will return min and max of the parameter in pandas.DataFrame format
+        """
         import tempfile
         temp_name = next(tempfile._get_candidate_names())
         robjects.r.options(width=10000)
@@ -2380,20 +2401,34 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return min, max
 
     @classmethod
-    def extracting_params(cls, variable_names, scale_y=None, yfile='y.h5'):
+    def extracting_params(cls, variable_names: List, scale_y: Union[preprocessing.MinMaxScaler] = None,
+                          yfile: str = 'y.h5') -> pandas.DataFrame:
+        """
+        re-extracting (or retransform) the parameters from y.h5 so that we can reuse it later for narrow
 
+        :param variable_names: the name of the variables in list format
+        :param scale_y: the minmax scale on parameters
+        :param yfile: the y.h5 file path
+        :return: will return the parameters in pandas DataFrame format with rescaled back
+        """
         y, _ = cls.train_test_split_hdf5(yfile, test_rows=0)
         if scale_y:
-            params = pandas.DataFrame(scale_y.inverse_transform(y[:]),
-                                      columns=variable_names[-y.shape[1]:])
+            params = pandas.DataFrame(scale_y.inverse_transform(y[:]), columns=variable_names[-y.shape[1]:])
         else:
             params = pandas.DataFrame(y[:], columns=variable_names[-y.shape[1]:])
         return params
 
     @classmethod
-    def updating_newrange(cls, newrange, oldrange, imp=.95):
-        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+    def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
+                          imp: float = .95) -> pandas.DataFrame:
+        """
 
+        :param newrange:
+        :param oldrange:
+        :param imp:
+        :return:
+        """
+        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         newrange.loc[newrange['imp'] > imp, :2] = oldrange[newrange['imp'] > imp]
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
