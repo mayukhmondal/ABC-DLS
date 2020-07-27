@@ -2401,7 +2401,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return min, max
 
     @classmethod
-    def extracting_params(cls, variable_names: List, scale_y: Union[preprocessing.MinMaxScaler] = None,
+    def extracting_params(cls, variable_names: List, scale_y: Optional[preprocessing.MinMaxScaler] = None,
                           yfile: str = 'y.h5') -> pandas.DataFrame:
         """
         re-extracting (or retransform) the parameters from y.h5 so that we can reuse it later for narrow
@@ -2422,11 +2422,17 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
                           imp: float = .95) -> pandas.DataFrame:
         """
+        This will check if the new range improvement is more than 95%. if true it will update the new range or else keep
+        the old range assuming there is no direct improvement. this step is necessary so that you donot get smaller
+        range just because you ran it several time
 
-        :param newrange:
-        :param oldrange:
-        :param imp:
-        :return:
+        :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :param imp: the amount of improvement required to update the new improvement. default is 95%
+        :return: will return the updated newrange dataframe. where if imp is less than .95 then new range rows if not
+            old range rows
         """
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         newrange.loc[newrange['imp'] > imp, :2] = oldrange[newrange['imp'] > imp]
@@ -2434,7 +2440,19 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return newrange
 
     @classmethod
-    def narrowing_input(cls, info, params, newrange, folder=''):
+    def narrowing_input(cls, info: str, params: pandas.DataFrame, newrange: pandas.DataFrame, folder: str = '') -> str:
+        """
+        To reuse some simulations for next round. ABC will predict narrower posterior for parameters. No point rerun
+        everythin. rather use those simulations which are within the limit of new range.
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param params: the parameters coming from y.h5 rescaled. remember this step assumed that you donot randomized
+            the line between csv and .h5 files. rather it will in this step
+        :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :param folder: to define the output folder. default is '' meaning current folder
+        :return: will return the path of 'Narrowed.csv'
+        """
         linenumbers = cls.narrowing_params(params=params, min=newrange['min'], max=newrange['max'])
         inputfiles, _, _ = cls.read_info(info=info)
         temp = cls.extracting_by_linenumber(file=inputfiles[0], linenumbers=linenumbers,
@@ -2447,7 +2465,17 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return folder + 'Narrowed.csv'
 
     @classmethod
-    def narrowing_params(cls, params, min, max):
+    def narrowing_params(cls, params: pandas.DataFrame, min: pandas.Series,
+                         max: pandas.Series) -> pandas.core.indexes.range.RangeIndex:
+        """
+        narrowing the pandas pararams with new range
+
+        :param params: pandas.DataFrame for the parameters
+        :param min: pandas.Series about the minimum range of every parameters
+        :param max: pandas.Series about the maximum range of every parameters
+        :return: will return the lienumber+2 where we have ranges with in the new limit. use ful to directly extract from
+            the csv file
+        """
 
         for index in range(params.shape[1]):
             params = params[params.iloc[:, index].between(min[index], max[index])]
@@ -2455,7 +2483,16 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return linenumbers
 
     @classmethod
-    def extracting_by_linenumber(cls, file, linenumbers, outputfile='out.txt'):
+    def extracting_by_linenumber(cls, file: str, linenumbers: Union[list,numpy.array],
+                                 outputfile: str = 'out.txt')-> str:
+        """
+        given line numbers it will extract the lines from the text file
+
+        :param file: the path of the text file
+        :param linenumbers: the line numbers which you want to extract
+        :param outputfile: the path of output file where you want to write
+        :return: will return the path of output file
+        """
 
         import linecache
         if file[-3:] == '.gz':
