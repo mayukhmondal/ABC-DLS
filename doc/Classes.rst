@@ -94,3 +94,15 @@ ABC_TFK_Params_After_Train
     :members:
     :show-inheritance:
     :special-members: __new__
+
+Parmeter Estimation Classes
+---------------------------
+
+ABC_TFK_NS
+^^^^^^^^^^
+
+.. autoclass:: Classes.ABC.ABC_TFK_NS
+    :members:
+    :inherited-members:
+    :show-inheritance:
+    :special-members: __new__

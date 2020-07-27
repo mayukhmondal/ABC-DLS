@@ -2135,8 +2135,8 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         as documented in the r.abc
    :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
-    :param cvrepeats: the number of repeats will be used for CV calculations
-    :param folder: to define the output folder. default is '' meaning current folder
+   :param cvrepeats: the number of repeats will be used for CV calculations
+   :param folder: to define the output folder. default is '' meaning current folder
    :return: will not return anything but will plot and print the parameters
    """
 
@@ -2444,6 +2444,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         """
         To reuse some simulations for next round. ABC will predict narrower posterior for parameters. No point rerun
         everythin. rather use those simulations which are within the limit of new range.
+
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
         :param params: the parameters coming from y.h5 rescaled. remember this step assumed that you donot randomized
