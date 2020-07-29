@@ -51,6 +51,9 @@ sp.add_argument('--cvrepeats', help='The number of time cross validation will be
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
+sp.add_argument('--frac', help='If you multiply all the observed ss with some fraction. Important in case simulated '
+                               'data and observed data are not from same lengrth.default is 1 ', default=1.0,
+                type=float)
 
 sp = subparsers.add_parser('Pre_train', help='To prepare the data for training ANN.')
 sp.set_defaults(cmd='Pre_train')
@@ -119,6 +122,9 @@ sp.add_argument('--cvrepeats', help='The number of time cross validation will be
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
+sp.add_argument('--frac', help='If you multiply all the observed ss with some fraction. Important in case simulated '
+                               'data and observed data are not from same lengrth.default is 1 ', default=1.0,
+                type=float)
 args = parser.parse_args()
 scaling_x, scaling_y = False, False
 # checking inputs
@@ -150,7 +156,7 @@ if args.cmd == 'All':
                        method=args.method, tol=args.tolerance, test_size=args.test_size,
                        chunksize=args.chunksize,
                        csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y, cvrepeats=args.cvrepeats,
-                       folder=args.folder)
+                       folder=args.folder,frac=args.frac)
 elif args.cmd == 'Pre_train':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
@@ -189,4 +195,4 @@ elif args.cmd == 'After_train':
         print('test_size:', args.test_size)
         sys.exit(1)
     ABC.ABC_TFK_Params_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance, method=args.method,
-                                   csvout=args.csvout, cvrepeats=args.cvrepeats, folder=args.folder)
+                                   csvout=args.csvout, cvrepeats=args.cvrepeats, folder=args.folder,frac=args.frac)

@@ -73,7 +73,7 @@ class ABC_TFK_Classification:
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                 scale: bool = False, csvout: bool = False, cvrepeats: int = 100, together: bool = False,
-                folder: str = '') -> None:
+                folder: str = '', frac: float = 1.0) -> None:
         """
         This will automatically call the wrapper function and to do the necessary work.
 
@@ -99,13 +99,14 @@ class ABC_TFK_Classification:
         """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
                            test_size=test_size, chunksize=chunksize, scale=scale, together=together, csvout=csvout,
-                           cvrepeats=cvrepeats, folder=folder)
+                           cvrepeats=cvrepeats, folder=folder, frac=frac)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .005, test_size: int = int(1e4), chunksize: Optional[int] = None,
                 scale: bool = False,
-                together: bool = False, csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                together: bool = False, csvout: bool = False, cvrepeats: int = 100, folder: str = '',
+                frac: float = 1.0) -> None:
         """
         the total wrapper of the classification method. with given underlying models it will compare with real data and
         will predict how much it sure about which model can bet predict the real data.
@@ -148,7 +149,7 @@ class ABC_TFK_Classification:
 
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
-                                csvout=csvout, cvrepeats=cvrepeats, folder=folder)
+                                csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
     @classmethod
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
@@ -660,7 +661,7 @@ class ABC_TFK_Classification:
                             y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                             y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
                             tolerance: float = .005, csvout: bool = False, cvrepeats: int = 100,
-                            folder: str = '', pred_repeat: int = 1) -> None:
+                            folder: str = '', pred_repeat: int = 1, frac: float = 1.0) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -688,6 +689,7 @@ class ABC_TFK_Classification:
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         sfs = cls.read_ss_2_series(file=ssfile)
+        sfs = sfs * numpy.array(frac)
         cls.check_results(results=[x_test[0:2]], observed=sfs)
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
@@ -1195,7 +1197,7 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
     """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.05, method: str = 'rejection',
-                csvout: bool = False, cvrepeats: int = 100, folder: str = ''):
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0):
         """
         This will call the wrapper function
 
@@ -1211,11 +1213,11 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         return cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout,
-                           cvrepeats=cvrepeats, folder=folder)
+                           cvrepeats=cvrepeats, folder=folder, frac=frac)
 
     @classmethod
     def wrapper(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.01, method: str = 'rejection',
-                csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
         data set to see the power and then use a real data setto show how likely it support one model over another.
@@ -1238,7 +1240,7 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
                                                                                       folder=folder)
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method,
-                                tolerance=tol, csvout=csvout, cvrepeats=cvrepeats, folder=folder)
+                                tolerance=tol, csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
 
 # TFK parameter estimation stuff
@@ -1274,7 +1276,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         This will call the wrapper function
 
@@ -1303,13 +1305,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            demography=demography, together=together, csvout=csvout, scaling_x=scaling_x,
-                           scaling_y=scaling_y, cvrepeats=cvrepeats, folder=folder)
+                           scaling_y=scaling_y, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
                 demography: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
-                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                scaling_y: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
@@ -1357,7 +1359,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
                                paramfile='params_header.csv', method=method, tol=tol, csvout=csvout,
                                cvrepeats=cvrepeats,
-                               folder=folder)
+                               folder=folder, frac=frac)
 
     @classmethod
     def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
@@ -1624,7 +1626,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                           csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -1652,7 +1654,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
-
+        ss = ss * numpy.array(frac)
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
 
@@ -2141,7 +2143,7 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
    """
 
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = .01, method: str = 'neuralnet',
-                csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         This will call the wrapper funciton
 
@@ -2157,11 +2159,11 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
        :return: will not return anything but will plot and print the parameters
         """
         cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout, cvrepeats=cvrepeats,
-                    folder=folder)
+                    folder=folder, frac=frac)
 
     @classmethod
     def wrapper(cls, ssfile: str, test_size: int = int(1e4), tol: float = 0.01, method: str = 'neuralnet',
-                csvout: bool = False, cvrepeats: int = 100, folder: str = '') -> None:
+                csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2184,7 +2186,7 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
                                                                                              folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, ssfile=ssfile, x_test=x_test, y_test=y_test,
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
-                               csvout=csvout, cvrepeats=cvrepeats, folder=folder)
+                               csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
 
 class ABC_TFK_NS(ABC_TFK_Params):
@@ -2192,7 +2194,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95) -> pandas.DataFrame:
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
+                frac: float = 1.0) -> pandas.DataFrame:
         """
         The main wrapper for for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2231,7 +2234,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
 
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
-                                      paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp)
+                                      paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp,
+                                      frac=frac)
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
@@ -2276,7 +2280,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '', csvout: bool = False, imp: float = 0.95) -> pandas.DataFrame:
+                           folder: str = '', csvout: bool = False, imp: float = 0.95,frac: float = 1.0) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2306,7 +2310,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         Misc.removefiles([folder + 'Narrows.csv', folder + 'Narrowed.csv'], printing=False)
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
-
+        ss = ss * numpy.array(frac)
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
         min, max = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,
@@ -2484,8 +2488,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return linenumbers
 
     @classmethod
-    def extracting_by_linenumber(cls, file: str, linenumbers: Union[list,numpy.array],
-                                 outputfile: str = 'out.txt')-> str:
+    def extracting_by_linenumber(cls, file: str, linenumbers: Union[list, numpy.array],
+                                 outputfile: str = 'out.txt') -> str:
         """
         given line numbers it will extract the lines from the text file
 
