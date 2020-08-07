@@ -2280,7 +2280,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '', csvout: bool = False, imp: float = 0.95,frac: float = 1.0) -> pandas.DataFrame:
+                           folder: str = '', csvout: bool = False, imp: float = 0.95,
+                           frac: float = 1.0) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2324,7 +2325,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         oldrange.columns = ['min', 'max']
 
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
-        newrange.to_csv('Newrange.csv', header=False)
+        newrange.to_csv(folder+'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
         return newrange
