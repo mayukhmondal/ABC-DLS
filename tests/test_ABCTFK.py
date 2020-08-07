@@ -25,6 +25,7 @@ if os.path.isdir('par'):
 if os.path.isdir('ns'):
     shutil.rmtree('ns')
 
+
 def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                                   outfolder: str = 'cls'):
     # main check
@@ -230,7 +231,8 @@ def test_ABC_TFK_NS(info: str = 'Model2.info', ssfile: str = '../examples/YRI_CE
                     csvout=True, folder: str = 'ns'):
     ABC.ABC_TFK_NS.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            csvout=csvout, folder=folder)
-    files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5',  'ns/y.h5']
+    files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
+             'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_NS'
 

@@ -19,3 +19,6 @@ scale_y.sav
 paramposterior.pdf
 params.csv.gz
 .Rhistory
+tests/par
+tests/cls
+tests/ns
