@@ -3,10 +3,6 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
-      <excludeFolder url="file://$MODULE_DIR$/tests/.pytest_cache" />
-      <excludeFolder url="file://$MODULE_DIR$/tests/cls" />
-      <excludeFolder url="file://$MODULE_DIR$/tests/ns" />
-      <excludeFolder url="file://$MODULE_DIR$/tests/par" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

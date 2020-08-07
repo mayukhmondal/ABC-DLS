@@ -236,7 +236,9 @@ def test_ABC_TFK_NS(info: str = 'Model2.info', ssfile: str = '../examples/YRI_CE
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_NS'
 
-# if os.path.isdir('cls'):
-#     shutil.rmtree('cls')
-# if os.path.isdir('par'):
-#     shutil.rmtree('par')
+if os.path.isdir('cls'):
+    shutil.rmtree('cls')
+if os.path.isdir('par'):
+    shutil.rmtree('par')
+if os.path.isdir('ns'):
+    shutil.rmtree('ns')
