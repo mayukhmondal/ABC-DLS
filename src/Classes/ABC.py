@@ -2195,7 +2195,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0) -> pandas.DataFrame:
+                frac: float = 1.0,oldrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The main wrapper for for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2218,6 +2218,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
         :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :param oldrange_file: csv format of oldrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. same as Newrange.csv
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2235,7 +2237,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp,
-                                      frac=frac)
+                                      frac=frac,oldrange_file=oldrange_file)
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
@@ -2269,7 +2271,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         # Reduce learning rate
         RL = ReduceLROnPlateau(factor=0.2)
 
-        model.fit(x_train, y_train, epochs=2, verbose=0, shuffle="batch", callbacks=[ES, CP, RL],
+        model.fit(x_train, y_train, epochs=int(2e6), verbose=0, shuffle="batch", callbacks=[ES, CP, RL],
                   validation_data=(numpy.array(x_test), numpy.array(y_test)))
 
         return model
@@ -2281,7 +2283,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            folder: str = '', csvout: bool = False, imp: float = 0.95,
-                           frac: float = 1.0) -> pandas.DataFrame:
+                           frac: float = 1.0, oldrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2304,6 +2306,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param csvout: n case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :param oldrange_file: csv format of oldrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. same as Newrange.csv
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2321,9 +2325,12 @@ class ABC_TFK_NS(ABC_TFK_Params):
         newrange.index = params_names
         newrange.columns = ['min', 'max']
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
-        oldrange = pandas.concat([params.min(), params.max()], axis=1)
-        oldrange.columns = ['min', 'max']
-
+        if oldrange_file:
+            oldrange = pandas.read_csv(oldrange_file, index_col=0, header=None, names=['', 'min', 'max'],
+                                       usecols=[0, 1, 2])
+        else:
+            oldrange = pandas.concat([params.min(), params.max()], axis=1)
+            oldrange.columns = ['min', 'max']
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
         newrange.to_csv(folder+'Newrange.csv', header=False)
         if csvout:

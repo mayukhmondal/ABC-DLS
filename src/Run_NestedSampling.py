@@ -41,6 +41,9 @@ sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters). deafult is b",
                 default='b', choices=["n", "x", "y", "b"])
+sp.add_argument('--oldrange',
+                help="csv format of oldrange file path. Should have 3 columns. params_names, lower and upper limit. "
+                     "every row is define a parameters. no header. same as Newrange.csv" )
 sp.add_argument('--csvout',
                 help="If you want reuse the simulations with new updated range",
                 action="store_true")
