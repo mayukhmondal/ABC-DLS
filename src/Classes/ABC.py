@@ -2261,7 +2261,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         model.add(Dense(128, activation='relu'))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(32, activation='relu'))
-        model.add(Dense(y_train.shape[1], activation='softmax'))
+        model.add(Dense(y_train.shape[1]))
 
         model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
         # adding an early stop so that it does not overfit
