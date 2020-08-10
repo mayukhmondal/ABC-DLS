@@ -230,7 +230,7 @@ def test_ABC_TFK_NS(info: str = 'Model2.info', demography: str = '../src/extras/
                     ssfile: str = '../examples/YRI_CEU_CHB.observed.csv',
                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
                     csvout=True, folder: str = 'ns'):
-    ABC.ABC_TFK_NS.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
+    ABC.ABC_TFK_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            csvout=csvout, folder=folder,demography=demography)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']

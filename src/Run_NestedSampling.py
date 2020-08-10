@@ -73,7 +73,7 @@ if args.cmd == 'All':
         scaling_x = True
         scaling_y = True
     # running
-    newrange = ABC.ABC_TFK_NS.wrapper(info=args.info, ssfile=args.ssfile, demography=args.demography,
+    newrange = ABC.ABC_TFK_NS(info=args.info, ssfile=args.ssfile, demography=args.demography,
                                       method=args.method, tol=args.tolerance, test_size=args.test_size,
                                       chunksize=args.chunksize,csvout=args.csvout,
                                       scaling_x=scaling_x, scaling_y=scaling_y,imp=args.imp,

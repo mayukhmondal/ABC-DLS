@@ -2190,6 +2190,63 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
 
 
 class ABC_TFK_NS(ABC_TFK_Params):
+    """
+        This is the main class  for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare
+        with real data and will predict minima and maxima with in the parameter range can be for real data
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param folder: to define the output folder. default is '' meaning current folder
+        :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
+            simulations which are within that new range
+        """
+
+    def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
+                tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
+                frac: float = 1.0) -> pandas.DataFrame:
+        """
+        This will call the wrapper function
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
+        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param chunksize: the number of rows accessed at a time.
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param tol: the level of tolerance for abc. default is .005
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
+        :param demography: custom function made for keras model. the path of that .py file. should have a def
+            ANNModelCheck
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
+            later by r
+        :param folder: to define the output folder. default is '' meaning current folder
+        :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
+            simulations which are within that new range
+        """
+        return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
+                           demography=demography, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
+                           folder=folder, imp=imp, frac=frac)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
@@ -2197,7 +2254,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
                 frac: float = 1.0,oldrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
-        The main wrapper for for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
+        The main wrapper for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
@@ -2332,7 +2389,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
             oldrange = pandas.concat([params.min(), params.max()], axis=1)
             oldrange.columns = ['min', 'max']
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
-        newrange.to_csv(folder+'Newrange.csv', header=False)
+        newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
         return newrange
