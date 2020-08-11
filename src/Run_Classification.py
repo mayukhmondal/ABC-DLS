@@ -10,10 +10,7 @@ from Classes import ABC
 # to stop future warning every time to print out
 
 # input argument is done
-parser = argparse.ArgumentParser(description='This is run classification between models using any summary statistics.\n'
-                                             'The info file should look like this\n'
-                                             'file1.csv.gz    10\n'
-                                             'file2.csv.gz    14\n', formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(description='This file will run Model Selection.')
 subparsers = parser.add_subparsers(help='sub-commands help')
 
 sp = subparsers.add_parser('All', help='The whole run of the NN for parameter estimation from first to last')

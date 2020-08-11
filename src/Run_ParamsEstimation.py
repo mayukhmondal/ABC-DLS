@@ -10,9 +10,7 @@ import sys
 from Classes import ABC
 
 # input argument is done
-parser = argparse.ArgumentParser(description='The info file should look like this\n'
-                                             'file1.csv.gz    10\n'
-                                             'file2.csv.gz    14\n', formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(description='This file will run Parameter estimation.')
 subparsers = parser.add_subparsers(help='sub-commands help')
 
 sp = subparsers.add_parser('All', help='The whole run of the NN for parameter estimation from first to last')
