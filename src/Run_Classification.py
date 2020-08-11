@@ -125,7 +125,7 @@ if args.cmd == 'All':
     ABC.ABC_TFK_Classification(info=args.info, ssfile=args.ssfile, chunksize=args.chunksize,
                                demography=args.demography, method=args.method, together=args.together,
                                tolerance=args.tolerance, test_size=args.test_size, scale=args.scale, csvout=args.csvout,
-                               cvrepeats=args.cvrepeats, folder=args.folder,frac=args.frac)
+                               cvrepeats=args.cvrepeats, folder=args.folder, frac=args.frac)
 elif args.cmd == 'Pre_train':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
@@ -142,4 +142,4 @@ elif args.cmd == 'CV':
 elif args.cmd == 'After_train':
     ABC.ABC_TFK_Classification_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance,
                                            method=args.method, csvout=args.csvout, cvrepeats=args.cvrepeats,
-                                           folder=args.folder,frac=args.frac)
+                                           folder=args.folder, frac=args.frac)

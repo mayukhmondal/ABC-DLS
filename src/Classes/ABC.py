@@ -77,12 +77,13 @@ class ABC_TFK_Classification:
         """
         This will automatically call the wrapper function and to do the necessary work.
 
-        :param info: the path of info file whose file column is the path of the file and second column defining the number
-            of  parameters
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters
         :param ssfile: the summary statistic on real data set. should be csv format
-        :param demography: custom function made for keras model. the path of that .py file. Should have a def ANNModelCheck
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc. as
-            documented in the r.abc
+        :param demography: custom function made for keras model. the path of that .py file. Should have a def
+            ANNModelCheck
+        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+            as documented in the r.abc
         :param tolerance: the level of tolerance for abc. default is .005
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param chunksize:  the number of rows accessed at a time.
@@ -312,7 +313,7 @@ class ABC_TFK_Classification:
         if stderr:
             print(stderr)
             sys.exit(1)
-        ##checking for nan in csvs
+        # checking for nan in csvs
         if filename[-2:] == 'gz':
             nancheckcommand = Misc.joinginglistbyspecificstring(['zcat ', filename, '| grep ",,"|wc -l '])
         else:
@@ -325,7 +326,8 @@ class ABC_TFK_Classification:
         if int(stdout) > 0:
             print(filename, "has nan elements in ", int(stdout),
                   "rows. They are automatically removed. ", "Small number of removed is ok.",
-                  "But if they are huge, they can create problem in the downstream as the number of models are not equal")
+                  "But if they are huge, they can create problem in the downstream as the number of models are not "
+                  "equal")
 
         return None
 
@@ -2252,7 +2254,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0,oldrange_file: Optional[str] = None) -> pandas.DataFrame:
+                frac: float = 1.0, oldrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The main wrapper for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2294,7 +2296,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp,
-                                      frac=frac,oldrange_file=oldrange_file)
+                                      frac=frac, oldrange_file=oldrange_file)
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],

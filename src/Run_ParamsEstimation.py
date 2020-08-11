@@ -150,11 +150,11 @@ if args.cmd == 'All':
         print('test_size:', args.test_size)
         sys.exit(1)
     # running
-    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography,together=args.together,
+    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography, together=args.together,
                        method=args.method, tol=args.tolerance, test_size=args.test_size,
                        chunksize=args.chunksize,
                        csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y, cvrepeats=args.cvrepeats,
-                       folder=args.folder,frac=args.frac)
+                       folder=args.folder, frac=args.frac)
 elif args.cmd == 'Pre_train':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
@@ -193,4 +193,4 @@ elif args.cmd == 'After_train':
         print('test_size:', args.test_size)
         sys.exit(1)
     ABC.ABC_TFK_Params_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance, method=args.method,
-                                   csvout=args.csvout, cvrepeats=args.cvrepeats, folder=args.folder,frac=args.frac)
+                                   csvout=args.csvout, cvrepeats=args.cvrepeats, folder=args.folder, frac=args.frac)

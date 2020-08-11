@@ -41,7 +41,7 @@ sp.add_argument('--scale',
                 default='b', choices=["n", "x", "y", "b"])
 sp.add_argument('--oldrange',
                 help="csv format of oldrange file path. Should have 3 columns. params_names, lower and upper limit. "
-                     "every row is define a parameters. no header. same as Newrange.csv" )
+                     "every row is define a parameters. no header. same as Newrange.csv")
 sp.add_argument('--csvout',
                 help="If you want reuse the simulations with new updated range",
                 action="store_true")
@@ -72,8 +72,8 @@ if args.cmd == 'All':
         scaling_y = True
     # running
     newrange = ABC.ABC_TFK_NS(info=args.info, ssfile=args.ssfile, demography=args.demography,
-                                      method=args.method, tol=args.tolerance, test_size=args.test_size,
-                                      chunksize=args.chunksize,csvout=args.csvout,
-                                      scaling_x=scaling_x, scaling_y=scaling_y,imp=args.imp,
-                                      folder=args.folder,frac=args.frac)
+                              method=args.method, tol=args.tolerance, test_size=args.test_size,
+                              chunksize=args.chunksize, csvout=args.csvout,
+                              scaling_x=scaling_x, scaling_y=scaling_y, imp=args.imp,
+                              folder=args.folder, frac=args.frac)
     print(newrange)
