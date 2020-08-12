@@ -48,7 +48,7 @@ sp.add_argument('--csvout',
 sp.add_argument('--imp', help='minimum amount of improvement needed to register as true. default is .95. lower means '
                               'stronger filter ', default=.95, type=float)
 sp.add_argument('--frac', help='If you multiply all the observed ss with some fraction. Important in case simulated '
-                               'data and observed data are not from same lengrth.default is 1 ', default=1.0,
+                               'data and observed data are not from same length.default is 1 ', default=1.0,
                 type=float)
 args = parser.parse_args()
 scaling_x, scaling_y = False, False

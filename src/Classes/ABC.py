@@ -96,6 +96,8 @@ class ABC_TFK_Classification:
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but will plot and print the power
         """
         return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
@@ -136,6 +138,8 @@ class ABC_TFK_Classification:
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but will plot and print the power
         """
         folder = Misc.creatingfolders(folder)
@@ -688,6 +692,8 @@ class ABC_TFK_Classification:
         :param pred_repeat: in case you want to run multiple run of prediction on observed data. if you use it your
             training must need some randomization like the custom Gaussiannoise i have implemented here. The idea is by
             using random noise you are producing multiple run of the same observed data
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         sfs = cls.read_ss_2_series(file=ssfile)
@@ -1212,6 +1218,8 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output/input folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         return cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout,
@@ -1235,6 +1243,8 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output/input folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but will produce the graphs and print out how much it is sure about any model
         """
         folder = Misc.creatingfolders(folder)
@@ -1303,6 +1313,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return:  will not return anything but will plot and print the parameters
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
@@ -1342,6 +1354,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             MinMaxscaler.
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return:  will not return anything but will plot and print the parameters
         """
         folder = Misc.creatingfolders(folder)
@@ -1650,6 +1664,8 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but print out the result and save files for plot
         """
         print("Evaluate with test:")
@@ -2158,6 +2174,8 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
             later by r
        :param cvrepeats: the number of repeats will be used for CV calculations
        :param folder: to define the output folder. default is '' meaning current folder
+       :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
        :return: will not return anything but will plot and print the parameters
         """
         cls.wrapper(ssfile=ssfile, test_size=test_size, tol=tol, method=method, csvout=csvout, cvrepeats=cvrepeats,
@@ -2181,6 +2199,8 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will not return anything but will plot and print the parameters
         """
         folder = Misc.creatingfolders(folder)
@@ -2243,6 +2263,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
         :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2279,6 +2301,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param imp: minimum amount of improvement needed to register as true. default is .95.
         :param oldrange_file: csv format of oldrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2367,6 +2391,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param imp: minimum amount of improvement needed to register as true. default is .95.
         :param oldrange_file: csv format of oldrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv
+        :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """

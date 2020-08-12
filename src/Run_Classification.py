@@ -47,7 +47,7 @@ sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
 sp.add_argument('--frac', help='If you multiply all the observed ss with some fraction. Important in case simulated '
-                               'data and observed data are not from same lengrth.default is 1 ', default=1.0,
+                               'data and observed data are not from same length.default is 1 ', default=1.0,
                 type=float)
 
 sp = subparsers.add_parser('Pre_train', help='To prepare the data for training ANN.')
@@ -114,7 +114,7 @@ sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
                 action="store_true")
 sp.add_argument('--frac', help='If you multiply all the observed ss with some fraction. Important in case simulated '
-                               'data and observed data are not from same lengrth.default is 1 ', default=1.0,
+                               'data and observed data are not from same length.default is 1 ', default=1.0,
                 type=float)
 args = parser.parse_args()
 
