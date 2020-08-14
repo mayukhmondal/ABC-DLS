@@ -2447,8 +2447,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
                 mincol, maxcol = cls.r_summary_min_max_single(res)
                 min.append(mincol)
                 max.append(maxcol)
-            min = pandas.Series(min)
-            max = pandas.Series(max)
+            min = pandas.Series(numpy.hstack(min))
+            max = pandas.Series(numpy.hstack(max))
         elif method == 'neuralnet':
             print('Together')
             res = abc.abc(target=target, param=param, sumstat=ss, method=method, tol=tol)
