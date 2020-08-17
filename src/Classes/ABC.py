@@ -58,7 +58,6 @@ class ABC_TFK_Classification:
         later by r
     :return: will not return anything but will plot and print the power
     """
-
     info: str
     ssfile: str
     demography: Optional[str] = None
@@ -470,6 +469,8 @@ class ABC_TFK_Classification:
         :return: will return the min max scaler which can be used later. or none. it will save h5path the whole data
         """
         # the scaling part
+        newss=numpy.array([])
+        chunk=pandas.DataFrame()
         if scaling:
             scale = preprocessing.MinMaxScaler()
             row = 0
@@ -657,7 +658,7 @@ class ABC_TFK_Classification:
 
         :param model: trained model by keras tf
         :param output: output file name for h5. default Model.h5
-        :param check: check point file name. default Checkpoint.h5
+        :param check_point: check point file name. default Checkpoint.h5
         :return: wil not return anything but will save the model
         """
         if os.path.isfile(check_point):
@@ -1347,7 +1348,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
             as documented in the r.abc
         :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
             ANNModelCheck
-        :param togehter: If you want to send both train and test together in tfk model (train). Useful for validation
+        :param together: If you want to send both train and test together in tfk model (train). Useful for validation
             test set in early stopping . need a specific format for demography.py. Look at Extra/Dynamic.py
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
