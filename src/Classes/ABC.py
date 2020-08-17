@@ -558,7 +558,10 @@ class ABC_TFK_Classification:
             sys.exit(1)
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix], y_train: Union[numpy.ndarray, HDF5Matrix],
+    def wrapper_train(cls, x_train: Union[
+        numpy.ndarray, HDF5Matrix, Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]],
+                      y_train: Union[numpy.ndarray, HDF5Matrix, Tuple[
+                          Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]],
                       demography: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
         This the wrapper for training part of the classification method. it need training data set for x and y. can be
