@@ -216,6 +216,75 @@ summary(res)
 plot(res,param=params)
 ```
 This will transform the parameter values in log scale. Thus, we can calculate the distance much more precisely. 
+## Parameter Estimation by SMC
+Now Parameter Estimation by ABC-TFK is good but what if we want to do it recursively. First and foremost why doing it recursively is better in this case. Think it like this, before the training we did not know what is the amount of admixture from first population to second populations (suppose the real amount is 30%). It can be 10%, can be 20%.. 90%. Anything is possible. So we run every possible admixture amount and neural network learns how the ss should look under 10%,20%..90% admixture. After we use the real data suppose it predicted the amount is 20-50%. Now we can only concentrate on simulations from 20-50% admixture as there is no need of making the neural network learn how the ss behaves in those extreme condition when they are unlikely. Neural network now can specialize in much smaller deviated ss which in turn make it much powerful for prediction. Of course, we can simulate infinite number of line to make the neural network learn from that. Instead we are making the neural network learn recursively for the amount which we think is true and by doing that we are making it much more specialized. 
+The simplified idea is to get the minimum and maximum value for every parameter as a posterior and use that posterior as a prior to create new simulation and repeat it again (aka Sequential Monte Carlo or SMC). This recursion should be done till convergence is reached. In this case when imp (improvement) of every parameter is more than 95% (default value), we can assume we have reached enough convergence and neural network now cannot make any more improvement.
+
+<img src="https://latex.codecogs.com/gif.latex?imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" title="imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" />
+
+To run the SMC for Parameter Estimation for a single time:   
+
+```shell
+python src/Run_NestedSampling.py All --folder SMC --demography src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+``` 
+
+The code is similar to Parameter Estimation part with some added changes which makes it efficient for recursion (which basically means it will remove most of the extra test and graphs and only produce the range). 
+ 
+ - --demography src/extras/ModelParamsTogether.py The format is slightly different than the Parameter Estimation. The idea is train and test both are send in together for training part to make it more efficient. As it is recursive method wasting of simulations do not make sense. In case you want you can use the default one which works most of the time. In case you want to use your own neural network model you have to follow this format:
+```python
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import *
+import numpy
+# from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+
+def ANNModelParams(x, y):
+    # main difference from Parameter Estimation. Sending both (_train,_test) together as tupple 
+    x_train, x_test = x
+    y_train, y_test = y
+    #This part is same as before
+    model = Sequential()
+    model.add(...(input_shape=(x_train.shape[1],)))
+    ...
+    model.add(Dense(y_train.shape[1]))
+    #example
+    # model.add(GaussianNoise(0.05, input_shape=(x_train.shape[1],)))
+    # model.add(Dense(256, activation='relu'))
+    # model.add(Dense(128, activation='relu'))
+    # model.add(Dense(64, activation='relu'))
+    # model.add(Dense(32, activation='relu'))
+    # model.add(Dense(y_train.shape[1]))
+    model.compile(...)
+    #example
+    # model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+    model.fit(x_train, y_train, ...,validation_data=(numpy.array(x_test), numpy.array(y_test)))
+    # example 
+    # adding an early stop so that it does not overfit
+    # ES = EarlyStopping(monitor='val_loss', patience=100)
+    # checkpoint
+    # CP = ModelCheckpoint('Checkpoint.h5', verbose=0, save_best_only=True)
+    # Reduce learning rate
+    # RL = ReduceLROnPlateau(factor=0.2)
+    # model.fit(x_train, y_train, epochs=5, verbose=0, shuffle="batch", callbacks=[ES, CP, RL],
+    #           validation_data=(numpy.array(x_test), numpy.array(y_test)))
+
+    return model
+```   
+
+- --csvout will keep the simulation which are with in the new (posterior) range of parameters. Thus can be reused another round(s) of iteration.
+
+It will also save a newfile called Newrange.csv which would have information about the posterior range. 
+
+### Recursion
+If we cannot do the recursion, there is particularly no difference between Parameter Estimation and Parameter Estimation with SMC. You can think of SMC part is a subset and efficient version of normal Parameter Estimation part. Unfortunately we cannot give a code easily for recursion. This is because first of all ABC-TFK in principle meant for any ss (not only SFS). Thus not all possible ss can be written here. Second production of ss files takes times and it is impossible to run the code for production of ss in a single computer. You need a cluster as well as a pipeline (for example snakemake), which can submit multiple ss files in parallel. Nonetheless here we will give an idea how to do it but its reader discretion how to implement such a pipeline:
+#### Single Iteration
+```shell
+do while 
+Produce the prior paramters with in some range
+Produce SS from those parameters
+Merge parameters and their corresponding ss togther so it can be used in ABC-TFK
+python src/Run_NestedSampling.py ..
+```
+ 
 ## Good Practices
 - Never believe in one run of ABC-TFK. It is always better to run several separate simulations (pre-train) with several different neural models (training, you can find some in [src/extras/](src/extras/) folder) and see it reaches the same outcome. After training also use differently masked vcfs to ss (after train) files give same results. One example might be to use no masked and mappability masked (using [snapable programme](http://lh3lh3.users.sourceforge.net/snpable.shtml)) ss files and compare the results coming from them. Same things can also be achieved by producing same ss from different individuals or use boot strap results from same individuals.     
 - Take care of over fitting by checking accuracy in training data set vs test data set. If training accuracy is very high compared to test data set, try to run a smaller number of epochs and or use more data to train. If you are using less data than what is needed, your train data set accuracy will diverge from test data set accuracy very early on (<50 epochs). This suggests your training might be improved by using more data to train. On the other hand more data is always better. Especially because we can simulate easily more and more data synthetically. In principle, memory is not a problem for ABC-TFK as the code is implemented in hdf5 format. Thus you have unlimited memory.But take care, as more data also means it will take more time to converge. As a rule of thumb, we found that 20k simulations for classification and 50k simulations for parameter estimation per model is generally enough when using SFS as a ss. 
