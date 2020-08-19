@@ -95,8 +95,8 @@ ABC_TFK_Params_After_Train
     :show-inheritance:
     :special-members: __new__
 
-Parmeter Estimation Classes
----------------------------
+Parmeter Estimation by SMC Classes
+----------------------------------
 
 ABC_TFK_NS
 ^^^^^^^^^^
