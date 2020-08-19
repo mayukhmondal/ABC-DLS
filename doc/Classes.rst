@@ -1,5 +1,5 @@
 API Classes
-=======
+===========
 
 .. toctree::
     :maxdepth: 2
