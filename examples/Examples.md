@@ -275,13 +275,13 @@ def ANNModelParams(x, y):
 It will also save a newfile called Newrange.csv which would have information about the posterior range. 
 
 ### Recursion
-If we cannot do the recursion, there is particularly no difference between Parameter Estimation and Parameter Estimation with SMC. You can think of SMC part is a subset and efficient version of normal Parameter Estimation part. Unfortunately we cannot give a code easily for recursion. This is because first of all ABC-TFK in principle meant for any ss (not only SFS). Thus not all possible ss can be written here. Second production of ss files takes times and it is impossible to run the code for production of ss in a single computer. You need a cluster as well as a pipeline (for example snakemake), which can submit multiple ss files in parallel. Nonetheless here we will give an idea how to do it but its reader discretion how to implement such a pipeline:
+If we cannot do the recursion, there is no difference between Parameter Estimation and Parameter Estimation with SMC. You can think of SMC part is a subset and efficient version of normal Parameter Estimation part. Unfortunately we cannot give a code to do all the stuff easily for recursion. First of all ABC-TFK is in principle meant for any ss (not only SFS). Thus not all possible ss can be written here. Secondly,  the production of ss files takes times and it is impossible to run the code for production of ss in a single computer. You need a cluster as well as a pipeline (for example snakemake), which can submit multiple ss files in parallel. Nonetheless here we will give an idea how to do it but its reader discretion how to implement such a pipeline:
 #### Iterations
 ```shell
-do while 
+do while any parameter imp < 0.95
     Produce the prior paramters with in some range
-    Produce SS from those parameters
-    Merge parameters and their corresponding ss togther so it can be used in ABC-TFK
+    Produce SS from those parameters (heavily paralelize here)
+    Merge parameters and their corresponding ss together so it can be used in ABC-TFK
     python src/Run_NestedSampling.py ..
 ```
  
