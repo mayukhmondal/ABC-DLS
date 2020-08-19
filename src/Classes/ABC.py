@@ -67,7 +67,10 @@ class ABC_TFK_Classification:
     chunksize: Optional[int] = int(1e4)
     scale: bool = False
     csvout: bool = False
+    cvrepeats: int = 100
+    together: bool = False
     folder: str = ''
+    frac: float = 1.0
 
     def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
