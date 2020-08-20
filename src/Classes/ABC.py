@@ -43,31 +43,29 @@ class ABC_TFK_Classification:
     Main classification class. It will distinguish between different models. with given underlying models it will
     compare with real data and will predict how much it sure about which model can bet predict the real data.
 
-    :param info: the path of info file whose file column is the path of the file and second column defining the number
-        of  parameters
+    :param info: the path of info file whose file column is the path of the file and second column defining the
+        number of  parameters
     :param ssfile: the summary statistic on real data set. should be csv format
-    :param nn: custom function made for keras model. the path of that .py file. Should have a def ANNModelCheck
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc. as
-        documented in the r.abc
+    :param nn: custom function made for keras model. the path of that .py file. Should have a def
+        ANNModelCheck
+    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        as documented in the r.abc
     :param tolerance: the level of tolerance for abc. default is .005
     :param test_size:  the number of test rows. everything else will be used for train. 10k is default
     :param chunksize:  the number of rows accessed at a time.
     :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
         scaling will only happen on the ss.
+    :param together: in case you want to send both train and test together (for validation data set). important if
+        you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+        should look like. Should not be used for big valdation data set. Takes too much memory.
     :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
         later by r
+    :param cvrepeats: the number of repeats will be used for CV calculations
+    :param folder: to define the output folder. default is '' meaning current folder
+    :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+        data are not from same length. default is 1
     :return: will not return anything but will plot and print the power
     """
-    info: str
-    ssfile: str
-    nn: Optional[str] = None
-    method: str = "mnlogistic"
-    tolerance: float = .001
-    test_size: int = int(1e4)
-    chunksize: Optional[int] = int(1e4)
-    scale: bool = False
-    csvout: bool = False
-    folder: str = ''
 
     def __new__(cls, info: str, ssfile: str, nn: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
