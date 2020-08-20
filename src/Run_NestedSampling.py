@@ -27,9 +27,9 @@ sp.add_argument('--chunksize',
                 help='If two big for the memory use chunk size. relatively slow but no problem with ram', type=float,
                 default=1e2)
 sp.add_argument('--ssfile', help="The summary statistics file from real data", required=True)
-sp.add_argument('--demography',
-                help='The demography.py file full path. If this is given it will assume it has better function cater '
-                     'to your own demography. The def ANNModelCheck should be inside')
+sp.add_argument('--nn',
+                help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater '
+                     'to your own problem. The def ANNModelCheck should be inside')
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "loclinear", and "neuralnet". default'
                      ' is "rejection" ',
@@ -71,7 +71,7 @@ if args.cmd == 'All':
         scaling_x = True
         scaling_y = True
     # running
-    newrange = ABC.ABC_TFK_NS(info=args.info, ssfile=args.ssfile, demography=args.demography,
+    newrange = ABC.ABC_TFK_NS(info=args.info, ssfile=args.ssfile, nn=args.nn,
                               method=args.method, tol=args.tolerance, test_size=args.test_size,
                               chunksize=args.chunksize, csvout=args.csvout,
                               scaling_x=scaling_x, scaling_y=scaling_y, imp=args.imp,

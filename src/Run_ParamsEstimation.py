@@ -27,12 +27,12 @@ sp.add_argument('--test_size',
 sp.add_argument('--chunksize',
                 help='If two big for the memory use chunk size. relatively slow but no problem with ram', type=float)
 sp.add_argument('--ssfile', help="The summary statistics file from real data", required=True)
-sp.add_argument('--demography',
-                help='The demography.py file full path. If this is given it will assume it has better function cater '
-                     'to your own demography. The def ANNModelCheck should be inside')
+sp.add_argument('--nn',
+                help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater '
+                     'to your own problem. The def ANNModelCheck should be inside')
 sp.add_argument('--together',
                 help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
-                     " validation test set. need a specific format for demography.py. Look at Extra/Dynamic.py. Should "
+                     " validation test set. need a specific format for NeuralNetwork.py. Look at Extra/Dynamic.py. Should "
                      "not be used for big test data as it loads in the memory",
                 action="store_true")
 sp.add_argument('--method',
@@ -73,15 +73,15 @@ sp = subparsers.add_parser('Train', help='The training part of the ANN. Should b
 sp.set_defaults(cmd='Train')
 sp.add_argument('--folder',
                 help='in case you want to run the codes not in current working directory give the path', default='')
-sp.add_argument('--demography',
-                help='The demography.py file full path. If this is given it will assume it has better function cater to'
-                     ' your own demography. The def it can have ')
+sp.add_argument('--nn',
+                help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater to'
+                     ' your own problem. The def it can have ')
 sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
 sp.add_argument('--together',
                 help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
-                     " validation test set. need a specific format for demography.py. Look at Extra/Dynamic.py. Should "
+                     " validation test set. need a specific format for NeuralNetwork.py. Look at Extra/Dynamic.py. Should "
                      "not be used for big test data as it loads in the memory",
                 action="store_true")
 
@@ -150,7 +150,7 @@ if args.cmd == 'All':
         print('test_size:', args.test_size)
         sys.exit(1)
     # running
-    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, demography=args.demography, together=args.together,
+    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, nn=args.nn, together=args.together,
                        method=args.method, tol=args.tolerance, test_size=args.test_size,
                        chunksize=args.chunksize,
                        csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y, cvrepeats=args.cvrepeats,
@@ -173,7 +173,7 @@ elif args.cmd == 'Pre_train':
     ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scaling_x=scaling_x,
                                 scaling_y=scaling_y, folder=args.folder)
 elif args.cmd == 'Train':
-    ABC.ABC_TFK_Params_Train(demography=args.demography, test_rows=args.test_size, folder=args.folder,
+    ABC.ABC_TFK_Params_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
                              together=args.together)
 elif args.cmd == 'CV':
     if args.cvrepeats <= args.test_size:

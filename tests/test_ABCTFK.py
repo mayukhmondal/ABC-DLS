@@ -111,9 +111,9 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
     # will do it later
 
 
-def test_Classification_Train(demography: str = '../src/extras/ModelClass.py', test_size: int = 0, folder: str = 'cls'):
+def test_Classification_Train(nn: str = '../src/extras/ModelClass.py', test_size: int = 0, folder: str = 'cls'):
     # main check
-    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size, folder=folder)
+    ABC.ABC_TFK_Classification_Train(nn=nn, test_rows=test_size, folder=folder)
 
     # file checks
     files = ['cls/ModelClassification.h5']
@@ -143,14 +143,14 @@ def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, metho
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
 
 
-def test_Classification_Train_together(demography: str = '../src/extras/ModelClassTogether.py', test_size: int = 3,
+def test_Classification_Train_together(nn: str = '../src/extras/ModelClassTogether.py', test_size: int = 3,
                                        folder: str = 'cls'):
     # main check
     ABC.ABC_TFK_Classification_PreTrain(info='Model.info', chunksize=1, scale=True, folder=folder)
     y_train, _ = ABC.ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
     assert 12 == y_train.shape[0]
 
-    ABC.ABC_TFK_Classification_Train(demography=demography, test_rows=test_size, folder=folder, together=True)
+    ABC.ABC_TFK_Classification_Train(nn=nn, test_rows=test_size, folder=folder, together=True)
 
     # file checks
     files = ['cls/ModelClassification.h5']
@@ -172,9 +172,9 @@ def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksiz
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_PreTrain'
 
 
-def test_Params_Train(demography: str = '../src/extras/ModelParams.py', test_size: int = 0, folder: str = 'par'):
+def test_Params_Train(nn: str = '../src/extras/ModelParams.py', test_size: int = 0, folder: str = 'par'):
     # main check
-    ABC.ABC_TFK_Params_Train(demography=demography, test_rows=test_size, folder=folder)
+    ABC.ABC_TFK_Params_Train(nn=nn, test_rows=test_size, folder=folder)
 
     # file checks
     files = ['par/ModelParamPrediction.h5']
@@ -210,7 +210,7 @@ if os.path.isdir('par2'):
     shutil.rmtree('par2')
 
 
-def test_Params_Train_together(demography: str = '../src/extras/Dynamic.py', test_size: int = 1, folder: str = 'par'):
+def test_Params_Train_together(nn: str = '../src/extras/Dynamic.py', test_size: int = 1, folder: str = 'par'):
     # main check
     ABC.ABC_TFK_Params_PreTrain(info='Model.info', chunksize=1,
                                 scaling_x=True,
@@ -218,7 +218,7 @@ def test_Params_Train_together(demography: str = '../src/extras/Dynamic.py', tes
     y_train, _ = ABC.ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
     assert 4 == y_train.shape[0]
 
-    ABC.ABC_TFK_Params_Train(demography=demography, test_rows=test_size, folder=folder, together=True)
+    ABC.ABC_TFK_Params_Train(nn=nn, test_rows=test_size, folder=folder, together=True)
 
     # file checks
     files = ['par/ModelParamPrediction.h5']
@@ -226,12 +226,12 @@ def test_Params_Train_together(demography: str = '../src/extras/Dynamic.py', tes
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train_together'
 
 
-def test_ABC_TFK_NS(info: str = 'Model2.info', demography: str = '../src/extras/ModelParamsTogether.py',
+def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
                     ssfile: str = '../examples/YRI_CEU_CHB.observed.csv',
                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
                     csvout=True, folder: str = 'ns'):
     ABC.ABC_TFK_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           csvout=csvout, folder=folder,demography=demography)
+                   csvout=csvout, folder=folder, nn=nn)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]
