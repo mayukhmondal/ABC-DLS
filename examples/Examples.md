@@ -117,12 +117,12 @@ This will print out (including the CV part) which models is better explained by 
 ### All
 In case rather than doing it separately, we can do all these stuffs together in one command.  
 ``` sh
-python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout  --demography src/extras/ModelClass.py examples/Model.info 
+python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout  --nn src/extras/ModelClass.py examples/Model.info 
 ``` 
 It will produce the same files as previously but all of them together. If we do not use --chunksize it will produce x_test.h5 and y_test.h5 (of course if we use csvout it will be deleted) instead of x.h5 y.h5 as it will keep the training part on the ram itself. If you reach ram memory error, please use chunksize which will be relatively slower but do not have any upper limit for the file size.   
 ### Optional 
 We can easily use this result in R further to improve our analysis: 
-``` sh
+``` R
 library(abc) 
 ss_predict=read.csv('ss_predicted.csv.gz') 
 target=read.csv('ss_target.csv.gz') 
@@ -201,12 +201,12 @@ This will calculate both the CV part as well as will compare with the observed d
 ### All
 To put all these parts together we can use: 
 ```sh
-python src/Run_ParamsEstimation.py All --demography src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale examples/Model.info
+python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
 ```
 It will produce similar result. 
 ### Optional 
 We can use further the results in R:
-```
+```R
 library(abc)
 params=read.csv('params.csv.gz')
 ss=read.csv('ss_predicted.csv.gz')
@@ -225,7 +225,7 @@ The simplified idea is to get the minimum and maximum value for every parameter 
 To run the SMC for Parameter Estimation for a single time:   
 
 ```shell
-python src/Run_NestedSampling.py All --folder SMC --demography src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+python src/Run_NestedSampling.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
 ``` 
 
 The code is similar to Parameter Estimation part with some added changes which makes it efficient for recursion (which basically means it will remove most of the extra test and graphs and only produce the range). 
@@ -283,6 +283,7 @@ do while any parameter imp < 0.95
     Produce SS from those parameters (heavily paralelize here)
     Merge parameters and their corresponding ss together so it can be used in ABC-TFK
     python src/Run_NestedSampling.py ..
+    remove unrequired files
 ```
  
 ## Good Practices
