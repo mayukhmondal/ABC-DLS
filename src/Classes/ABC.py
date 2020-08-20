@@ -67,6 +67,7 @@ class ABC_TFK_Classification:
     :return: will not return anything but will plot and print the power
     """
 
+
     def __new__(cls, info: str, ssfile: str, nn: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                 scale: bool = False, csvout: bool = False, cvrepeats: int = 100, together: bool = False,
