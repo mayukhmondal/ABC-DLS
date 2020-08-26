@@ -43,36 +43,32 @@ class ABC_TFK_Classification:
     Main classification class. It will distinguish between different models. with given underlying models it will
     compare with real data and will predict how much it sure about which model can bet predict the real data.
 
-    :param info: the path of info file whose file column is the path of the file and second column defining the number
-        of  parameters
+    :param info: the path of info file whose file column is the path of the file and second column defining the
+        number of  parameters
     :param ssfile: the summary statistic on real data set. should be csv format
-    :param demography: custom function made for keras model. the path of that .py file. Should have a def ANNModelCheck
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc. as
-        documented in the r.abc
+    :param nn: custom function made for keras model. the path of that .py file. Should have a def
+        ANNModelCheck
+    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        as documented in the r.abc
     :param tolerance: the level of tolerance for abc. default is .005
     :param test_size:  the number of test rows. everything else will be used for train. 10k is default
     :param chunksize:  the number of rows accessed at a time.
     :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
         scaling will only happen on the ss.
+    :param together: in case you want to send both train and test together (for validation data set). important if
+        you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+        should look like. Should not be used for big valdation data set. Takes too much memory.
     :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
         later by r
+    :param cvrepeats: the number of repeats will be used for CV calculations
+    :param folder: to define the output folder. default is '' meaning current folder
+    :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+        data are not from same length. default is 1
     :return: will not return anything but will plot and print the power
     """
-    info: str
-    ssfile: str
-    demography: Optional[str] = None
-    method: str = "mnlogistic"
-    tolerance: float = .001
-    test_size: int = int(1e4)
-    chunksize: Optional[int] = int(1e4)
-    scale: bool = False
-    csvout: bool = False
-    cvrepeats: int = 100
-    together: bool = False
-    folder: str = ''
-    frac: float = 1.0
 
-    def __new__(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
+
+    def __new__(cls, info: str, ssfile: str, nn: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                 scale: bool = False, csvout: bool = False, cvrepeats: int = 100, together: bool = False,
                 folder: str = '', frac: float = 1.0) -> None:
@@ -82,7 +78,7 @@ class ABC_TFK_Classification:
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
         :param ssfile: the summary statistic on real data set. should be csv format
-        :param demography: custom function made for keras model. the path of that .py file. Should have a def
+        :param nn: custom function made for keras model. the path of that .py file. Should have a def
             ANNModelCheck
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
@@ -102,12 +98,12 @@ class ABC_TFK_Classification:
             data are not from same length. default is 1
         :return: will not return anything but will plot and print the power
         """
-        return cls.wrapper(info=info, ssfile=ssfile, demography=demography, method=method, tolerance=tolerance,
+        return cls.wrapper(info=info, ssfile=ssfile, nn=nn, method=method, tolerance=tolerance,
                            test_size=test_size, chunksize=chunksize, scale=scale, together=together, csvout=csvout,
                            cvrepeats=cvrepeats, folder=folder, frac=frac)
 
     @classmethod
-    def wrapper(cls, info: str, ssfile: str, demography: Optional[str] = None, method: str = "mnlogistic",
+    def wrapper(cls, info: str, ssfile: str, nn: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .005, test_size: int = int(1e4), chunksize: Optional[int] = None,
                 scale: bool = False,
                 together: bool = False, csvout: bool = False, cvrepeats: int = 100, folder: str = '',
@@ -124,7 +120,7 @@ class ABC_TFK_Classification:
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
         :param ssfile: the summary statisfic on real data set. should be csv format
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
+        :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
@@ -150,9 +146,9 @@ class ABC_TFK_Classification:
                                                                                       folder=folder)
         if together:
             ModelSeparation = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                                                demography=demography, folder=folder)
+                                                nn=nn, folder=folder)
         else:
-            ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+            ModelSeparation = cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn, folder=folder)
 
         cls.wrapper_after_train(ModelSeparation=ModelSeparation, x_test=x_test, y_test=y_test, scale_x=scale_x,
                                 y_cat_dict=y_cat_dict, ssfile=ssfile, method=method, tolerance=tolerance,
@@ -472,8 +468,8 @@ class ABC_TFK_Classification:
         :return: will return the min max scaler which can be used later. or none. it will save h5path the whole data
         """
         # the scaling part
-        newss=numpy.array([])
-        chunk=pandas.DataFrame()
+        newss = numpy.array([])
+        chunk = pandas.DataFrame()
         if scaling:
             scale = preprocessing.MinMaxScaler()
             row = 0
@@ -566,7 +562,7 @@ class ABC_TFK_Classification:
         numpy.ndarray, HDF5Matrix, Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]],
                       y_train: Union[numpy.ndarray, HDF5Matrix, Tuple[
                           Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]],
-                      demography: Optional[str] = None, folder: str = '') -> keras.models.Model:
+                      nn: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
         This the wrapper for training part of the classification method. it need training data set for x and y. can be
         either numpy array or hdf5 matrix format (HD5matrix) of keras
@@ -574,7 +570,7 @@ class ABC_TFK_Classification:
 
         :param x_train: train part of x aka summary statistics
         :param y_train: training part of y aka models names. should be used keras.utils.to_categorical to better result
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
+        :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param folder: to define the output folder. default is '' meaning current folder
         :return: will return the keras model. it will also save the model in ModelClassification.h5
@@ -582,10 +578,10 @@ class ABC_TFK_Classification:
         folder = Misc.creatingfolders(folder)
 
         Misc.removefiles((folder + "ModelClassification.h5", folder + "Checkpoint.h5"))
-        if demography:
-            ANNModelCheck = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelCheck')
+        if nn:
+            ANNModelCheck = Misc.loading_def_4m_file(filepath=nn, defname='ANNModelCheck')
             if ANNModelCheck is None:
-                print('Could not find the ANNModelCheck in', demography,
+                print('Could not find the ANNModelCheck in', nn,
                       '. Please check. Now using the default ANNModelCheck')
                 ANNModelCheck = cls.ANNModelCheck
         else:
@@ -657,7 +653,7 @@ class ABC_TFK_Classification:
         """
         This will save the keras model as a h5 file. It will also check if check_point (default=Checkpoint.h5)  was
         created before. In case check point was created before it will rename that as output. In case no checkpoint it
-        will save the model. Needed in case demography (model train) do not create checkpoint.
+        will save the model. Needed in case nn (model train) do not create checkpoint.
 
         :param model: trained model by keras tf
         :param output: output file name for h5. default Model.h5
@@ -889,7 +885,7 @@ class ABC_TFK_Classification:
 
         :param target:  the observed summary statistic in a dataframe format with single line
         :param ss:  the simulated summary statics in dataframe format.
-        :param name: name of the demography
+        :param name: name of the nn
         :param tol: the level of tolerance. default is .005
         :param extra: internal. to add in the graph to say about the method
         :param repeats: the number of nb.replicates to use to calculate the null
@@ -967,7 +963,7 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     Subset of class ABC_TFK_Classification. Specifically to do the train stuff. it need training data set for x.h5 and
     y.h5 in the cwd in hdf5 matrix format (HD5matrix) of keras
 
-    :param demography: custom function made for keras model. the path of that .py file. should have a def
+    :param nn: custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
     :param test_rows: the number of test rows. everything else will be used for train. 10k is default
     :param together: in case you want to send both train and test together (for validation data set). important if
@@ -976,11 +972,11 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     :return: will not return anything but will train and save the file ModelClassification.h5
     """
 
-    def __new__(cls, demography=None, test_rows=int(1e4), folder: str = '', together: bool = False):
+    def __new__(cls, nn=None, test_rows=int(1e4), folder: str = '', together: bool = False):
         """
         This will call the wrapper function
 
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
+        :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :param folder: to define the output folder. default is '' meaning current folder
@@ -989,16 +985,16 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
             should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
-        return cls.wrapper(demography=demography, test_rows=test_rows, folder=folder, together=together)
+        return cls.wrapper(nn=nn, test_rows=test_rows, folder=folder, together=together)
 
     @classmethod
-    def wrapper(cls, demography: Optional[str] = None, test_rows: int = int(1e4), folder: str = '',
+    def wrapper(cls, nn: Optional[str] = None, test_rows: int = int(1e4), folder: str = '',
                 together: bool = False) -> None:
         """
         wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
         y.h5 present.
 
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
+        :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :param together: in case you want to send both train and test together (for validation data set). important if
@@ -1011,10 +1007,10 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         x_train, x_test = cls.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
         if together:
             cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                              demography=demography, folder=folder)
+                              nn=nn, folder=folder)
         else:
 
-            cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography, folder=folder)
+            cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn, folder=folder)
 
 
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
@@ -1276,7 +1272,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     :param tol: the level of tolerance for abc. default is .005
     :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
         as documented in the r.abc
-    :param demography:  custom function made for keras model. the path of that .py file. should have a def
+    :param nn:  custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
     :param together: in case you want to send both train and test together (for validation data set). important if
             you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
@@ -1294,7 +1290,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
+                nn: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
                 scaling_y: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         This will call the wrapper function
@@ -1307,7 +1303,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
-        :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
+        :param nn:  custom function made for keras model. the path of that .py file. shoul have a def
             ANNModelCheck
         :param together: in case you want to send both train and test together (for validation data set). important if
             you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
@@ -1325,13 +1321,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :return:  will not return anything but will plot and print the parameters
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           demography=demography, together=together, csvout=csvout, scaling_x=scaling_x,
+                           nn=nn, together=together, csvout=csvout, scaling_x=scaling_x,
                            scaling_y=scaling_y, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection',
-                demography: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
+                nn: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
                 scaling_y: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
@@ -1349,10 +1345,10 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
-        :param demography:  custom function made for keras model. the path of that .py file. shoul have a def
+        :param nn:  custom function made for keras model. the path of that .py file. shoul have a def
             ANNModelCheck
         :param together: If you want to send both train and test together in tfk model (train). Useful for validation
-            test set in early stopping . need a specific format for demography.py. Look at Extra/Dynamic.py
+            test set in early stopping . need a specific format for nn.py. Look at Extra/Dynamic.py
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
@@ -1374,9 +1370,9 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                                                                                               folder=folder)
         if together:
             ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                                                     demography=demography, folder=folder)
+                                                     nn=nn, folder=folder)
         else:
-            ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
+            ModelParamPrediction = cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn,
                                                      folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                ssfile=ssfile, scale_x=scale_x, scale_y=scale_y,
@@ -1579,7 +1575,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix, tuple],
                       y_train: Union[numpy.ndarray, HDF5Matrix, tuple],
-                      demography: Optional[str] = None, folder: str = '') -> keras.models.Model:
+                      nn: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
         This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need trainging
         data set for x and y. can be either numpy array or hdf5 matrix format (HD5matrix) of keras
@@ -1587,17 +1583,17 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         :param x_train: train part of x aka summary statistics
         :param y_train: train part of all the parameters
-        :param demography: custom function made for keras model. the path of that .py file. should have a def has
+        :param nn: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
         :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
         """
         folder = Misc.creatingfolders(folder)
         Misc.removefiles((folder + "ModelParamPrediction.h5", folder + "Checkpoint.h5"))
-        if demography:
-            ANNModelParams = Misc.loading_def_4m_file(filepath=demography, defname='ANNModelParams')
+        if nn:
+            ANNModelParams = Misc.loading_def_4m_file(filepath=nn, defname='ANNModelParams')
             if ANNModelParams is None:
-                print('Could not find the ANNModelParams in', demography,
+                print('Could not find the ANNModelParams in', nn,
                       '. Please check. Now using the default ANNModelParams')
                 ANNModelParams = cls.ANNModelParams
         else:
@@ -1968,19 +1964,19 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
     can be hdf5 matrix format (HD5matrix) of keras
 
     :param test_rows: the number of rows kept for test data set. it will return those lines from the end
-    :param demography: custom function made for keras model. the path of that .py file. should have a def has
+    :param nn: custom function made for keras model. the path of that .py file. should have a def has
         ANNModelParams as def in Any.py
     :param folder: to define the output folder. default is '' meaning current folder
     :return: will not return anything but save the keras model
     """
 
-    def __new__(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '',
+    def __new__(cls, test_rows: int = int(1e4), nn: Optional[str] = None, folder: str = '',
                 together: bool = False) -> None:
         """
         This will call the wrapper function
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
-        :param demography: custom function made for keras model. the path of that .py file. should have a def has
+        :param nn: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
@@ -1988,16 +1984,16 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
             should look like. Should not be used for big valdation data set. Takes too much memory.
         :return: will not return anything but save the keras model
         """
-        return cls.wrapper(test_rows=test_rows, demography=demography, folder=folder, together=together)
+        return cls.wrapper(test_rows=test_rows, nn=nn, folder=folder, together=together)
 
     @classmethod
-    def wrapper(cls, test_rows: int = int(1e4), demography: Optional[str] = None, folder: str = '',
+    def wrapper(cls, test_rows: int = int(1e4), nn: Optional[str] = None, folder: str = '',
                 together: bool = False) -> None:
         """
         This is the wrapper. Will write later
 
         :param test_rows: the number of rows kept for test data set. it will return those lines from the end
-        :param demography: custom function made for keras model. the path of that .py file. should have a def has
+        :param nn: custom function made for keras model. the path of that .py file. should have a def has
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
@@ -2011,10 +2007,10 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         if together:
 
             cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                              demography=demography, folder=folder)
+                              nn=nn, folder=folder)
 
         else:
-            cls.wrapper_train(x_train=x_train, y_train=y_train, demography=demography,
+            cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn,
                               folder=folder)
 
 
@@ -2231,7 +2227,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     :param tol: the level of tolerance for abc. default is .005
     :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
         as documented in the r.abc
-    :param demography: custom function made for keras model. the path of that .py file. should have a def
+    :param nn: custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
     :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
         MinMaxscaler.
@@ -2250,7 +2246,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     test_size: int = int(1e4)
     tol: float = .005
     method: str = 'rejection'
-    demography: Optional[str] = None
+    nn: Optional[str] = None
     scaling_x: bool = False
     scaling_y: bool = False
     csvout: bool = False
@@ -2259,7 +2255,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     frac: float = 1.0
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
+                tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
                 frac: float = 1.0) -> pandas.DataFrame:
         """
@@ -2273,7 +2269,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
+        :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
@@ -2289,12 +2285,12 @@ class ABC_TFK_NS(ABC_TFK_Params):
             simulations which are within that new range
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                           demography=demography, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
+                           nn=nn, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
                            folder=folder, imp=imp, frac=frac)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
-                tol: float = .005, method: str = 'rejection', demography: Optional[str] = None, scaling_x: bool = False,
+                tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
                 frac: float = 1.0, oldrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
@@ -2309,7 +2305,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param tol: the level of tolerance for abc. default is .005
         :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
             as documented in the r.abc
-        :param demography: custom function made for keras model. the path of that .py file. should have a def
+        :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
@@ -2335,7 +2331,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                                                                                               folder=folder)
 
         ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                                                 demography=demography, folder=folder)
+                                                 nn=nn, folder=folder)
 
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
