@@ -29,8 +29,8 @@ sp.add_argument('--chunksize',
 sp.add_argument('--scale', help="To scale the data ", action="store_true")
 sp.add_argument('--ssfile', help="The summary statistics file from real data", required=True)
 sp.add_argument('--nn',
-                help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater to'
-                     ' your own problem. The def ANNModelCheck should be inside')
+                help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater'
+                     ' to your own problem. The def ANNModelCheck should be inside')
 sp.add_argument('--together',
                 help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
                      " validation test set. need a specific format for NeuralNetwork.py. Look at "
@@ -68,8 +68,8 @@ sp.set_defaults(cmd='Train')
 sp.add_argument('--folder',
                 help='in case you want to run the codes not in current working directory give the path', default='')
 sp.add_argument('--nn',
-                help='The NeuralNetwork.py.py file full path. If this is given it will assume it has better function cater to'
-                     ' your own problem. The def ANNModelCheck should be inside')
+                help='The NeuralNetwork.py.py file full path. If this is given it will assume it has better function '
+                     ' cater to your own problem. The def ANNModelCheck should be inside')
 sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)

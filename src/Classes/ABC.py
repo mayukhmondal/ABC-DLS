@@ -67,7 +67,6 @@ class ABC_TFK_Classification:
     :return: will not return anything but will plot and print the power
     """
 
-
     def __new__(cls, info: str, ssfile: str, nn: Optional[str] = None, method: str = "mnlogistic",
                 tolerance: float = .001, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                 scale: bool = False, csvout: bool = False, cvrepeats: int = 100, together: bool = False,
@@ -343,9 +342,11 @@ class ABC_TFK_Classification:
         :param inputcsv: the joined csv file (Comparison.csv) with ss and model names default:"Comparison.csv"
         :param output: the shuffled csv file path. default: 'shuffle.csv'
         :param header: if the header should be kept or not. default is true
+        :param outfolder: to define the output folder. default is current folder
         :return: will return output which is the shuffled rows of input
         """
-        import os, shutil
+        import os
+        import shutil
         terashuf = os.path.dirname(os.path.abspath(__file__)) + '/shuffle.py'
         parentfolder = os.getcwd()
         if outfolder != '':
@@ -902,9 +903,9 @@ class ABC_TFK_Classification:
     def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame,
                       predict4mreal: pandas.DataFrame, folder: str = ''):
         """
-        in case of everything satisfied. this will output the test data set in csv format which then later can be used by
-        r directly. if you use it, it will delete all the middle files from the current directory if exists: x_test.h5,
-        y_test.h5, x.h5, y.h5,scale_x.sav, scale_y.sav, params_header.csv
+        in case of everything satisfied. this will output the test data set in csv format which then later can be used
+        by r directly. if you use it, it will delete all the middle files from the current directory if exists:
+        x_test.h5, y_test.h5, x.h5, y.h5,scale_x.sav, scale_y.sav, params_header.csv
 
         :param modelindex: the model indexes in pandas series format
         :param ss_predictions: the predicted ss by nn on simulation[meaning nn(ss)]
@@ -1755,8 +1756,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
                           y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                           scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray,
-                          ss: pandas.Series) -> Tuple[
-        pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
+                          ss: pandas.Series) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
         """
         as the name suggest after ann ran it will prepare the data for abc analysis
 
