@@ -2504,14 +2504,14 @@ class ABC_TFK_NS(ABC_TFK_Params):
         temp_name = next(tempfile._get_candidate_names())
         robjects.r.options(width=10000)
         robjects.r['sink'](temp_name)
-        min = pandas.DataFrame(numpy.array(robjects.r['summary'](rmodel))).iloc[0, :]
+        min_df = pandas.DataFrame(numpy.array(robjects.r['summary'](rmodel))).iloc[0, :]
         robjects.r['sink']()
         robjects.r.options(width=10000)
         robjects.r['sink'](temp_name)
-        max = pandas.DataFrame(numpy.array(robjects.r['summary'](rmodel))).iloc[-1, :]
+        max_df = pandas.DataFrame(numpy.array(robjects.r['summary'](rmodel))).iloc[-1, :]
         robjects.r['sink']()
         os.remove(temp_name)
-        return min, max
+        return min_df, max_df
 
     @classmethod
     def extracting_params(cls, variable_names: List, scale_y: Optional[preprocessing.MinMaxScaler] = None,
@@ -2582,13 +2582,13 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def narrowing_params(cls, params: pandas.DataFrame, min: pandas.Series,
                          max: pandas.Series) -> pandas.core.indexes.range.RangeIndex:
         """
-        narrowing the pandas pararams with new range
+        narrowing the pandas params with new range
 
         :param params: pandas.DataFrame for the parameters
         :param min: pandas.Series about the minimum range of every parameters
         :param max: pandas.Series about the maximum range of every parameters
-        :return: will return the lienumber+2 where we have ranges with in the new limit. use ful to directly extract from
-            the csv file
+        :return: will return the lienumber+2 where we have ranges with in the new limit. use ful to directly extract
+            from the csv file
         """
 
         for index in range(params.shape[1]):
