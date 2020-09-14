@@ -1,0 +1,11 @@
+dependencies:
+    - numpy
+    - scikit-learn
+    - joblib
+    - pandas
+    - h5py
+    - rpy2
+    - r-essentials
+    - tzlocal
+    - tensorflow=1
+    - keras

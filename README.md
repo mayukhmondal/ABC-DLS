@@ -17,16 +17,16 @@ The codes are written in python3 (>=python3.6.9). This programme comes with seve
 - rpy2
 - r-essentials
 - tzlocal
-- tensorflow
+- tensorflow=1
 - keras
 
 The easiest way to install all of these dependencies is using conda. To install conda please visit <https://www.anaconda.com/distribution/>. After installing conda (remember to install python 3), use:
 ```
-conda install --file requirements.txt
+conda env update -f requirements.yml
 ```
 or if you want to make a different environment:
 ```
-conda create --name ABC-TFK --file requirements.txt  python=3
+conda env create -f requirements.yml --name ABC-TFK
 conda activate ABC-TFK
 ```
 Wait a little bit as it can take a long time to install all the dependencies.  
