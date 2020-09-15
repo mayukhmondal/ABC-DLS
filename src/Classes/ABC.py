@@ -644,7 +644,7 @@ class ABC_TFK_Classification:
         # Reduce learning rate
         RL = ReduceLROnPlateau(factor=0.5)
 
-        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP, RL], validation_split=.2)
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle=True, callbacks=[ES, CP, RL], validation_split=.2)
 
         return model
 
@@ -1637,7 +1637,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         # checkpoint
         CP = ModelCheckpoint('Checkpoint.h5', verbose=1, save_best_only=True)
 
-        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP], validation_split=.2)
+        model.fit(x, y, epochs=int(2e6), verbose=2, shuffle=True, callbacks=[ES, CP], validation_split=.2)
 
         return model
 
@@ -2370,7 +2370,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         # Reduce learning rate
         RL = ReduceLROnPlateau(factor=0.2)
 
-        model.fit(x_train, y_train, epochs=int(2e6), verbose=0, shuffle="batch", callbacks=[ES, CP, RL],
+        model.fit(x_train, y_train, epochs=int(2e6), verbose=0, shuffle=True, callbacks=[ES, CP, RL],
                   validation_data=(numpy.array(x_test), numpy.array(y_test)))
 
         return model

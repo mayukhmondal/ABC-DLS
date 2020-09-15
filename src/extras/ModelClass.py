@@ -27,6 +27,6 @@ def ANNModelCheck(x, y):
     # ES = EarlyStopping(monitor='val_loss', patience=100)
     # model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
     ####
-    model.fit(x, y, epochs=5, verbose=2, shuffle="batch")
+    model.fit(x, y, epochs=5, verbose=2, shuffle=True)
 
     return model

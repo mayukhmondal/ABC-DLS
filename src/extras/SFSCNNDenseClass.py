@@ -49,5 +49,5 @@ def ANNModelCheck(x, y):
     # Reduce learning rate
     RL = ReduceLROnPlateau(factor=0.2,patience=5)
 
-    model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES, CP, RL], validation_split=.2)
+    model.fit(x, y, epochs=int(2e6), verbose=2, shuffle=True, callbacks=[ES, CP, RL], validation_split=.2)
     return model

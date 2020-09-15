@@ -29,6 +29,6 @@ def ANNModelParams(x, y):
     # ES = EarlyStopping(monitor='val_loss', patience=100)
     # model.fit(x, y, epochs=int(2e6), verbose=2, shuffle="batch", callbacks=[ES], validation_split=.1)
     ####
-    model.fit(x, y, epochs=100, shuffle="batch",  verbose=2)
+    model.fit(x, y, epochs=100, shuffle=True,  verbose=2)
 
     return model
