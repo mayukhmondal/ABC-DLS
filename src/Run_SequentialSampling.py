@@ -39,9 +39,6 @@ sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters). deafult is b",
                 default='b', choices=["n", "x", "y", "b"])
-sp.add_argument('--oldrange',
-                help="csv format of oldrange file path. Should have 3 columns. params_names, lower and upper limit. "
-                     "every row is define a parameters. no header. same as Newrange.csv")
 sp.add_argument('--csvout',
                 help="If you want reuse the simulations with new updated range",
                 action="store_true")
@@ -50,6 +47,16 @@ sp.add_argument('--imp', help='minimum amount of improvement needed to register 
 sp.add_argument('--frac', help='If you multiply all the observed ss with some fraction. Important in case simulated '
                                'data and observed data are not from same length.default is 1 ', default=1.0,
                 type=float)
+sp.add_argument('--noise_injection', help='If you want to add some noises with the new range. Important if you want add'
+                                          'some noise in the newrange in case it has missed the true parameters. The '
+                                          'value if in fraction of distance of new range min and max. a good value'
+                                          'is 10 times lower than 1-imp. It is better to use hardrange to make it '
+                                          'understand what should the the hard cut off if not newrange can be outside '
+                                          'of possibile values. default is 0', default=0.0, type=float)
+sp.add_argument('--hardrange',
+                help="csv format of hardrange file path. Should have 3 columns. params_names, lower and upper limit. "
+                     "every row is define a parameters. no header. same as Newrange.csv. important to define what is "
+                     "possible for range")
 args = parser.parse_args()
 scaling_x, scaling_y = False, False
 # checking inputs
@@ -75,5 +82,6 @@ if args.cmd == 'All':
                               method=args.method, tol=args.tolerance, test_size=args.test_size,
                               chunksize=args.chunksize, csvout=args.csvout,
                               scaling_x=scaling_x, scaling_y=scaling_y, imp=args.imp,
-                              folder=args.folder, frac=args.frac)
+                              folder=args.folder, frac=args.frac, noise_injection=args.noise_injection,
+                              hardrange_file=args.hardrange)
     print(newrange)

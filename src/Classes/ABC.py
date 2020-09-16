@@ -2237,6 +2237,13 @@ class ABC_TFK_NS(ABC_TFK_Params):
         later by r
     :param folder: to define the output folder. default is '' meaning current folder
     :param imp: minimum amount of improvement needed to register as true. default is .95.
+    :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
+            data are not from same length. default is 1
+    :param noise_injection: the amount of fraction for noise injection from the distance between
+            params[min]-params[max]
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. same as Newrange.csv. important when used
+            noise_injection as not go awry for simulation parameters
     :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
         simulations which are within that new range
     """
@@ -2257,7 +2264,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0) -> pandas.DataFrame:
+                frac: float = 1.0,noise_injection: float = 0.0,
+                hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         This will call the wrapper function
 
@@ -2281,18 +2289,25 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param imp: minimum amount of improvement needed to register as true. default is .95.
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
+        :param noise_injection: the amount of fraction for noise injection from the distance between
+            params[min]-params[max]
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. same as Newrange.csv. important when used
+            noise_injection as not go awry for simulation parameters
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            nn=nn, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
-                           folder=folder, imp=imp, frac=frac)
+                           folder=folder, imp=imp, frac=frac, noise_injection=noise_injection,
+                           hardrange_file=hardrange_file)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0, oldrange_file: Optional[str] = None) -> pandas.DataFrame:
+                frac: float = 1.0, noise_injection: float = 0.0,
+                hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The main wrapper for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2315,8 +2330,11 @@ class ABC_TFK_NS(ABC_TFK_Params):
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
         :param imp: minimum amount of improvement needed to register as true. default is .95.
-        :param oldrange_file: csv format of oldrange file path. Should have 3 columns. params_names, lower and upper
-            limit. every row is define a parameters. no header. same as Newrange.csv
+        :param noise_injection: the amount of fraction for noise injection from the distance between
+            params[min]-params[max]
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. same as Newrange.csv. important when used
+            noise_injection as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
@@ -2336,7 +2354,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp,
-                                      frac=frac, oldrange_file=oldrange_file)
+                                      frac=frac, noise_injection=noise_injection, hardrange_file=hardrange_file)
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
@@ -2382,7 +2400,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            folder: str = '', csvout: bool = False, imp: float = 0.95,
-                           frac: float = 1.0, oldrange_file: Optional[str] = None) -> pandas.DataFrame:
+                           frac: float = 1.0, noise_injection: float = 0.0,
+                           hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2405,8 +2424,11 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param csvout: n case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param imp: minimum amount of improvement needed to register as true. default is .95.
-        :param oldrange_file: csv format of oldrange file path. Should have 3 columns. params_names, lower and upper
-            limit. every row is define a parameters. no header. same as Newrange.csv
+        :param noise_injection: the amount of fraction for noise injection from the distance between
+            params[min]-params[max]
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. same as Newrange.csv. important when used
+            noise_injection as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
@@ -2426,12 +2448,16 @@ class ABC_TFK_NS(ABC_TFK_Params):
         newrange.index = params_names
         newrange.columns = ['min', 'max']
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
-        if oldrange_file:
-            oldrange = pandas.read_csv(oldrange_file, index_col=0, header=None, names=['', 'min', 'max'],
-                                       usecols=[0, 1, 2])
-        else:
-            oldrange = pandas.concat([params.min(), params.max()], axis=1)
-            oldrange.columns = ['min', 'max']
+        if noise_injection > 0:
+            if hardrange_file:
+                hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['', 'min', 'max'],
+                                            usecols=[0, 1, 2])
+            else:
+                hardrange = pandas.DataFrame()
+            newrange = cls.noise_injection_update(newrange=newrange, noise_injection=noise_injection,
+                                                  hardrange=hardrange)
+        oldrange = pandas.concat([params.min(), params.max()], axis=1)
+        oldrange.columns = ['min', 'max']
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
@@ -2532,6 +2558,32 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return params
 
     @classmethod
+    def noise_injection_update(cls, newrange: pandas.DataFrame, noise_injection: float = 0.005,
+                               hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
+        """
+        in case you want to use some noise injection to the newrange. important as sometime when ABC-TFK is working
+        recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
+        lowerlimit in a fraction manner, thus even if it misses the true result in a cycle it can come back to the real
+        results in further cycle
+
+        :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :param noise_injection: the amount of fraction for noise injection from the distance between
+            params[min]-params[max]
+        :param hardrange: the hard range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
+            tested to be within hardrange
+        """
+        dist = (newrange['max'] - newrange['min']) * noise_injection * 0.5
+        newrange['min'] = newrange['min'] - dist
+        newrange['max'] = newrange['max'] + dist
+        if not hardrange.empty:
+            newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
+            newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
+        return newrange
+
+    @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
                           imp: float = .95) -> pandas.DataFrame:
         """
@@ -2548,7 +2600,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
             old range rows
         """
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange.loc[newrange['imp'] > imp, ['min','max']] = oldrange[newrange['imp'] > imp]
+        newrange.loc[newrange['imp'] > imp, ['min', 'max']] = oldrange[newrange['imp'] > imp]
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 

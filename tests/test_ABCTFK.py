@@ -229,9 +229,9 @@ def test_Params_Train_together(nn: str = '../src/extras/Dynamic.py', test_size: 
 def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
                     ssfile: str = '../examples/YRI_CEU_CHB.observed.csv',
                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
-                    csvout=True, folder: str = 'ns'):
+                    csvout=True, folder: str = 'ns',noise_injection=0.005):
     ABC.ABC_TFK_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                   csvout=csvout, folder=folder, nn=nn)
+                   csvout=csvout, folder=folder, nn=nn,noise_injection=noise_injection)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]
