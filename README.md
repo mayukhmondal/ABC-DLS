@@ -21,11 +21,20 @@ The codes are written in python3 (>=python3.6.9). This programme comes with seve
 - keras
 
 The easiest way to install all of these dependencies is using conda. To install conda please visit <https://www.anaconda.com/distribution/>. After installing conda (remember to install python 3), use:
+```shell script
+conda install --file requirements.txt
 ```
+or for last tested version 
+```shell script
 conda env update -f requirements.yml
 ```
 or if you want to make a different environment:
+```shell script
+conda create --name ABC-TFK --file requirements.txt  python=3
+conda activate ABC-TFK
 ```
+same but for last tested version
+```shell script
 conda env create -f requirements.yml --name ABC-TFK
 conda activate ABC-TFK
 ```

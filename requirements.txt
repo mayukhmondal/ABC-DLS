@@ -1,0 +1,10 @@
+numpy
+scikit-learn
+joblib
+pandas
+h5py
+rpy2
+r-essentials
+tzlocal
+tensorflow
+keras
