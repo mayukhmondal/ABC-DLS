@@ -2548,7 +2548,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
             old range rows
         """
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange.loc[newrange['imp'] > imp, :2] = oldrange[newrange['imp'] > imp]
+        newrange.loc[newrange['imp'] > imp, ['min','max']] = oldrange[newrange['imp'] > imp]
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
