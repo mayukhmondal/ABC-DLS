@@ -2264,7 +2264,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0,noise_injection: float = 0.0,
+                frac: float = 1.0, noise_injection: float = 0.0,
                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         This will call the wrapper function
