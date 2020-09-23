@@ -998,6 +998,7 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
+        :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
             you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
             should look like. Should not be used for big valdation data set. Takes too much memory.
@@ -2061,11 +2062,10 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
 
         print("Evaluate with test:")
         ModelParamPrediction.evaluate(x_test[:], y_test[:], verbose=2)
+        params_names = pandas.read_csv(folder + 'params_header.csv').columns
         test_predictions, params_unscaled = cls.preparing_for_abc(ModelParamPrediction=ModelParamPrediction,
-                                                                  x_test=x_test,
-                                                                  y_test=y_test, scale_x=scale_x, scale_y=scale_y,
-                                                                  params_names=pandas.read_csv(folder +
-                                                                                               'params_header.csv').columns)
+                                                                  x_test=x_test, y_test=y_test, scale_x=scale_x,
+                                                                  scale_y=scale_y, params_names=params_names)
         print('correlation between params. Prior')
         print(params_unscaled.corr().to_string())
 
@@ -2441,8 +2441,9 @@ class ABC_TFK_NS(ABC_TFK_Params):
         ss = ss * numpy.array(frac)
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
-        parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,
-                                          method=method)
+        parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions,
+                                                tol=tol,
+                                                method=method)
 
         newrange = pandas.concat([parmin, parmax], axis=1)
         newrange.index = params_names
@@ -2637,8 +2638,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         narrowing the pandas params with new range
 
         :param params: pandas.DataFrame for the parameters
-        :param min: pandas.Series about the minimum range of every parameters
-        :param max: pandas.Series about the maximum range of every parameters
+        :param parmin: pandas.Series about the minimum range of every parameters
+        :param parmax: pandas.Series about the maximum range of every parameters
         :return: will return the lienumber+2 where we have ranges with in the new limit. use ful to directly extract
             from the csv file
         """
