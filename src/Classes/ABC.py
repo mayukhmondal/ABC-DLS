@@ -48,7 +48,7 @@ class ABC_TFK_Classification:
     :param ssfile: the summary statistic on real data set. should be csv format
     :param nn: custom function made for keras model. the path of that .py file. Should have a def
         ANNModelCheck
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+    :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
         as documented in the r.abc
     :param tolerance: the level of tolerance for abc. default is .005
     :param test_size:  the number of test rows. everything else will be used for train. 10k is default
@@ -56,8 +56,8 @@ class ABC_TFK_Classification:
     :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
         scaling will only happen on the ss.
     :param together: in case you want to send both train and test together (for validation data set). important if
-        you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-        should look like. Should not be used for big valdation data set. Takes too much memory.
+        you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+        should look like. Should not be used for big validation data set. Takes too much memory.
     :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
         later by r
     :param cvrepeats: the number of repeats will be used for CV calculations
@@ -79,7 +79,7 @@ class ABC_TFK_Classification:
         :param ssfile: the summary statistic on real data set. should be csv format
         :param nn: custom function made for keras model. the path of that .py file. Should have a def
             ANNModelCheck
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param tolerance: the level of tolerance for abc. default is .005
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
@@ -87,8 +87,8 @@ class ABC_TFK_Classification:
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.The
             scaling will only happen on the ss.
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
@@ -118,10 +118,10 @@ class ABC_TFK_Classification:
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
-        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param ssfile: the summary statistic on real data set. should be csv format
         :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param tolerance: the level of tolerance for abc. default is .005
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
@@ -129,8 +129,8 @@ class ABC_TFK_Classification:
         :param scale: to tell if the data should be scaled or not. default is false. will be scaled by MinMaxscaler.
             The scaling will only happen on the ss.
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param cvrepeats: the number of repeats will be used for CV calculations
@@ -193,7 +193,7 @@ class ABC_TFK_Classification:
             ['models'] + list(pandas.read_csv(files[0], nrows=1).columns[paramnumbers[0]:])).transpose().to_csv(
             outfolder +
             'Comparison.csv', index=False, header=False)
-        # adding line after subseting
+        # adding line after sub-setting
         [cls.subsetting_file_concating(filename=files[i], params_number=paramnumbers[i], nrows=minlines,
                                        modelname=names[i], outfolder=outfolder) for i in range(len(files))]
         shuffile = cls.shufling_joined_models(inputcsv='Comparison.csv', output='shuf.csv',
@@ -289,7 +289,7 @@ class ABC_TFK_Classification:
         this will remove the params columns (As not needed for model comparison) and make same number of rows per model
         so that it is not biased. also add the very first column as the name of the model
 
-        :param filename: the csv file path. whose first columns are paramters and all the rest are sfs or ss. comma
+        :param filename: the csv file path. whose first columns are parameters and all the rest are sfs or ss. comma
             separated
         :param params_number: the number of parameters present in the file. rest are sfs or ss
         :param nrows: the number of rows to include in the file. remember the nrows start with 0. thus if you want to
@@ -314,7 +314,7 @@ class ABC_TFK_Classification:
         if stderr:
             print(stderr)
             sys.exit(1)
-        # checking for nan in csvs
+        # checking for nan in csv files
         if filename[-2:] == 'gz':
             nancheckcommand = Misc.joinginglistbyspecificstring(['zcat ', filename, '| grep ",,"|wc -l '])
         else:
@@ -587,7 +587,7 @@ class ABC_TFK_Classification:
                 ANNModelCheck = cls.ANNModelCheck
         else:
             ANNModelCheck = cls.ANNModelCheck
-        # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
+        # needed as Checkpoint.h5 should be inside the folder and i do not want to make ANNModelCheck complicated with
         # another variable 'folder'
         parentfolder = os.getcwd()
         if folder != '':
@@ -674,7 +674,7 @@ class ABC_TFK_Classification:
                             folder: str = '', pred_repeat: int = 1, frac: float = 1.0) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
-        data set to see the power and then use a real data setto show how likely it support one model over another.
+        data set to see the power and then use a real data set to show how likely it support one model over another.
         it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
         sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
         ModelSeparation.evaluate -> cls.read_ss_2_series -> cls.plot_power_of_ss (cls.r_summary) -> cls.model_selection
@@ -686,7 +686,7 @@ class ABC_TFK_Classification:
         :param scale_x: the MinMax scaler of x axis. can be None
         :param y_cat_dict: name of all the models. will be printed the pdf
         :param ssfile: the summary statistic on real data set. should be csv format
-        :param method: to tell which method is to be used in abc. default is mnlogitic. but can be rejection, neural net
+        :param method: to tell which method is to be used in abc. default is mnlogistic. but can be rejection, neural net
             etc. as documented in the r.abc
         :param tolerance: the level of tolerance. default is .005
         :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
@@ -808,7 +808,7 @@ class ABC_TFK_Classification:
         :param index: the index of the models
         :param tol: the level of tolerance. default is .005
         :param repeats: the number of repeat to use is on cv (cross validation) error. default is 100
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :return: will plot it the folder to see the confusion matrix. also print out the summary of the model to see the
             confusion matrix in text format
@@ -845,8 +845,8 @@ class ABC_TFK_Classification:
         :param ss: the summary statics in dataframe format
         :param index:  the index of the models in pandas.Series format
         :param tol: the level of tolerance. default is .005
-        :param method: to tell which method is to be used in abc. default is mnlogitic. but can be rejection, neural net
-         etc. as docuemented in the r.abc
+        :param method: to tell which method is to be used in abc. default is mnlogistic. but can be rejection, neural net
+         etc. as documented in the r.abc
         :return: will not return anything but will print summary of model selection
         """
         if method != 'rejection':
@@ -868,7 +868,7 @@ class ABC_TFK_Classification:
         :param extra: internal. to add in the graph to say about the method
         :param tol: the level of tolerance. default is .005
         :param repeats: the number of nb.replicates to use to calculate the null
-        :return: will not return anything. rather call googness_fit to plot stuff and print the summary of gfit
+        :return: will not return anything. rather call goodness_fit to plot stuff and print the summary of gfit
         """
         # abc complains if there is no std in the data columns (ss)
         noise = numpy.random.normal(0, 1e-4, ss.shape)
@@ -892,7 +892,6 @@ class ABC_TFK_Classification:
         :param repeats: the number of nb.replicates to use to calculate the null
         :return: will not return anything. but will plot goodness of fit also print the summary
         """
-        # gfit(target,sumstat,nb.replicate,tol)
         fit = abc.gfit(target, ss, repeats, tol=tol)
         print(name)
         print(robjects.r['summary'](fit))
@@ -968,8 +967,8 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         ANNModelCheck
     :param test_rows: the number of test rows. everything else will be used for train. 10k is default
     :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
     :return: will not return anything but will train and save the file ModelClassification.h5
     """
 
@@ -982,8 +981,8 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
         return cls.wrapper(nn=nn, test_rows=test_rows, folder=folder, together=together)
@@ -1000,8 +999,8 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
         :param test_rows: the number of test rows. everything else will be used for train. 10k is default
         :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :return: will not return anything but will train and save the file ModelClassification.h5
         """
         folder = Misc.creatingfolders(folder)
@@ -1017,12 +1016,12 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
 
 class ABC_TFK_Classification_CV(ABC_TFK_Classification):
     """
-    Subset of class ABC_TFK_Classification. Specifically to calculate cross validation test. good if you dont have
+    Subset of class ABC_TFK_Classification. Specifically to calculate cross validation test. good if you do not have
     real data
 
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+    :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
         as documented in the r.abc
     :return: will not return anything but will plot the cross validation stuff of different models
     """
@@ -1034,7 +1033,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
 
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
@@ -1051,7 +1050,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
 
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
@@ -1194,7 +1193,7 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
 class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
     """
     Subset of class ABC_TFK_Classification. To do the ABC part.  after training is done it will test on the test
-    data set to see the power and then use a real data setto show how likely it support one model over another.
+    data set to see the power and then use a real data set to show how likely it support one model over another.
     it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
     sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
 
@@ -1214,7 +1213,7 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
         """
         This will call the wrapper function
 
-        :param ssfile:  the summary statisfic on real data set. should be csv format
+        :param ssfile:  the summary statistic on real data set. should be csv format
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .01
         :param method: to tell which method is used in abc. default is rejection. but can be rejection, neural net etc.
@@ -1235,11 +1234,11 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
                 csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
         This the wrapper for after training part of the classification. after training is done it will test on the test
-        data set to see the power and then use a real data setto show how likely it support one model over another.
+        data set to see the power and then use a real data set to show how likely it support one model over another.
         it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
         sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
 
-        :param ssfile:  the summary statisfic on real data set. should be csv format
+        :param ssfile:  the summary statistic on real data set. should be csv format
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .01
         :param method: to tell which method is used in abc. default is rejection. but can be rejection, neural net etc.
@@ -1272,13 +1271,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
     :param chunksize: the number of rows accessed at a time.
     :param test_size:  the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+    :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
         as documented in the r.abc
     :param nn:  custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
     :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
     :param csvout:  in case of everything satisfied. this will output the test data set in csv format. can be used
         later by r
     :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by MinMaxscaler.
@@ -1303,13 +1302,13 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param chunksize: the number of rows accessed at a time.
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
-        :param nn:  custom function made for keras model. the path of that .py file. shoul have a def
+        :param nn:  custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :param csvout:  in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
@@ -1332,7 +1331,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                 nn: Optional[str] = None, together: bool = False, csvout: bool = False, scaling_x: bool = False,
                 scaling_y: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
-        the total wrapper of the pameter estimation method. with given model underlying parameters it will compare with
+        the total wrapper of the parameter estimation method. with given model underlying parameters it will compare with
         real data and will predict which parameter best predict the real data.
         wrapper_pretrain(Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5
         ;else preparingdata->Misc.removefiles) ->wrapper_train(Misc.loading_def_4m_file -> def ANNModelCheck)->
@@ -1345,9 +1344,9 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param chunksize: the number of rows accessed at a time.
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
-        :param nn:  custom function made for keras model. the path of that .py file. shoul have a def
+        :param nn:  custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
         :param together: If you want to send both train and test together in tfk model (train). Useful for validation
             test set in early stopping . need a specific format for nn.py. Look at Extra/Dynamic.py
@@ -1396,7 +1395,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters. only first line will be used
-        :param chunksize: the number of rows accesed at a time. in case of big data
+        :param chunksize: the number of rows accessed at a time. in case of big data
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
@@ -1499,7 +1498,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
 
         :param paramfile: the parameter csv file path for y
         :param simss: the ss file path for x
-        :param chunksize: the number of rows accesed at a time. default 100
+        :param chunksize: the number of rows accessed at a time. default 100
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
@@ -1579,7 +1578,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                       y_train: Union[numpy.ndarray, HDF5Matrix, tuple],
                       nn: Optional[str] = None, folder: str = '') -> keras.models.Model:
         """
-        This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need trainging
+        This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need training
         data set for x and y. can be either numpy array or hdf5 matrix format (HD5matrix) of keras
         Misc.loading_def_4m_file -> def ANNModelCheck
 
@@ -1600,7 +1599,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                 ANNModelParams = cls.ANNModelParams
         else:
             ANNModelParams = cls.ANNModelParams
-        # needed as Checkpoint.h5 should be inside the folder and i dont want to make ANNModelCheck complicated with
+        # needed as Checkpoint.h5 should be inside the folder and i do not want to make ANNModelCheck complicated with
         # another variable 'folder'
         parentfolder = os.getcwd()
         if folder != '':
@@ -1662,7 +1661,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         :param ssfile: the real ss file path
         :param scale_x: the scale of ss if exist
         :param scale_y: the scale of parameters if exist
-        :param paramfile: the path of paramter header file. default is 'params_header.csv'
+        :param paramfile: the path of parameter header file. default is 'params_header.csv'
         :param method: the method to be used in r_abc. default is rejection
         :param tol: the tolerance level to be used in r_abc. default is .005
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
@@ -1714,11 +1713,11 @@ class ABC_TFK_Params(ABC_TFK_Classification):
                         params_unscaled: pandas.DataFrame) -> Tuple[
         pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
         """
-        Rabc complains if the parameters do not have std (all are same or constant). this step will remove those
+        R_abc complains if the parameters do not have std (all are same or constant). this step will remove those
 
         :param test_predictions: the predicted values dataframe from ANN model
         :param predict4mreal: the predicted value from the real data
-        :param params_unscaled: the real paramters to produce the ss
+        :param params_unscaled: the real parameters to produce the ss
         :return: will return the all the inputs but will remove columns with 0 std
         """
 
@@ -1726,7 +1725,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         columns2bdrop = std[std == 0].index
 
         if len(columns2bdrop) == params_unscaled.shape[1]:
-            print('All the columns in the params have no standrd deviation. Please check in params for y_test')
+            print('All the columns in the params have no standard deviation. Please check in params for y_test')
             sys.exit(1)
         elif len(columns2bdrop) > 0:
             print('These columns do not have any std in the test data set. Is being removed before ABC')
@@ -1745,7 +1744,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         elif len(columns2bdrop) > 0:
             print(
                 'These columns do not have any std in the predicted data set. Is being removed before ABC. This is not '
-                'a good sign. Please check the trainging model')
+                'a good sign. Please check the training model')
             print(columns2bdrop)
             test_predictions = test_predictions.drop(columns2bdrop, axis=1)
             predict4mreal = predict4mreal.drop(columns2bdrop, axis=1)
@@ -1858,7 +1857,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         """
         the final abc calculation on real data.
 
-        :param target: the real ss in a pandas  data frameformat
+        :param target: the real ss in a pandas  data frame format
         :param param: the parameter data frame format (y_test)
         :param ss: the summary statics in dataframe format
         :param tol: the tolerance level. default is .001
@@ -1929,7 +1928,7 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters. only first line will be used
-    :param chunksize: the number of rows accesed at a time. in case of big data
+    :param chunksize: the number of rows accessed at a time. in case of big data
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
         MinMaxscaler.
@@ -1946,7 +1945,7 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters. only first line will be used
-        :param chunksize: the number of rows accesed at a time. in case of big data
+        :param chunksize: the number of rows accessed at a time. in case of big data
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
             MinMaxscaler.
@@ -1981,8 +1980,8 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :return: will not return anything but save the keras model
         """
         return cls.wrapper(test_rows=test_rows, nn=nn, folder=folder, together=together)
@@ -1998,8 +1997,8 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
             ANNModelParams as def in Any.py
         :param folder: to define the output folder. default is '' meaning current folder
         :param together: in case you want to send both train and test together (for validation data set). important if
-            you donot want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
-            should look like. Should not be used for big valdation data set. Takes too much memory.
+            you do not want to lose data for earlystop validation split. look at extras/Dynamic.py to see how the tfknn
+            should look like. Should not be used for big validation data set. Takes too much memory.
         :return: will not return anything but save the keras model
         """
         folder = Misc.creatingfolders(folder)
@@ -2017,12 +2016,12 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
 
 class ABC_TFK_Params_CV(ABC_TFK_Params):
     """
-    Subset of Paramter estimation Specifically to calculate cross validation test. good if you dont have
+    Subset of parameter estimation Specifically to calculate cross validation test. good if you do not have
     real data
 
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+    :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
         as documented in the r.abc
     :param folder: to define the output folder. default is '' meaning current folder
     :return: will not return anything but will plot the cross validation stuff for parameter estimation
@@ -2035,7 +2034,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
 
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param cvrepeats: the number of repeats will be used for CV calculations
         :param folder: to define the output folder. default is '' meaning current folder
@@ -2047,12 +2046,12 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
     def wrapper(cls, test_size: int = int(1e3), tol: float = 0.01, method: str = 'neuralnet',
                 cvrepeats: int = 100, folder: str = '') -> None:
         """
-       Subset of Parameter estimation Specifically to calculate cross validation test. good if you dont have
+       Subset of Parameter estimation Specifically to calculate cross validation test. good if you do not have
        real data
 
        :param test_size: the number of test rows. everything else will be used for train. 10k is default
        :param tol: the level of tolerance for abc. default is .005
-       :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+       :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
        :param cvrepeats: the number of repeats will be used for CV calculations
        :param folder: to define the output folder. default is '' meaning current folder
        :return: will not return anything but will plot the cross validation stuff for parameter estimation
@@ -2146,7 +2145,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
 
 class ABC_TFK_Params_After_Train(ABC_TFK_Params):
     """
-   The subset class to test to paramter estimation. after training is done it will test on the test data set
+   The subset class to test to parameter estimation. after training is done it will test on the test data set
    to see the power and then use a real data set to show what most likely parameters can create the real data.
    it will use abc to give the power or standard deviation of the parameters that is predicted by nn to know how
    much we are sure about the results. mainly it will do two parts of abc. one cv error and parameter estimation
@@ -2154,7 +2153,7 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
    :param ssfile:  the real ss file path
    :param test_size:  the number of test rows. everything else will be used for train. 10k is default
    :param tol: the level of tolerance for abc. default is .005
-   :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+   :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
         as documented in the r.abc
    :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
@@ -2166,12 +2165,12 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
     def __new__(cls, ssfile: str, test_size: int = int(1e4), tol: float = .01, method: str = 'neuralnet',
                 csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
         """
-        This will call the wrapper funciton
+        This will call the wrapper function
 
        :param ssfile:  the real ss file path
        :param test_size:  the number of test rows. everything else will be used for train. 10k is default
        :param tol: the level of tolerance for abc. default is .005
-       :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+       :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
        :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
@@ -2196,7 +2195,7 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         :param ssfile:  the real ss file path
         :param test_size:  the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param csvout: in case of everything satisfied. this will output the test data set in csv format. can be used
             later by r
@@ -2221,11 +2220,11 @@ class ABC_TFK_NS(ABC_TFK_Params):
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
         number of  parameters
-    :param ssfile: the summary statisfic on real data set. should be csv format
+    :param ssfile: the summary statistic on real data set. should be csv format
     :param chunksize: the number of rows accessed at a time.
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
     :param tol: the level of tolerance for abc. default is .005
-    :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+    :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
         as documented in the r.abc
     :param nn: custom function made for keras model. the path of that .py file. should have a def
         ANNModelCheck
@@ -2271,11 +2270,11 @@ class ABC_TFK_NS(ABC_TFK_Params):
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
-        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param ssfile: the summary statistic on real data set. should be csv format
         :param chunksize: the number of rows accessed at a time.
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
@@ -2314,11 +2313,11 @@ class ABC_TFK_NS(ABC_TFK_Params):
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
-        :param ssfile: the summary statisfic on real data set. should be csv format
+        :param ssfile: the summary statistic on real data set. should be csv format
         :param chunksize: the number of rows accessed at a time.
         :param test_size: the number of test rows. everything else will be used for train. 10k is default
         :param tol: the level of tolerance for abc. default is .005
-        :param method: to tell which method is used in abc. default is mnlogitic. but can be rejection, neural net etc.
+        :param method: to tell which method is used in abc. default is mnlogistic. but can be rejection, neural net etc.
             as documented in the r.abc
         :param nn: custom function made for keras model. the path of that .py file. should have a def
             ANNModelCheck
@@ -2364,8 +2363,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         A basic model for ANN to calculate parameters. to make it more efficient train and test together. but make it
         more memory inefficient
 
-        :param x: the x_train and x_test of summary statistics. can be numpy array or hdf5 of tupple
-        :param y: the x_train and x_test of the parameters which produced those ss. can be numpy array or hdf5 of tupple
+        :param x: the x_train and x_test of summary statistics. can be numpy array or hdf5 of tuple
+        :param y: the x_train and x_test of the parameters which produced those ss. can be numpy array or hdf5 of tuple
         :return: will return the trained model
         """
 
@@ -2417,7 +2416,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param ssfile: the real ss file path
         :param scale_x: the scale of ss if exist
         :param scale_y: the scale of parameters if exist
-        :param paramfile: the path of paramter header file. default is 'params_header.csv'
+        :param paramfile: the path of parameter header file. default is 'params_header.csv'
         :param method: the method to be used in r_abc. default is rejection
         :param tol: the tolerance level to be used in r_abc. default is .005
         :param folder: to define the output folder. default is '' meaning current folder
@@ -2544,7 +2543,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def extracting_params(cls, variable_names: List, scale_y: Optional[preprocessing.MinMaxScaler] = None,
                           yfile: str = 'y.h5') -> pandas.DataFrame:
         """
-        re-extracting (or retransform) the parameters from y.h5 so that we can reuse it later for narrow
+        re-extracting (or re-transform) the parameters from y.h5 so that we can reuse it later for narrow
 
         :param variable_names: the name of the variables in list format
         :param scale_y: the minmax scale on parameters
@@ -2589,7 +2588,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                           imp: float = .95) -> pandas.DataFrame:
         """
         This will check if the new range improvement is more than 95%. if true it will update the new range or else keep
-        the old range assuming there is no direct improvement. this step is necessary so that you donot get smaller
+        the old range assuming there is no direct improvement. this step is necessary so that you do not get smaller
         range just because you ran it several time
 
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
@@ -2609,11 +2608,11 @@ class ABC_TFK_NS(ABC_TFK_Params):
     def narrowing_input(cls, info: str, params: pandas.DataFrame, newrange: pandas.DataFrame, folder: str = '') -> str:
         """
         To reuse some simulations for next round. ABC will predict narrower posterior for parameters. No point rerun
-        everythin. rather use those simulations which are within the limit of new range.
+        everything. rather use those simulations which are within the limit of new range.
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
-        :param params: the parameters coming from y.h5 rescaled. remember this step assumed that you donot randomized
+        :param params: the parameters coming from y.h5 rescaled. remember this step assumed that you do not randomized
             the line between csv and .h5 files. rather it will in this step
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
