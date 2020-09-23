@@ -2441,10 +2441,10 @@ class ABC_TFK_NS(ABC_TFK_Params):
         ss = ss * numpy.array(frac)
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
-        min, max = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,
+        parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions, tol=tol,
                                           method=method)
 
-        newrange = pandas.concat([min, max], axis=1)
+        newrange = pandas.concat([parmin, parmax], axis=1)
         newrange.index = params_names
         newrange.columns = ['min', 'max']
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
@@ -2478,8 +2478,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
             rejection
         :return: will return min and max ranges in pandas Series format
         """
-        min = []
-        max = []
+        parmin = []
+        parmax = []
         if method == 'loclinear' or method == 'rejection':
             for colnum in range(param.shape[1]):
                 res = abc.abc(target=pandas.DataFrame(target.iloc[:, colnum]),
@@ -2487,15 +2487,15 @@ class ABC_TFK_NS(ABC_TFK_Params):
                               sumstat=pandas.DataFrame(ss.iloc[:, colnum]),
                               method=method, tol=tol)
                 mincol, maxcol = cls.r_summary_min_max_single(res)
-                min.append(mincol)
-                max.append(maxcol)
-            min = pandas.Series(numpy.hstack(min))
-            max = pandas.Series(numpy.hstack(max))
+                parmin.append(mincol)
+                parmax.append(maxcol)
+            parmin = pandas.Series(numpy.hstack(parmin))
+            parmax = pandas.Series(numpy.hstack(parmax))
         elif method == 'neuralnet':
             print('Together')
             res = abc.abc(target=target, param=param, sumstat=ss, method=method, tol=tol)
-            min, max = cls.r_summary_min_max_all(res)
-        return min, max
+            parmin, parmax = cls.r_summary_min_max_all(res)
+        return parmin, parmax
 
     @classmethod
     def r_summary_min_max_single(cls, rmodel) -> Tuple[float, float]:
@@ -2509,14 +2509,14 @@ class ABC_TFK_NS(ABC_TFK_Params):
         temp_name = next(tempfile._get_candidate_names())
         robjects.r.options(width=10000)
         robjects.r['sink'](temp_name)
-        min = robjects.r['summary'](rmodel)[0]
+        singlemin = robjects.r['summary'](rmodel)[0]
         robjects.r['sink']()
         robjects.r.options(width=10000)
         robjects.r['sink'](temp_name)
-        max = robjects.r['summary'](rmodel)[6]
+        singlemax = robjects.r['summary'](rmodel)[6]
         robjects.r['sink']()
         os.remove(temp_name)
-        return min, max
+        return singlemin, singlemax
 
     @classmethod
     def r_summary_min_max_all(cls, rmodel) -> Tuple[pandas.DataFrame, pandas.DataFrame]:
@@ -2619,7 +2619,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         :param folder: to define the output folder. default is '' meaning current folder
         :return: will return the path of 'Narrowed.csv'
         """
-        linenumbers = cls.narrowing_params(params=params, min=newrange['min'], max=newrange['max'])
+        linenumbers = cls.narrowing_params(params=params, parmin=newrange['min'], parmax=newrange['max'])
         inputfiles, _, _ = cls.read_info(info=info)
         temp = cls.extracting_by_linenumber(file=inputfiles[0], linenumbers=linenumbers,
                                             outputfile=folder + 'Narrows.csv')
@@ -2631,8 +2631,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return folder + 'Narrowed.csv'
 
     @classmethod
-    def narrowing_params(cls, params: pandas.DataFrame, min: pandas.Series,
-                         max: pandas.Series) -> pandas.core.indexes.range.RangeIndex:
+    def narrowing_params(cls, params: pandas.DataFrame, parmin: pandas.Series,
+                         parmax: pandas.Series) -> pandas.core.indexes.range.RangeIndex:
         """
         narrowing the pandas params with new range
 
@@ -2644,7 +2644,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         """
 
         for index in range(params.shape[1]):
-            params = params[params.iloc[:, index].between(min[index], max[index])]
+            params = params[params.iloc[:, index].between(parmin[index], parmax[index])]
         linenumbers = params.index.values + 2
         return linenumbers
 
