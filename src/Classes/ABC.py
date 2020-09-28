@@ -538,8 +538,8 @@ class ABC_TFK_Classification:
         return scale
 
     @classmethod
-    def train_test_split_hdf5(cls, file: str, dataset: str = 'mydata', test_rows: int = int(1e4)) -> Tuple[
-        HDF5Matrix, HDF5Matrix]:
+    def train_test_split_hdf5(cls, file: str, dataset: str = 'mydata', test_rows: Union[int, float] = int(1e4)) -> \
+    Tuple[HDF5Matrix, HDF5Matrix]:
         """
         Special way to train test split for hdf5. will take the first n-test_rows for training and rest for test
 
@@ -548,6 +548,8 @@ class ABC_TFK_Classification:
         :param test_rows: the number of rows for test every thing will be left for training. default is 10k
         :return: will return the test, train split for hdf5
         """
+        if isinstance(test_rows, float):
+            test_rows = int(test_rows)
         if os.path.isfile(file):
             with h5py.File(file, 'r') as f:
                 rows = f[dataset].shape[0]
