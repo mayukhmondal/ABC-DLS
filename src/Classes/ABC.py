@@ -2450,6 +2450,9 @@ class ABC_TFK_NS(ABC_TFK_Params):
         newrange.index = params_names
         newrange.columns = ['min', 'max']
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
+        oldrange = pandas.concat([params.min(), params.max()], axis=1)
+        oldrange.columns = ['min', 'max']
+        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
         if noise_injection > 0:
             if hardrange_file:
                 hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['', 'min', 'max'],
@@ -2458,9 +2461,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, noise_injection=noise_injection,
                                                   hardrange=hardrange)
-        oldrange = pandas.concat([params.min(), params.max()], axis=1)
-        oldrange.columns = ['min', 'max']
-        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
+            newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
