@@ -2460,7 +2460,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
             else:
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, noise_injection=noise_injection,
-                                                  hardrange=hardrange,oldrange=oldrange)
+                                                  hardrange=hardrange, oldrange=oldrange)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2560,34 +2560,6 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return params
 
     @classmethod
-    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                               noise_injection: float = 0.005,
-                               hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
-        """
-        in case you want to use some noise injection to the newrange. important as sometime when ABC-TFK is working
-        recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
-        lowerlimit in a fraction manner, thus even if it misses the true result in a cycle it can come back to the real
-        results in further cycle
-
-        :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
-            the parameters
-        :param noise_injection: the amount of fraction for noise injection from the distance between
-            params[min]-params[max]
-        :param hardrange: the hard range in pandas dataframe format. columns should be max and min and indexes should be
-            the parameters
-        :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
-            tested to be within hardrange
-        """
-        dist = (newrange['max'] - newrange['min']) * noise_injection * 0.5
-        newrange['min'] = newrange['min'] - dist
-        newrange['max'] = newrange['max'] + dist
-        if not hardrange.empty:
-            newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
-            newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
-        newrange['imp']=(newrange['max']-newrange['min'])/(oldrange['max']-oldrange['min'])
-        return newrange
-
-    @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
                           imp: float = .95) -> pandas.DataFrame:
         """
@@ -2605,6 +2577,36 @@ class ABC_TFK_NS(ABC_TFK_Params):
         """
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         newrange.loc[newrange['imp'] > imp, ['min', 'max']] = oldrange[newrange['imp'] > imp]
+        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        return newrange
+
+    @classmethod
+    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
+                               noise_injection: float = 0.005,
+                               hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
+        """
+        in case you want to use some noise injection to the newrange. important as sometime when ABC-TFK is working
+        recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
+        lowerlimit in a fraction manner, thus even if it misses the true result in a cycle it can come back to the real
+        results in further cycle
+
+        :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :param noise_injection: the amount of fraction for noise injection from the distance between
+            params[min]-params[max]
+        :param hardrange: the hard range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+        :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
+            tested to be within hardrange
+        """
+        dist = (newrange['max'] - newrange['min']) * noise_injection * 0.5
+        newrange['min'] = newrange['min'] - dist
+        newrange['max'] = newrange['max'] + dist
+        if not hardrange.empty:
+            newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
+            newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
         newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
