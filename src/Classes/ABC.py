@@ -539,7 +539,7 @@ class ABC_TFK_Classification:
 
     @classmethod
     def train_test_split_hdf5(cls, file: str, dataset: str = 'mydata', test_rows: Union[int, float] = int(1e4)) -> \
-    Tuple[HDF5Matrix, HDF5Matrix]:
+            Tuple[HDF5Matrix, HDF5Matrix]:
         """
         Special way to train test split for hdf5. will take the first n-test_rows for training and rest for test
 
@@ -2460,8 +2460,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
             else:
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, noise_injection=noise_injection,
-                                                  hardrange=hardrange)
-            newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
+                                                  hardrange=hardrange,oldrange=oldrange)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2561,7 +2560,8 @@ class ABC_TFK_NS(ABC_TFK_Params):
         return params
 
     @classmethod
-    def noise_injection_update(cls, newrange: pandas.DataFrame, noise_injection: float = 0.005,
+    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
+                               noise_injection: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-TFK is working
@@ -2584,6 +2584,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         if not hardrange.empty:
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
+        newrange['imp']=(newrange['max']-newrange['min'])/(oldrange['max']-oldrange['min'])
         return newrange
 
     @classmethod
