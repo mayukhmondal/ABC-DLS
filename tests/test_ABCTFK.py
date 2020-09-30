@@ -9,7 +9,7 @@ sys.path.append("..")
 
 from pathlib import Path
 from src.Classes import ABC
-from src.SFS.SFS_Class import VCF2SFS
+from Classes.SFS import VCF2SFS
 
 from collections import Counter
 from tensorflow.keras.utils import HDF5Matrix

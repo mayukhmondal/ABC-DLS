@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+dependencies:
+  - scikit-allel=1.2.1
+  - msprime=0.7.1
+  - snakemake=5.5.4
