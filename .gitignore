@@ -23,3 +23,4 @@ tests/par/
 tests/cls/
 tests/ns/
 tests/.pytest_cache
+tests/test_out.csv

@@ -269,3 +269,21 @@ def creatingfolders(specificfolder: str) -> str:
         if not os.path.exists(specificfolder):
             os.makedirs(specificfolder)
     return specificfolder
+
+def adding_pop(alldata, popfilepath):
+    """
+    This will return a column with pop information on a dataframe
+    :param alldata: the data, where you need at least one column with inds information and it should be the first column
+    :param popfilepath: the path of pop infor. The file should have first column with inds and the second is for pop. No header
+    :return: will return a column (Series) of exact size of input (alldata) so that it can be concatenate with the data itself
+    """
+    import numpy, pandas
+    popfile = pandas.read_csv(popfilepath, header=None, names=['inds', 'pop'], sep='\t')
+    alldata = alldata[:]
+    alldata = alldata.assign(pop=numpy.nan)
+    for index, row in alldata.iterrows():
+        try:
+            alldata.loc[index, "pop"] = list(popfile[popfile["inds"] == row[0]]["pop"].values)[0]
+        except IndexError:
+            pass
+    return alldata['pop']
