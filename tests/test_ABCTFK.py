@@ -9,7 +9,7 @@ sys.path.append("..")
 
 from pathlib import Path
 from src.Classes import ABC
-from SFS.Class import VCF2SFS
+from SFS import Class
 
 from collections import Counter
 from tensorflow.keras.utils import HDF5Matrix
@@ -241,12 +241,22 @@ def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelPar
 
 def test_vcf2ss(vcffile='../examples/Examples.vcf.gz', popfile='../examples/Input.pop', sfs_pop=('YRI', 'FRN', 'HAN'),
                 chunk_length=int(100), out='test_out'):
-    out = VCF2SFS.wrapper(vcffile=vcffile, popfile=popfile, sfs_pop=sfs_pop, chunk_length=chunk_length, out=out)
+    out = Class.VCF2SFS.wrapper(vcffile=vcffile, popfile=popfile, sfs_pop=sfs_pop, chunk_length=chunk_length, out=out)
     print(out.sum())
-    assert 22547 == out.sum()
+    assert 22547 == out.sum(),'The total number of segregating sites do not match with vcf'
     files = ['test_out.csv']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by VCF2SFS'
+
+def test_range2prior(upper="10,1,100",lower="1,0,2.5",repeats=100):
+    priors=Class.Range2UniformPrior(upper=upper,lower=lower,repeats=repeats)
+    assert 100==priors.shape[0], 'The priors row numbers do not match with repeats. check Class.Range2UniformPrior'
+    assert 3 == priors.shape[1], 'The priors column numbers do not match with upper parameters length. ' \
+                                 'Class.Range2UniformPrior('
+    sort_p=priors.sort_values(by=['param_1', 'param_2', 'param_3'])
+    assert (sort_p.iloc[0]== [1.0,0.0,2.5]).all(), "The minimum do not match with lower limit. Class.Range2UniformPrior"
+    assert (sort_p.iloc[-1]==[10.0,1,100.0]).all(), "The maximum do not match with upper limit. " \
+                                                    "Class.Range2UniformPrior"
 
 if os.path.isdir('cls'):
     shutil.rmtree('cls')
