@@ -18,7 +18,8 @@ class VCF2SFS():
     """
     VCF 2 SFS (csv format) conversion using Sickit
     """
-    def __new__(cls,vcffile: str, popfile: str, sfs_pop: Union[List[str], Tuple[str]], chunk_length: float = 1e6,
+
+    def __new__(cls, vcffile: str, popfile: str, sfs_pop: Union[List[str], Tuple[str]], chunk_length: float = 1e6,
                 out: Optional[str] = None) -> pandas.Series:
         """
         This will automatically call the wrapper function and to do the necessary work.
@@ -31,7 +32,7 @@ class VCF2SFS():
         :param out: in case you want to name the output. by default it will be your vcf file name (None)
         """
 
-        return cls.wrapper(vcffile=vcffile,popfile=popfile,sfs_pop=sfs_pop,chunk_length=chunk_length,out=out)
+        return cls.wrapper(vcffile=vcffile, popfile=popfile, sfs_pop=sfs_pop, chunk_length=chunk_length, out=out)
 
     @classmethod
     def wrapper(cls, vcffile: str, popfile: str, sfs_pop: Union[List[str], Tuple[str]], chunk_length: float = 1e6,
@@ -85,7 +86,7 @@ class VCF2SFS():
         return subpopdict
 
     @classmethod
-    def subsetting_pop(cls, popdict: dict, sfs_pop: Union[List[str], Tuple[str]],) -> dict:
+    def subsetting_pop(cls, popdict: dict, sfs_pop: Union[List[str], Tuple[str]], ) -> dict:
         """
         sub-setting sickitalllele popdict to only relevant populations. important in case in the popfile there are other
         populations which were not used
@@ -229,3 +230,109 @@ class VCF2SFS():
 
         """
         pandas.DataFrame(sfs).transpose().to_csv(name, index=False)
+
+
+class Range2UniformPrior():
+    """
+    This class will crate uniform distribution of parameters if the range for that parameters are given
+    """
+    def __new__(cls,upper: str, lower: str, variable_names: Optional[str] = None,
+                repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
+        return cls.wrapper(upper=upper,lower=lower,variable_names=variable_names,repeats=repeats)
+    @classmethod
+    def wrapper(cls, upper: str, lower: str, variable_names: Optional[str] = None,
+                repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
+        """
+        Main def for the class. given upper and lower limit it will create a uniform distribution of parameters which
+        then can used as prior for our analysis (ABC-TFK)
+
+        :param upper: upper limit for the parameters. string format
+        :param lower: lower limit for the parameters. string format
+        :param variable_names: the names of the variables. string format
+        :param repeats: number of repeats that you want create. can use float but will convert it to int
+        :return: wii return the pandas dataframe format of parameters. whose columns are parameters and rows are
+        different repeats (or instance)
+        """
+        upper = cls.string_param_2_array(upper)
+        lower = cls.string_param_2_array(lower)
+        if variable_names:
+            variable_names = cls.string_param_2_array(variable_names, type='str')
+        else:
+            variable_names = cls.givingname2parameters(params_length=len(upper))
+        cls.checks(upper=upper, lower=lower, variable_names=variable_names)
+        simulations = cls.simulating_params_4m_uni_dist((upper), (lower), variable_names, repeats=repeats)
+        return simulations
+
+    @classmethod
+    def string_param_2_array(cls, paramsstr: str, type: str = 'float') -> list:
+        """
+        Just to break the param string send by the shell script to numpy array
+
+        :param paramsstr: the string format of the parameters. comma separated '1122,112,.443..'
+        :param type: to tell what will be the format for all the params. default is float
+        :return: will send the numpy array [1122.0,112.0,0.443]
+        """
+        params = paramsstr.split(',')
+        params = [param.strip() for param in params]
+        params = list(map(eval(type), params))
+        return params
+
+    @classmethod
+    def givingname2parameters(cls, params_length: int) -> list:
+        """
+        if the names of the variables were not given it will give them a name
+
+        :param params_length: the number of parameters. length of upper or lower
+        :return: will return a list with [param_1,param_2..]
+        """
+        return ['param_' + str(x) for x in range(1, params_length + 1)]
+
+    @classmethod
+    def checks(cls, upper: list, lower: list, variable_names: list) -> None:
+        """
+        This is basic checking system if Submit_SFSOutput4ABC is right before printing commands. Basically checks if the
+         input length of upper_limit, lower_limit and variable_names are equal
+
+        :param upper: upper limit for the parameters. list of numpy array [1,.2, ..]
+        :param lower: lower limit for the parameters. list of numpy array [1,.2, ..]
+        :param variable_names: the names of the variables. list of strings [params1,params2..]
+        :return: will not return anything. but in case of non matching length it will print out and exit
+        """
+        if len(upper) != len(lower):
+            print("length of upper and lower dimension do not match. please check")
+            print(upper)
+            print("length of upper", len(upper))
+            print(lower)
+            print("length of lower", len(lower))
+            sys.exit(1)
+        if len(upper) != len(variable_names):
+            print("length of upper or lower dimension do not match with variable names please check. please check")
+            print(variable_names)
+            print("length of variable names", len(variable_names))
+            print(upper)
+            print("length of upper", len(upper))
+            print(lower)
+            print("length of lower", len(lower))
+            sys.exit(1)
+
+    @classmethod
+    def simulating_params_4m_uni_dist(cls, upper: list, lower: list, variable_names: list,
+                                      repeats: Union[float, int] = 1e4) -> pandas.DataFrame:
+        """
+        It will create the parameters from uniform distribution. where 0<U<1, and params= U(upper-lower)+lower in
+        another word parameter will be with in upper limit and lower limit with the uniform distribution
+
+        :param upper: upper limit for the parameters. list of numpy array [1,.2, ..]
+        :param lower: lower limit for the parameters. list of numpy array [1,.2, ..]
+        :param repeats: the number of repeats you want to simulate
+        :return: will return pandas dataframe whose columns are parameters and rows are different runs of parameters.
+        """
+        upper = numpy.array(upper)
+        lower = numpy.array(lower)
+        repeats = int(repeats)
+        uni = numpy.random.uniform(size=(repeats - 2, upper.shape[0]))
+        dist = upper - lower
+        uni = pandas.DataFrame(uni).mul(dist).add(lower)
+        uni = pandas.concat([uni, pandas.DataFrame([upper, lower])]).sample(frac=1)
+        uni.columns = variable_names
+        return uni
