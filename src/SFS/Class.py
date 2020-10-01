@@ -18,6 +18,20 @@ class VCF2SFS():
     """
     VCF 2 SFS (csv format) conversion using Sickit
     """
+    def __new__(cls,vcffile: str, popfile: str, sfs_pop: Union[List[str], Tuple[str]], chunk_length: float = 1e6,
+                out: Optional[str] = None) -> pandas.Series:
+        """
+        This will automatically call the wrapper function and to do the necessary work.
+        :param vcffile: the path of the vcffile. can be zipped and indexed
+        :param popfile: The file where population format is written. first column is individual, second column is
+                population. the file should be sorted according the simulation paradigm
+        :param sfs_pop: the name of pops. important for the order. example: [pop1,pop2,pop3]
+        :param chunk_length: If two big for the memory use chunk size. relatively slow but no problem
+                with ram. Defaults to 1e6. out
+        :param out: in case you want to name the output. by default it will be your vcf file name (None)
+        """
+
+        return cls.wrapper(vcffile=vcffile,popfile=popfile,sfs_pop=sfs_pop,chunk_length=chunk_length,out=out)
 
     @classmethod
     def wrapper(cls, vcffile: str, popfile: str, sfs_pop: Union[List[str], Tuple[str]], chunk_length: float = 1e6,

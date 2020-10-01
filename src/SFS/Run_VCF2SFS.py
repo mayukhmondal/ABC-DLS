@@ -26,5 +26,5 @@ parser.add_argument('--outprefix',
 
 args = parser.parse_args()
 
-out = VCF2SFS.wrapper(vcffile=args.vcffile, popfile=args.popfile,
+out = VCF2SFS(vcffile=args.vcffile, popfile=args.popfile,
                       sfs_pop=args.sfs_pop.split(","), chunk_length=args.chunksize, out=args.outprefix)
