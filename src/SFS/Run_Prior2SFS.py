@@ -12,9 +12,9 @@ from Class import MsPrime2SFS
 parser = argparse.ArgumentParser(description='To run msprime and create sfs from priors')
 parser.add_argument('demography', help='The msprime demography function that has to be load from Demogrpahy.py')
 parser.add_argument('--inds',
-                    help='The number of inds per popualtioms. All the output poplations should be mentioned in the inds.'
-                         ' again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 inds you would '
-                         'get total 11 (0 included) different allle counts ',
+                    help='The number of inds per populations. All the output populations should be mentioned in the '
+                         'inds. again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 inds you '
+                         'would get total 11 (0 included) different allele counts ',
                     required=True)
 parser.add_argument('--params_file', required=True,
                     help='All the priors for the parameteres on which the simulation will run. Should be "," comma '

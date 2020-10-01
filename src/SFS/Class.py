@@ -4,15 +4,13 @@ This file will hold all the classes for a specific case which is SFS. This shoul
 rather than only way to use it
 """
 import itertools
-import math
-import msprime
-import numpy
 import sys
 from multiprocessing import Pool as ThreadPool
 # type hint for readability
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, Callable
 
 import allel
+import numpy
 import pandas
 
 from Classes import Misc
@@ -352,7 +350,24 @@ class MsPrime2SFS:
     @classmethod
     def wrapper(cls, sim_func, params_file, samples, total_length=1e7, ldblock=1e6, mut_rate=1.45e-8, rec_rate=1e-8,
                 threads=1):
-        samples=list(numpy.array(Range2UniformPrior.string_param_2_array(samples,'int'))*2)
+        """
+        the wrapper for the class. this just wrapping around perline so that it can run it parallel.
+        :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
+        return it
+        :param params_file: the csv file where parameters are written. All the priors for the parameters on which the
+        simulation will run. Should be "," comma separated csv format. Different rows signify different run.
+        columns different parameters
+        :param samples: The number of inds per populations to run simulation. All the output populations should be
+        mentioned in the inds. again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 inds you
+        would get total 11 (0 included) different allele counts
+        :param total_length: total length of the genome. default is 3gb roughly the length of human genome
+        :param ldblock: Length of simulated blocks. Default is 1mb
+        :param mut_rate: the mutation rate. default is the one every body uses
+        :param rec_rate: the recombination rate for msprime. does it matter for sfs?
+        :param threads: the number of threads to run parallel
+        :return: will return a pandas dataframe with parameters and sfs together
+        """
+        samples = list(numpy.array(Range2UniformPrior.string_param_2_array(samples, 'int')) * 2)
         remainder_length = int(total_length % ldblock)
         replicates = int(total_length / ldblock)
         paramsdf = pandas.read_csv(params_file, index_col=False).dropna()
@@ -361,40 +376,60 @@ class MsPrime2SFS:
                     itertools.repeat(ldblock), itertools.repeat(mut_rate), itertools.repeat(int(replicates)),
                     itertools.repeat(rec_rate), itertools.repeat(remainder_length))
         results = pool.starmap(cls.perline, input)
-        # results = itertools.starmap(cls.perline, input)
         params_sfs = pandas.concat([paramsdf, pandas.DataFrame([result.flatten() for result in results])], axis=1)
         return params_sfs
 
     @classmethod
-    def perline(cls, sim_func, params, samples, length=1e6, mut_rate=1.45e-8, replicates=1e2,
-                rec_rate=1e-8, remainder_length=0):
+    def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
+                mut_rate: float = 1.45e-8, replicates: Union[float, int] = 1e2, rec_rate: float = 1e-8,
+                remainder_length: Union[float, int] = 0):
+        """
+        simulations2sfs per line or parameters. kind of the real wrapper. but we created another wrapper to take care of
+        the multithreading
+
+        :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
+        return it
+        :param params: All the parameters required for the model. except the samples. in numpy array or list
+        :param samples: the number of samples in tuple format
+        :param length:  the length of the chromosome for simulation. default is 1e6 which is fast enough and big enough
+        :param mut_rate: the mutation rate. default is the one every body uses
+        :param replicates:  the number of replicates. default 100 is fast
+        :param rec_rate: the recombination rate for msprime. does it matter for sfs?
+        :param remainder_length: as generally we are simulating 1Mb region. if the region is slightly larger than Mbs
+            (like 1e6+100), it is defined by this remainder length (100bp in this case)
+        :return: will return the multi-dimensional sfs in numpy format
+        """
         replicates = int(replicates)
-        sfs = cls.run_simulation(sim_func=sim_func, params=params, replicates=replicates, length=length,
-                                 mut_rate=mut_rate, rec_rate=rec_rate, samples=samples)
+        sfs = cls.sims2sfs(sim_func=sim_func, params=params, replicates=replicates, length=length,
+                           mut_rate=mut_rate, rec_rate=rec_rate, samples=samples)
         if remainder_length > 0:
-            sfs = sfs + cls.run_simulation(sim_func=sim_func.msprime_func, params=params, samples=samples,
-                                           length=int(remainder_length),
-                                           mut_rate=mut_rate, replicates=1, rec_rate=rec_rate)
+            sfs += cls.sims2sfs(sim_func=sim_func, params=params, samples=samples,
+                                length=int(remainder_length),
+                                mut_rate=mut_rate, replicates=1, rec_rate=rec_rate)
         return sfs
 
     @classmethod
-    def run_simulation(cls, sim_func, params, samples, length=1e6, mut_rate=1.45e-8, replicates=1e2, rec_rate=1e-8):
+    def sims2sfs(cls, sim_func: Callable, params: Union[numpy.array, list], samples: Union[List[int], Tuple[int]],
+                 length: float = 1e6, mut_rate: float = 1.45e-8, replicates: float = 1e2,
+                 rec_rate: float = 1e-8) -> numpy.array:
+        """
+        msprime simulated function are converted to sfs after running for the parameters.
+
+        :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
+        return it
+        :param params: All the parameters required for the model. except the samples. in numpy array or list
+        :param samples: the number of samples in tuple format
+        :param length: the length of the chromosome for simulation. default is 1e6 which is fast enough and big enough
+        :param mut_rate: the mutation rate. default is the one every body uses
+        :param replicates: the number of replicates. default 100 is fast
+        :param rec_rate: the recombination rate for msprime. does it matter for sfs?
+        :return: will return the multi-dimensional sfs in numpy format
+        """
+        fs_shape = numpy.asarray(samples) + 1
+        sfs = numpy.zeros(fs_shape)
+        sample_shape = numpy.split(numpy.arange(sum(samples)), numpy.cumsum(list(samples))[:-1])
         sims = sim_func(params, samples, length=length, mutation_rate=mut_rate, replicates=replicates,
                         recombination_rate=rec_rate)
-        sfs = cls.genotypes_to_fs(sims, samples)
-        return sfs
-
-    @classmethod
-    def genotypes_to_fs(cls, sims, pop_samples):
-        """
-        As msprime instead of genotypes all together sent it via iterator. Thus it is a good idea do it line by line thus not using too much ram
-        :param genotypes: the genotype iterator from msprime
-        :param pop_samples: the number of samples for every populations. POP1,POP2..=> 20,20.. in a tupple format
-        :return: will return the sfs dadi style
-        """
-        fs_shape = numpy.asarray(pop_samples) + 1
-        all_data = numpy.zeros(fs_shape)
-        sample_shape = numpy.split(numpy.arange(sum(pop_samples)), numpy.cumsum(list(pop_samples))[:-1])
         for sim in sims:
-            all_data = all_data + sim.allele_frequency_spectrum(sample_shape, polarised=True, span_normalise=False)
-        return all_data
+            sfs += sim.allele_frequency_spectrum(sample_shape, polarised=True, span_normalise=False)
+        return sfs
