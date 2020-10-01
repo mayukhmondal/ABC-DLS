@@ -5,7 +5,7 @@ This file to convert vcf file to sfs (csv) format
 """
 import argparse
 
-from Classes.SFS import VCF2SFS
+from Class.SFS import VCF2SFS
 
 ##input argument is done
 parser = argparse.ArgumentParser(description='To convert a vcf file for the distant matrix which can be used in ABC')
