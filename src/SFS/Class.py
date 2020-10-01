@@ -3,12 +3,16 @@
 This file will hold all the classes for a specific case which is SFS. This should taken as example how to use ABC-TFK
 rather than only way to use it
 """
+import itertools
+import math
+import msprime
+import numpy
 import sys
+from multiprocessing import Pool as ThreadPool
 # type hint for readability
 from typing import Optional, Union, List, Tuple
 
 import allel
-import numpy
 import pandas
 
 from Classes import Misc
@@ -236,9 +240,11 @@ class Range2UniformPrior():
     """
     This class will crate uniform distribution of parameters if the range for that parameters are given
     """
-    def __new__(cls,upper: str, lower: str, variable_names: Optional[str] = None,
+
+    def __new__(cls, upper: str, lower: str, variable_names: Optional[str] = None,
                 repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
-        return cls.wrapper(upper=upper,lower=lower,variable_names=variable_names,repeats=repeats)
+        return cls.wrapper(upper=upper, lower=lower, variable_names=variable_names, repeats=repeats)
+
     @classmethod
     def wrapper(cls, upper: str, lower: str, variable_names: Optional[str] = None,
                 repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
@@ -336,3 +342,59 @@ class Range2UniformPrior():
         uni = pandas.concat([uni, pandas.DataFrame([upper, lower])]).sample(frac=1)
         uni.columns = variable_names
         return uni
+
+
+class MsPrime2SFS:
+    """
+    Given a msprime demographic python file and priors it can produce sfs out of it.
+    """
+
+    @classmethod
+    def wrapper(cls, sim_func, params_file, samples, total_length=1e7, ldblock=1e6, mut_rate=1.45e-8, rec_rate=1e-8,
+                threads=1):
+        samples=list(numpy.array(Range2UniformPrior.string_param_2_array(samples,'int'))*2)
+        remainder_length = int(total_length % ldblock)
+        replicates = int(total_length / ldblock)
+        paramsdf = pandas.read_csv(params_file, index_col=False).dropna()
+        pool = ThreadPool(threads)
+        input = zip(itertools.repeat(sim_func), paramsdf.values, itertools.repeat(samples),
+                    itertools.repeat(ldblock), itertools.repeat(mut_rate), itertools.repeat(int(replicates)),
+                    itertools.repeat(rec_rate), itertools.repeat(remainder_length))
+        results = pool.starmap(cls.perline, input)
+        # results = itertools.starmap(cls.perline, input)
+        params_sfs = pandas.concat([paramsdf, pandas.DataFrame([result.flatten() for result in results])], axis=1)
+        return params_sfs
+
+    @classmethod
+    def perline(cls, sim_func, params, samples, length=1e6, mut_rate=1.45e-8, replicates=1e2,
+                rec_rate=1e-8, remainder_length=0):
+        replicates = int(replicates)
+        sfs = cls.run_simulation(sim_func=sim_func, params=params, replicates=replicates, length=length,
+                                 mut_rate=mut_rate, rec_rate=rec_rate, samples=samples)
+        if remainder_length > 0:
+            sfs = sfs + cls.run_simulation(sim_func=sim_func.msprime_func, params=params, samples=samples,
+                                           length=int(remainder_length),
+                                           mut_rate=mut_rate, replicates=1, rec_rate=rec_rate)
+        return sfs
+
+    @classmethod
+    def run_simulation(cls, sim_func, params, samples, length=1e6, mut_rate=1.45e-8, replicates=1e2, rec_rate=1e-8):
+        sims = sim_func(params, samples, length=length, mutation_rate=mut_rate, replicates=replicates,
+                        recombination_rate=rec_rate)
+        sfs = cls.genotypes_to_fs(sims, samples)
+        return sfs
+
+    @classmethod
+    def genotypes_to_fs(cls, sims, pop_samples):
+        """
+        As msprime instead of genotypes all together sent it via iterator. Thus it is a good idea do it line by line thus not using too much ram
+        :param genotypes: the genotype iterator from msprime
+        :param pop_samples: the number of samples for every populations. POP1,POP2..=> 20,20.. in a tupple format
+        :return: will return the sfs dadi style
+        """
+        fs_shape = numpy.asarray(pop_samples) + 1
+        all_data = numpy.zeros(fs_shape)
+        sample_shape = numpy.split(numpy.arange(sum(pop_samples)), numpy.cumsum(list(pop_samples))[:-1])
+        for sim in sims:
+            all_data = all_data + sim.allele_frequency_spectrum(sample_shape, polarised=True, span_normalise=False)
+        return all_data
