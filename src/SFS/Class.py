@@ -316,7 +316,7 @@ class Range2UniformPrior():
             sys.exit(1)
 
     @classmethod
-    def simulating_params_4m_uni_dist(cls, upper: list, lower: list, variable_names: list,
+    def simulating_params_4m_uni_dist(cls, upper: List[float], lower: List[float], variable_names: List[str],
                                       repeats: Union[float, int] = 1e4) -> pandas.DataFrame:
         """
         It will create the parameters from uniform distribution. where 0<U<1, and params= U(upper-lower)+lower in
