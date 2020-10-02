@@ -20,6 +20,7 @@ import joblib
 import shutil
 import os
 
+
 def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                                   outfolder: str = 'cls'):
     # main check
@@ -271,7 +272,4 @@ def test_MsPrime2SFS(demography='OOA', params_file='Priors.csv', samples='5,5,5'
                                        total_length=total_length)
     assert 10 == prisfs.shape[0], "The sfs output do not have same rows as in the prior"
     assert 1345 == prisfs.shape[1], "The sfs do not have expected number of columns (1331+priors)"
-    Misc.removefiles(['Priors.csv','test_out.csv'])
-
-
-
+    Misc.removefiles(['Priors.csv', 'test_out.csv'])
