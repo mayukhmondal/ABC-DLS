@@ -10,7 +10,8 @@ using SFS but this is a good starting point.
 ## Installation
 
 To run and create SFS, we need some other packages. I divided the packages from the default packages of ABC-TFK as SFS 
-are not necessary for ABC-TFK and more packages mean more dependency hell. The packages needed on top of the previous packages are:
+are not necessary for ABC-TFK and more packages mean more dependency hell. The packages needed on top of the previous 
+packages are:
 
 - scikit-allel
 - msprime
@@ -27,7 +28,9 @@ conda env update -f src/SFS/requirements.yml
 ## VCF to SFS
 First we need a real or observed ss which can be produced from a vcf file. Before using the vcf file we need some filter
 and information so that it can be used for SFS.
-- Every body has their own strategy of filtering. But the strategy I generally use is following (For explanations for the commands used please see the respective software sites [vcftools](https://vcftools.github.io/index.html) and [bcftools](http://samtools.github.io/bcftools/bcftools.html). ):
+- Every body has their own strategy of filtering. But the strategy I generally use is following (For explanations for 
+the commands used please see the respective software sites [vcftools](https://vcftools.github.io/index.html) and 
+[bcftools](http://samtools.github.io/bcftools/bcftools.html). ):
 ```shell script
 vcftools --gzvcf  <in.vcf.gz> --max-missing 1.0 --remove-indels --min-alleles 2 --max-alleles 2 --mac 1 --keep <in.pop> --stdout --recode|bcftools view -T examples/masked_regions.bed.gz| bcftools  annotate -x ^FORMAT/GT -O z -o <out.vcf.gz> 
 bcftools index <out.vcf.gz>
@@ -74,8 +77,10 @@ parameters with the given range:
 
 where ky is kilo years
 ## Prior to SFS 
+### Simulation (msprime)
 Again SFS can be created by lots of other methods but here we have used only msprime (which is fast enough as we need 
-a lot of simulations). For the simulations we used a previously well known model from [msprime](https://msprime.readthedocs.io/en/stable/tutorial.html#demography) itself with slight changes:
+a lot of simulations). For the simulations we used a previously well known model from 
+[msprime](https://msprime.readthedocs.io/en/stable/tutorial.html#demography) itself with slight changes:
 ```python
 import math
 
@@ -131,16 +136,47 @@ def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8
     return geno
 ``` 
 The notable difference is with scaling of events and migration rates. msprime uses generations thus our input has to be 
-scaled with 1000/29 as our events are in ky and the migrations are multiplieded by 10<sup>^-5</sup> to make it correct scale. 
-We used more human readable version of priors instead of required one so that we can easily understand the output of 
-the results. Of course we could have used directly generations and correct scaled amount of migration matrix but then 
-it will be difficult to understand. Of course if we are running the parameter estimation only for once it does not 
+scaled with 1000/29 as our events are in ky and the migrations are multiplieded by 10<sup>^-5</sup> to make it correct 
+scale. We used more human readable version of priors instead of required one so that we can easily understand the output
+ of the results. Of course we could have used directly generations and correct scaled amount of migration matrix but 
+ then it will be difficult to understand. Of course if we are running the parameter estimation only for once it does not 
 matter but it become more easier when we use recursively to understand if our results not going awry. You can add your 
 own code in the SFS/Demography.py which has to follow some simple rule:
-``` python
+```python
 import msprime
 def demo(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     your own code
-    retrun geno
+    geno=msprime.simulate(...)
+    return geno
 ``` 
-    
+### Creating SFS csv file
+Now after making a correct format for demography now it is time to create csv file from the simulations. 
+```shell
+python src/SFS/Run_Prior2SFS.py  OOA --params_file Params.csv --inds 5,5,5 --threads 5 --total_length 1e7 |gzip > OOA.csv.gz
+```
+This will create Out of Africa sfs with parameters files which then can be directly used as an input Parameter 
+Estimation or Sequential Sampling method. 
+No doubt this is the main bottleneck for the whole approach thus this part should be mostly improved if we use more 
+parallelize approach. For example only using threads will not be enough. In my case I used cluster to massively 
+parallelize by submitting multiple production of csv together using snakemake.  
+
+## Going forward with ABC-TFK (SFS to Posteriors)
+With this prior stuff done, finally we reached a situation where we can use ABC-TFK method to get out posteriors. 
+```shell 
+echo -e "OOA.csv.gz\t14" > Model.info
+python src/Run_NestedSampling.py All --test_size 5 --tolerance .5 --ssfile examples/Examples.csv --scale b Model.info 
+``` 
+Of course understandably with 10 simulations we do not expect it to reach any level for correctness at all. To have 
+good level of power we need to use much more simulations:
+```shell
+python src/SFS/Run_Range2UniParameters.py --upper 25e3,2e5,2e5,2e5,1e4,1e4,1e4,80,320,700,50,50,50,50 --lower 5e3,1e4,1e4,1e4,500,500,500,15,5,5,0,0,0,0 --par_names N_A,N_AF,N_EU,N_AS,N_EU0,N_AS0,N_B,T_EU_AS,T_B,T_AF,m_AF_B,m_AF_EU,m_AF_AS,m_EU_AS  --repeats 2e4 > Params.csv
+python src/SFS/Run_Prior2SFS.py  OOA --params_file Params.csv --inds 5,5,5 --threads 5 --total_length 1e6 |gzip > OOA.csv.gz 
+echo -e "OOA.csv.gz\t14" > Model.info
+python src/Run_SequentialSampling.py All --ssfile Examples.csv --scale b Model.info --frac 0.16442630347307816
+```
+The frac (fraction) was calculated with available amount of data for chr22 (for the vcf file) which is 6,081,752. Thus 
+to make it equal with the simulations we have to multiply 1e6/6081752 or 0.16442630347307816. You will definitely see
+improvement (imp) for several parameters. But this ran only once. To use it recursively, we can use the output of
+Newrange.csv and run it again till there is no improvement possible.   
+
+     
