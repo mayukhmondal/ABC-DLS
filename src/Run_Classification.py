@@ -6,11 +6,12 @@ This file to run ABC-TFK for classification between models
 import argparse
 
 from Classes import ABC
-
-# to stop future warning every time to print out
+from _version import __version__
 
 # input argument is done
 parser = argparse.ArgumentParser(description='This file will run Model Selection.')
+parser.add_argument('-v', '--version', action='version',
+                    version='ABC-TFK {version}'.format(version=__version__))
 subparsers = parser.add_subparsers(help='sub-commands help')
 
 sp = subparsers.add_parser('All', help='The whole run of the NN for parameter estimation from first to last')

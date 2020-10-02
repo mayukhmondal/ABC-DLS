@@ -17,7 +17,7 @@ The codes are written in python3 (>=python3.6.9). This programme comes with seve
 - rpy2
 - r-essentials
 - tzlocal
-- tensorflow=1
+- tensorflow
 - keras
 
 The easiest way to install all of these dependencies is using conda. To install conda please visit <https://www.anaconda.com/distribution/>. After installing conda (remember to install python 3), use:

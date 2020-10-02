@@ -9,6 +9,7 @@ sys.path.append("..")
 
 from pathlib import Path
 from src.Classes import ABC
+from src.Classes import Misc
 from SFS import Class
 
 from collections import Counter
@@ -18,13 +19,6 @@ import numpy
 import joblib
 import shutil
 import os
-
-if os.path.isdir('cls'):
-    shutil.rmtree('cls')
-if os.path.isdir('par'):
-    shutil.rmtree('par')
-if os.path.isdir('ns'):
-    shutil.rmtree('ns')
 
 
 def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
@@ -157,6 +151,8 @@ def test_Classification_Train_together(nn: str = '../src/extras/ModelClassTogeth
     files = ['cls/ModelClassification.h5']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train_together'
+    if os.path.isdir('cls'):
+        shutil.rmtree('cls')
 
 
 def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
@@ -225,6 +221,8 @@ def test_Params_Train_together(nn: str = '../src/extras/Dynamic.py', test_size: 
     files = ['par/ModelParamPrediction.h5']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train_together'
+    if os.path.isdir('par'):
+        shutil.rmtree('par')
 
 
 def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
@@ -237,6 +235,8 @@ def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelPar
              'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_TFK_NS'
+    if os.path.isdir('ns'):
+        shutil.rmtree('ns')
 
 
 def test_vcf2ss(vcffile='../examples/Examples.vcf.gz', popfile='../examples/Input.pop', sfs_pop=('YRI', 'FRN', 'HAN'),
@@ -272,10 +272,4 @@ def test_MsPrime2SFS(demography='OOA', params_file='Priors.csv', samples='5,5,5'
                                        total_length=total_length)
     assert 10 == prisfs.shape[0], "The sfs output do not have same rows as in the prior"
     assert 1345 == prisfs.shape[1], "The sfs do not have expected number of columns (1331+priors)"
-
-if os.path.isdir('cls'):
-    shutil.rmtree('cls')
-if os.path.isdir('par'):
-    shutil.rmtree('par')
-if os.path.isdir('ns'):
-    shutil.rmtree('ns')
+    Misc.removefiles(['Priors.csv', 'test_out.csv'])

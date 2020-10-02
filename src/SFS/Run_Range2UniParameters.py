@@ -8,8 +8,12 @@ import argparse
 # noinspection PyUnresolvedReferences
 from Class import Range2UniformPrior
 
+from _version import __version__
+
 ##input argument is done
 parser = argparse.ArgumentParser(description='To convert a vcf file for the distant matrix which can be used in ABC')
+parser.add_argument('-v', '--version', action='version',
+                    version='ABC-TFK {version}'.format(version=__version__))
 parser.add_argument('--upper',
                     help='the upper limits for all the paramteres on which the simulation will run, should be comman '
                          'separated ',
@@ -25,5 +29,5 @@ parser.add_argument('--repeats', help='the number of repeats. default is 1e6', t
 args = parser.parse_args()
 
 out = Range2UniformPrior(upper=args.upper, lower=args.lower, variable_names=args.par_names,
-                                 repeats=args.repeats)
+                         repeats=args.repeats)
 print(out.to_csv(index=False))
