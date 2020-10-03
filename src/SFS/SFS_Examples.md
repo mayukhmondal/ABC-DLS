@@ -19,7 +19,7 @@ packages are:
 
 You can install as previously (of course in the same environment as ABC-TFK):
 ```shell script
-conda install --file src/SFS/requirements.txt
+conda install  -c conda-forge -c bioconda --file src/SFS/requirements.txt
 ```
 or last tested version:
 ```shell script

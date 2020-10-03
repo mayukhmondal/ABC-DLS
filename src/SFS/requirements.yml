@@ -1,5 +1,6 @@
 channels:
   - conda-forge
+  - bioconda
 dependencies:
   - scikit-allel=1.2.1
   - msprime=0.7.1
