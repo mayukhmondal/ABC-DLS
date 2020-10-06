@@ -1,0 +1,114 @@
+# !/usr/bin/python
+import os
+import sys
+import pandas
+##input info extraction
+configfile: sys.path[0] + '/config.yml'
+workdir: os.getcwd()
+# extra work
+config["current_repeats"] = max(config["current_repeats"], config["jobs"])
+joblist = [format(x, '03') for x in range(1, config["jobs"] + 1)]
+config["sfsfile"] = os.path.abspath(config["sfsfile"])
+parameteres=pandas.read_csv(config['priors_range'],header=None,names=['par_names','upper','lower'])
+# optional stuff
+if "tfknn" in config:
+    if not os.path.isfile(config["tfknn"]):
+        print("Could not find the tfknn file. If you do not want to use leave it blank as tfknn='' ")
+        sys.exit(1)
+    tfknn_demo = '--nn ' + os.path.abspath(config["tfknn"])
+else:
+    tfknn_demo = ''
+noise = ''
+if 'noise_injection' in config:
+    if config["noise_injection"] > 0:
+        noise = '--noise_injection ' + str(config["noise_injection"]) + ' --hardrange ' + os.path.abspath(
+            config["hardrange_file"])
+# real snakemake pipeline starts here
+localrules: finalize, info_sfs
+rule finalize:
+    input:
+         config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
+    output:
+          'Newrange.csv'
+    shell:
+         """
+         mv {input[0]} ./
+         mv {input[1]} ./
+         rm -fR {config[demography]}
+         touch count.out
+         awk '{{print $1+1}}' count.out > tmp && mv tmp count.out
+         """
+
+rule params_sfs:
+    input:
+         config['demography'] + '/Model.info'
+    output:
+          config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
+    params:
+          tfknn_demo=tfknn_demo,
+          noise=noise
+    shell:
+         "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
+         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --csvout --frac {config[frac]} "
+         "{params.tfknn_demo} {params.noise} --folder {config[demography]} {input} "
+
+rule info_sfs:
+    input:
+         config['demography'] + '/' + config['demography'] + '.csv.gz'
+    output:
+          config['demography'] + '/Model.info'
+    params:
+          str(parameteres.shape[0])
+    run:
+        print(input[0] + '\t' + params[0], file=open(output[0], "w"))
+
+rule join_SFS_All:
+    input:
+         files=expand(config['demography'] + '/' + config['demography'] + '_{jobint}.csv', jobint=joblist)
+    output:
+          config['demography'] + '/' + config['demography'] + '.csv.gz'
+    shell:
+         "touch Narrowed.csv\n"
+         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv |gzip > {output}"
+
+rule run_SFS:
+    input:
+         config['demography'] + '/Priors_{jobint}.csv'
+    output:
+          config['demography'] + '/' + config['demography'] + '_{jobint}.csv'
+    resources:
+             mem=6000
+    shell:
+         "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
+         "--total_length {config[total_length]} {config[demography]} > {output}"
+
+rule priors_add_header:
+    output:
+          config['demography'] + '/Priors_{jobint}.csv'
+    input:
+         config['demography'] + "/{jobint}.csv"
+    shell:
+         "cat <(head -n 1 {config[demography]}/Priors.csv) <(cat {input}) > {output}"
+
+rule breaks_priors:
+    output:
+          expand(config['demography'] + "/{jobint}.csv", jobint=joblist)
+    input:
+         config['demography'] + "/Priors.csv"
+    params:
+          str(int(config["current_repeats"] / config["jobs"]))
+    shell:
+         "split --numeric-suffixes=1 -l {params}   -a 3 --additional-suffix=.csv <(tail -n+2 {input}) "
+         "{config[demography]}/"
+
+rule priors_create:
+    output:
+          config['demography'] + "/Priors.csv"
+    params:
+        par_names=parameteres['par_names'].to_csv(line_terminator=",",index=False,header=False)[:-1],
+        upper=parameteres['upper'].to_csv(line_terminator=",",index=False,header=False)[:-1],
+        lower=parameteres['lower'].to_csv(line_terminator=",",index=False,header=False)[:-1]
+    shell:
+         "mkdir -p {config[demography]}\n"
+         "python {config[sc_priors]} --par_names {params.par_names} --upper {params.upper} --lower {params.lower} "
+         "--repeats {config[current_repeats]} > {output}"

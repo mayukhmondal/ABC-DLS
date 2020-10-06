@@ -1,0 +1,16 @@
+sc_priors: Run_Range2UniParameters.py
+sc_sfs: Run_Prior2SFS.py
+sc_abc: ../Run_SequentialSampling.py
+sfsfile: ../../examples/YRI_FRN_HAN.csv
+priors_range: Oldrange.csv
+demography: OOA
+inds: 5,5,5
+threads: 1
+jobs: 10
+current_repeats: 2000
+total_repeats: 2000
+total_length: 1000000
+test_size: 1000
+improvement: 0.95
+tolerance: .1
+frac: 0.0015455858426908665

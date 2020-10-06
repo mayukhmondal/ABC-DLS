@@ -24,3 +24,8 @@ tests/cls/
 tests/ns/
 tests/.pytest_cache
 tests/test_out.csv
+src/SFS/.snakemake/
+src/SFS/OOA/
+src/SFS/Narrowed.csv
+src/SFS/count.out
+src/SFS/Newrange.csv
