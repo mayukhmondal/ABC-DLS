@@ -1,4 +1,8 @@
 # !/usr/bin/python
+"""
+This is snakemake pipeline which will produce posterior range from prior range using msprime SFS and ABC-TFK sequential
+sampling method.
+"""
 import os
 import sys
 import pandas
@@ -26,6 +30,13 @@ if 'noise_injection' in config:
 # real snakemake pipeline starts here
 localrules: finalize, info_sfs
 rule finalize:
+    """
+    Finalizing everything and removing unecessary file. Also counts how many time it ran important if you put the 
+    snakemake inside a while loop and you want to count it
+    input: output from params_sfs. demography/Newrange.csv. demography/Narrowed.csv
+    output: remove demography folder so that we can start a run again. moving important file to current directory
+    Newrange.csv and Narrowed.csv
+    """
     input:
          config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
     output:
@@ -40,6 +51,14 @@ rule finalize:
          """
 
 rule params_sfs:
+    """
+    Main run for ABC-TFK sequential sampling method. This will using Priors+SFS will give Posterior range which are 
+    slightly closer to the real observed data that priors range
+    input: output from info_sfs. demography/demography.csv.gz
+    output: will produce Newrange.csv which has information of posterior range.  also to recycle
+    previous run of simulation will produce Narrowed.csv which has Priors+SFS within the new range output. 
+    demography/Newrange.csv. demography/Narrowed.csv 
+    """
     input:
          config['demography'] + '/Model.info'
     output:
@@ -53,6 +72,12 @@ rule params_sfs:
          "{params.tfknn_demo} {params.noise} --folder {config[demography]} {input} "
 
 rule info_sfs:
+    """
+    Creating Model.info which can be used in ABC-TFK to know the file path and the number of columns designated for 
+    parameters.
+    input: output from join_SFS_All. demography/demography.csv.gz
+    output: tab formatted file path and the parameters columns. demography/Model.info
+    """
     input:
          config['demography'] + '/' + config['demography'] + '.csv.gz'
     output:
@@ -63,6 +88,12 @@ rule info_sfs:
         print(input[0] + '\t' + params[0], file=open(output[0], "w"))
 
 rule join_SFS_All:
+    """
+    Joining all the different run of sfs and creating one single file. Mainly tackling the header problem from every 
+    file to one header for concatenated file. also taking care of simulations from previous loop using Narrowed.csv
+    input: output of run_SFS. demography/demography_xxx.csv all
+    output: zipped version. demography/demography.csv.gz
+    """
     input:
          files=expand(config['demography'] + '/' + config['demography'] + '_{jobint}.csv', jobint=joblist)
     output:
@@ -72,17 +103,29 @@ rule join_SFS_All:
          "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv |gzip > {output}"
 
 rule run_SFS:
+    """
+    The slowest but most important part of the pipeline. Given priors it will produce SFS which then can be used for 
+    ABC-TFK. The simulation here is implemented on msprime. 
+    input: output of priors_add_header. demography/Priors_xxx.csv
+    output: pramaters+sfs together. demography/demography_xxx.csv
+    """
     input:
          config['demography'] + '/Priors_{jobint}.csv'
     output:
           config['demography'] + '/' + config['demography'] + '_{jobint}.csv'
     resources:
              mem=6000
+    threads: config['threads']
     shell:
          "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
          "--total_length {config[total_length]} {config[demography]} > {output}"
 
 rule priors_add_header:
+    """
+    Split command in the shell do not add the headers. Thus we needed a different approach to add the headers
+    input: output of breaks_priors. demography/XXX.csv
+    output: just added the header on the input demography/Priors_XXX.csv
+    """
     output:
           config['demography'] + '/Priors_{jobint}.csv'
     input:
@@ -91,6 +134,12 @@ rule priors_add_header:
          "cat <(head -n 1 {config[demography]}/Priors.csv) <(cat {input}) > {output}"
 
 rule breaks_priors:
+    """
+    This will break the priors in several files. Useful when we are running in cluster. As the main bottleneck is the 
+    SFS generation. Thus separating the priors and independently run them will help parallelization.
+    input: coming from priors_create demography.Priors.csv
+    output: broken apart Priors.csv demography/XXX.csv assuming we are not going to run more than 1000 jobs together
+    """
     output:
           expand(config['demography'] + "/{jobint}.csv", jobint=joblist)
     input:
@@ -102,6 +151,14 @@ rule breaks_priors:
          "{config[demography]}/"
 
 rule priors_create:
+    """
+    This rule will create Uniform Priors from range. The range should be mentioned in a csv file which then can be load
+    by priors_range: from config.yml. 
+    input: The range csv should be written in 3 columns. first column is parameter names, second is lower bound of that 
+    parameter and third column is the upper bound. The number of current repeats will define how many repeats has to be
+    run 
+    output: demography/Priors.csv  
+    """
     output:
           config['demography'] + "/Priors.csv"
     params:
