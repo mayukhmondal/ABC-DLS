@@ -53,7 +53,7 @@ well known model (Gutenkunst et al. 2009, Gravel et al. 2013)
 To produce uniform distribution 
 you can use:
 ```shell script
-python /home/mayukh/PycharmProjects/ABC-TFK/src/SFS/Run_Range2UniParameters.py --upper 25e3,2e5,2e5,2e5,1e4,1e4,1e4,80,320,700,50,50,50,50 --lower 5e3,1e4,1e4,1e4,500,500,500,15,5,5,0,0,0,0 --par_names N_A,N_AF,N_EU,N_AS,N_EU0,N_AS0,N_B,T_EU_AS,T_B,T_AF,m_AF_B,m_AF_EU,m_AF_AS,m_EU_AS  --repeats 10 > Params.csv
+python src/SFS/Run_Range2UniParameters.py --upper 25e3,2e5,2e5,2e5,1e4,1e4,1e4,80,320,700,50,50,50,50 --lower 5e3,1e4,1e4,1e4,500,500,500,15,5,5,0,0,0,0 --par_names N_A,N_AF,N_EU,N_AS,N_EU0,N_AS0,N_B,T_EU_AS,T_B,T_AF,m_AF_B,m_AF_EU,m_AF_AS,m_EU_AS  --repeats 10 > Params.csv
 ``` 
 This will create csv files whose every row denote different run for simulations and the columns denote different 
 parameters with the given range:
@@ -178,5 +178,83 @@ The frac (fraction) was calculated with available amount of data for chr22 (for 
 to make it equal with the simulations we have to multiply 1e6/6081752 or 0.16442630347307816. You will definitely see
 improvement (imp) for several parameters. But this ran only once. To use it recursively, we can use the output of
 Newrange.csv and run it again till there is no improvement possible.   
-
-     
+## Snakemake 
+We added a snakemake pipeline to run those commands automatically. snakemake pipeline will be extremely useful for 
+clusters, where we can run multiple jobs together. Unfortunately, here we can not talk in details about how to install 
+and implement snakemake pipeline in the cluster. For further information you have to see 
+[snakemake](https://snakemake.readthedocs.io/en/stable/) tutorial. 
+The snakemake pipeline takes config.yml as an input which takes several neccesary configuration parameters together 
+inside a yml file. here we add an example in [config.yml](config.yml) file:
+```yaml
+sc_priors: Run_Range2UniParameters.py
+sc_sfs: Run_Prior2SFS.py
+sc_abc: ../Run_SequentialSampling.py
+sfsfile: ../../examples/YRI_FRN_HAN.csv
+priors_range: Oldrange.csv
+demography: OOA
+inds: 5,5,5
+threads: 1
+jobs: 10
+repeats: 2000
+total_length: 1000000
+test_size: 1000
+improvement: 0.95
+tolerance: .1
+frac: 0.0015455858426908665
+``` 
+ - sc_priors, sc_sfs and sc_abc is tha scripts for running the necessary commands for Run_Range2UniParameters.py, 
+ Run_Prior2SFS.py and Run_SequentialSampling.py. If you want to run it somewhere else you can put the full path instead 
+ of relative path. 
+ - sfsfile is the full path where you have your real or observed sfs file in csv format. You can use 
+ python src/SFS/Run_VCF2SFS.py to produce such file. Please see above how to do it. Here we used one real observed data
+ of Yoruba, French and Han Chinese downloaded from [High Coverage HGDP data](https://doi.org/10.1126/science.aay5012).
+ -  priors_range is the file path for a csv file which has 3 columns. First columns are the parameters name, second 
+ columns is the lower limit and third columns are the upper limit for every parameters. No header is expected. Example:
+```csv
+N_A,5000,25000
+N_AF,10000,200000
+N_EU,10000,200000
+N_AS,10000,200000
+N_EU0,500,10000
+N_AS0,500,10000
+N_B,500,10000
+T_EU_AS,15,80
+T_B,5,320
+T_AF,5,700
+m_AF_B,0,50
+m_AF_EU,0,50
+m_AF_AS,0,50
+m_EU_AS,0,50
+```
+- demography is the name of the demography def which is saved in the [Demography.py](Demography.py) file.
+- inds is the number of individuals per populations. 
+- threads is the number of threads that would be used per simulation run where we create sfs using msprime using 
+Run_Prior2SFS.py. 
+- jobs is the number of different jobs you want to run separately. This will break the Priors.csv several number of 
+smaller but independent files which then can run separately in parallel. 
+- repeats is the number of repeats that is needed to run ABC-TFK Sequential Sampling. Remember this does not 
+correspondent to  the number of simulation run for this loop as we reuse some of the older simulations using 
+Narrowed.csv
+- total_length is the total length of chromosomes that we want to run. Remember the total length are divided by equal 
+1mb of LD region or chromosome to run it separately. 
+- test_size is the number of test_size that would be kept for ABC-TFK. Every thing else will be used for training. 
+- imp is the amount of improvement necessary to regard it as true improvement. For more information please see 
+[Examples](../../examples/Examples.md) under Sequential Sampling. 
+- tolerance amount of tolerance that is neccesary for ABc analysis.
+ - frac is the amount of fraction to multiply with observed sfs so that it can be equal to the simulated sfs. It is 
+ unlikely that we'll simulate same length of chromosomes in total as the real or observed data. This will mitigate 
+ this problem. For example here we are simulating 1mb region but weknow our observed data was produced from ~647 mb
+ region. Meaning we should multipy our observed sfs with 1mb/647mb which is close to 0.0015455858426908665. You can 
+ also write there !!float 1/647 
+ 
+ 
+To run the snakemake you can use just run in this folder:
+```shell script
+snakemake --jobs 10 
+```  
+This will run all the neccesary commands will run parallely 10 jobs and will produce a Newrange.csv and Narrowed.csv.
+But this only one recursion. We need to do multiple recursion to make our posterior range much smaller. To do it we
+need to put this code inside a while loop. On top of it we should change the Newrange.csv to Oldrange.csv so that we
+can run it inside a loop as long as we did not reach any convergence. 
+    
+    

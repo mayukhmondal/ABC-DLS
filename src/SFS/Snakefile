@@ -6,14 +6,20 @@ sampling method.
 import os
 import sys
 import pandas
+from Classes import Misc
 ##input info extraction
 configfile: sys.path[0] + '/config.yml'
 workdir: os.getcwd()
 # extra work
-config["current_repeats"] = max(config["current_repeats"], config["jobs"])
+
 joblist = [format(x, '03') for x in range(1, config["jobs"] + 1)]
 config["sfsfile"] = os.path.abspath(config["sfsfile"])
 parameteres=pandas.read_csv(config['priors_range'],header=None,names=['par_names','upper','lower'])
+if os.path.isfile('Narrowed.csv'):
+    config["current_repeats"]=config["repeats"]-Misc.getting_line_count('Narrowed.csv')
+else:
+    config["current_repeats"]=config["repeats"]
+config["current_repeats"] = max(config["current_repeats"], config["jobs"])
 # optional stuff
 if "tfknn" in config:
     if not os.path.isfile(config["tfknn"]):
