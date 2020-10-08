@@ -188,8 +188,8 @@ inside a yml file. here we add an example in [config.yml](config.yml) file:
 ```yaml
 sc_priors: Run_Range2UniParameters.py
 sc_sfs: Run_Prior2SFS.py
-sc_abc: ../Run_SequentialSampling.py
-sfsfile: ../../examples/YRI_FRN_HAN.csv
+sc_abc: ../Run_SMC.py
+sfsfile: ../../examples/YRI_FRN_HAN.observed.csv
 priors_range: Oldrange.csv
 demography: OOA
 inds: 5,5,5
