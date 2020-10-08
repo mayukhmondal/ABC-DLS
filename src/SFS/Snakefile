@@ -106,7 +106,7 @@ rule join_SFS_All:
           config['demography'] + '/' + config['demography'] + '.csv.gz'
     shell:
          "touch Narrowed.csv\n"
-         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv |gzip > {output}"
+         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv| grep . |gzip > {output}"
 
 rule run_SFS:
     """
