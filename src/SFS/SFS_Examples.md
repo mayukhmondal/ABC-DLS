@@ -252,9 +252,35 @@ To run the snakemake you can use just run in this folder:
 ```shell script
 snakemake --jobs 10 
 ```  
-This will run all the neccesary commands will run parallely 10 jobs and will produce a Newrange.csv and Narrowed.csv.
+This will run all the necessary commands will run parallel 10 jobs and will produce a Newrange.csv and Narrowed.csv.
 But this only one recursion. We need to do multiple recursion to make our posterior range much smaller. To do it we
 need to put this code inside a while loop. On top of it we should change the Newrange.csv to Oldrange.csv so that we
 can run it inside a loop as long as we did not reach any convergence. 
     
+## Recursion 
+The last and final part of this approach is to put it (snakemake pipeline) inside a recursive loop. This can be done
+in several ways. Here we present a simple shell script approach to do it. ([recursive.sh](recursive.sh))
+```shell script
+#!/bin/bash
+imp=0
+touch Narrowed.csv
+cp Startrange.csv Oldrange.csv
+while [ "$(echo "$imp < 0.95"| bc -l)"  -eq 1 ]
+do
+	snakemake -q --jobs 6
+	imp=$(cut -f4  -d ","  Newrange.csv |sort -n | head -n 1)
+	mv Newrange.csv Oldrange.csv
+done
+mv Oldrange.csv Finalrange.csv
+``` 
+To run this code we have just to use:
+```commandline
+sh recursive.sh
+```
+This will automatically run the recursion of snakemake pipeline inside a while loop. We used Startrange.csv as a 
+starting point of the whole recursion and Oldrange.csv as the starting point of the every loop. The snakemake
+pipeline will submit 6 jobs in parallel and when it reaches convergence (which is minimum of imp > 0.95) it will stop
+the while loop and save it as Finalrange.csv This is a very basic way to do it. Of course, you are free to update it and
+make it more complex so that it is more useful for your stuff. 
+ 
     
