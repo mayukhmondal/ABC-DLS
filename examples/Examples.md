@@ -72,7 +72,7 @@ python src/Run_Classification.py Train --demography src/extras/ModelClass.py --t
 ``` 
 This will train the model.  
 -  --nn src/extras/ModelClass.py 
-ABC-TFK has a default training neural model. But it is impossible to predict which model should be better for the input 
+ABC-DLS has a default training neural model. But it is impossible to predict which model should be better for the input 
 data. Thus, we can define custom made model cater to our own need. One such example is 
 [src/extras/ModelClass.py](../src/extras/ModelClass.py). Here we put very less epochs (only 20) to get faster result. 
 More is merrier of course. The *.py should have a definition name ANNModelCheck which should return the trained model 
@@ -245,15 +245,17 @@ After everything is done, we can use the After_train to use the ABC analysis.
 ```sh
 python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv
 ```
-This will calculate both the CV part as well as will compare with the observed data. This will produce paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of model_index.csv.gz will produce params.csv.gz. Inside those files will be necessary information for the parameters. 
+This will calculate both the CV part as well as will compare with the observed data. This will produce 
+paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of 
+model_index.csv.gz will produce params.csv.gz. Inside those files will be necessary information for the parameters. 
 ### All
 To put all these parts together we can use: 
 ```sh
 python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
 ```
-It will produce similar result. 
+It will produce similar result but running all the commands together.
 ### Optional 
-We can use further the results in R:
+We can use further our analysis in R:
 ```R
 library(abc)
 params=read.csv('params.csv.gz')
@@ -265,20 +267,33 @@ plot(res,param=params)
 ```
 This will transform the parameter values in log scale. Thus, we can calculate the distance much more precisely. 
 ## Parameter Estimation by SMC
-Now Parameter Estimation by ABC-TFK is good but what if we want to do it recursively. First and foremost why doing it recursively is better in this case. Think it like this, before the training we did not know what is the amount of admixture from first population to second populations (suppose the real amount is 30%). It can be 10%, can be 20%.. 90%. Anything is possible. So we run every possible admixture amount and neural network learns how the ss should look under 10%,20%..90% admixture. After we use the real data suppose it predicted the amount is 20-50%. Now we can only concentrate on simulations from 20-50% admixture as there is no need of making the neural network learn how the ss behaves in those extreme condition when they are unlikely. Neural network now can specialize in much smaller deviated ss which in turn make it much powerful for prediction. Of course, we can simulate infinite number of line to make the neural network learn from that. Instead we are making the neural network learn recursively for the amount which we think is true and by doing that we are making it much more specialized. 
-The simplified idea is to get the minimum and maximum value for every parameter as a posterior and use that posterior as a prior to create new simulation and repeat it again (aka Sequential Monte Carlo or SMC). This recursion should be done till convergence is reached. In this case when imp (improvement) of every parameter is more than 95% (default value), we can assume we have reached enough convergence and neural network now cannot make any more improvement.
-
-<img src="https://latex.codecogs.com/gif.latex?imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" title="imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" />
-
+Now Parameter Estimation by ABC-DLS is good but what if we want to do it recursively. First and foremost we need to 
+understand why doing it recursively is better in this case. Think it like this, before the training we did not know 
+what is the amount of admixture from first population to second populations (suppose the true amount is 30%). As our 
+priors it can be 10%, can be 20%.. 90%. anything is possible. So we run every possible admixture amount and neural 
+network learns how the ss should look under 10%,20%..90% admixture. After we use the real/observed data suppose it 
+predicted the amount is 20-50% (posterior). Now we can only concentrate on simulations from 20-50% admixture as there is
+no need of making the neural network learn how the ss behaves in those extreme conditions (<20% and >50%) when they are 
+unlikely. Neural network now can specialize in much smaller deviated ss which in turn make it much powerful for 
+prediction. Of course, we can simulate infinite number of lines to make the neural network learn from that. Instead we 
+are making the neural network learn recursively for the amount which we think is true and by doing that we are making it
+ much more specialized. The simplified idea is to get the minimum and maximum value for every parameter as a posterior 
+ and use that posterior as a prior to create new simulation and repeat it again (aka Sequential Monte Carlo or SMC which
+ is also sometime called Particle Filter). This recursion should be done till convergence is reached. In this case when 
+ imp (improvement) of every parameter is more than 95% (default value), we can assume we have reached enough convergence
+ and neural network now cannot make any more improvement.
+<img src="https://latex.codecogs.com/gif.latex?imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" title="imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" />  
 To run the SMC for Parameter Estimation for a single time:   
-
 ```shell
-python src/Run_NestedSampling.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+python src/Run_SMC.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
 ``` 
-
-The code is similar to Parameter Estimation part with some added changes which makes it efficient for recursion (which basically means it will remove most of the extra test and graphs and only produce the range). 
- 
- - --demography src/extras/ModelParamsTogether.py The format is slightly different than the Parameter Estimation. The idea is train and test both are send in together for training part to make it more efficient. As it is recursive method wasting of simulations do not make sense. In case you want you can use the default one which works most of the time. In case you want to use your own neural network model you have to follow this format:
+The code is similar to Parameter Estimation part with some added changes which makes it more efficient for recursion 
+(which basically means it will remove most of the extra test and graphs and only produce the range).  
+ - --demography src/extras/ModelParamsTogether.py  
+ The format is slightly different than the Parameter Estimation. The idea is train and test both are send together for 
+ training part to make it more efficient. As it is recursive method wasting of simulations do not make sense. In case 
+ you want you can use the default nueral network which works most of the time. In case you want to use your own neural 
+ network model you have to follow this format:
 ```python
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
@@ -317,29 +332,66 @@ def ANNModelParams(x, y):
 
     return model
 ```   
+- --csvout  
+will keep the simulation which are with in the new (posterior) range of parameters. Thus can be reused another round(s) 
+of iteration.  
 
-- --csvout will keep the simulation which are with in the new (posterior) range of parameters. Thus can be reused another round(s) of iteration.
-
-It will also save a newfile called Newrange.csv which would have information about the posterior range. 
-
+It will also save a new file called Newrange.csv which would have information about the posterior range (which has 
+information from ABC minimum and maximum range). 
 ### Recursion
-If we cannot do the recursion, there is no difference between Parameter Estimation and Parameter Estimation with SMC. You can think of SMC part is a subset and efficient version of normal Parameter Estimation part. Unfortunately we cannot give a code to do all the stuff easily for recursion. First of all ABC-TFK is in principle meant for any ss (not only SFS). Thus not all possible ss can be written here. Secondly,  the production of ss files takes times and it is impossible to run the code for production of ss in a single computer. You need a cluster as well as a pipeline (for example snakemake), which can submit multiple ss files in parallel. Nonetheless here we will give an idea how to do it but its reader discretion how to implement such a pipeline:
+If we cannot do the recursion, there is no difference between Parameter Estimation and Parameter Estimation with SMC. 
+You can think of SMC part is a subset and efficient version of normal Parameter Estimation part for a single iteration. 
+First of all ABC-DLS is in principle meant for any ss (not only SFS). Thus not all possible ss can be written here. 
+Secondly, the production of ss files takes times and it is impossible to run the code for production of ss in a single 
+computer. You need a cluster as well as a pipeline (for example snakemake), which can submit multiple ss files in 
+parallel. Nonetheless here we will give an idea how to do it but its reader discretion how to implement such a pipeline:
 #### Iterations
-```shell
+```text
 do while any parameter imp < 0.95
-    Produce the prior paramters with in some range
-    Produce SS from those parameters (heavily paralelize here)
-    Merge parameters and their corresponding ss together so it can be used in ABC-TFK
-    python src/Run_NestedSampling.py ..
-    remove unrequired files
+    Produce the prior parameters with in some range
+    Produce SS from those parameters (heavily parallelize here)
+    Merge parameters and their corresponding ss together so it can be used in ABC-DLS
+    python src/Run_SMC.py ..
+    remove unimportant files
 ```
-You can look at [src/SFS/SFS_Examples.md](src/SFS/SFS_Examples.md) to have an idea how to do it. 
+You can look at [src/SFS/SFS_Examples.md](../src/SFS/SFS_Examples.md) to have an idea how to do it. 
 ## Good Practices
-- Never believe in one run of ABC-TFK. It is always better to run several separate simulations (pre-train) with several different neural models (training, you can find some in [src/extras/](src/extras/) folder) and see it reaches the same outcome. After training also use differently masked vcfs to ss (after train) files give same results. One example might be to use no masked and mappability masked (using [snapable programme](http://lh3lh3.users.sourceforge.net/snpable.shtml)) ss files and compare the results coming from them. Same things can also be achieved by producing same ss from different individuals or use boot strap results from same individuals.     
-- Take care of over fitting by checking accuracy in training data set vs test data set. If training accuracy is very high compared to test data set, try to run a smaller number of epochs and or use more data to train. If you are using less data than what is needed, your train data set accuracy will diverge from test data set accuracy very early on (<50 epochs). This suggests your training might be improved by using more data to train. On the other hand more data is always better. Especially because we can simulate easily more and more data synthetically. In principle, memory is not a problem for ABC-TFK as the code is implemented in hdf5 format. Thus you have unlimited memory.But take care, as more data also means it will take more time to converge. As a rule of thumb, we found that 20k simulations for classification and 50k simulations for parameter estimation per model is generally enough when using SFS as a ss. 
-- It is easy to build different models, but it is your responsibility to make them as much different as possible. For example, a 0% admixture proportion essentially means a model without admixture (aka in this case normal Out of Africa from the paper). Thus, admixture model should be more than 0% of admixture. What minimum percentage of admixture is good to train the data depends on the model itself (e.g. older the population split; it is easier to differentiate thus needed lesser admixture to detect). It is always better to revisit simulation after training and see if those low level of admixture (subset of all test data set) can be correctly differentiated or not by your trained neural network (i.e. suppose all the simulations less than 1% admixture is wrongly classified. Thus less than 1% admixture cannot be used for classification for your model).  
-- Use migrations (under island model) cautiously, till a better method (or ss) to calculate migrations was found. Although this approach gives the freedom to use migrations, it should be used moderately. We found that migrations make the result less accurate (at least in the current form SFS + Neural network), as well as big amount of migrations between populations has demonstrated to change the underlying tree of demographic history and thus the interpretation of the whole model itself. Migrations can affect the result indirectly which is not easy to understand. Try to check if your model gives the same result with or without migrations. If not revisit your model without migration, rather believing your model with migrations. 
-- Remember garbage in garbage out principle. If you use nonsense data as an input, you will get nonsense result as an output. Although using ABC method, it is easier now to catch such situation (as ABC gives posterior distribution rather a single number) but by no means it is full proof. On top of it, neural network is black box thus some time it is near impossible to catch such mistake (neural network will learn anything if you force it to learn). Suggested direction will be to start from an already known and accepted results. See if you get similar results and then try to make more complex models on top of it. 
+- Never believe in one run of ABC-DLS. It is always better to run several separate simulations (pre-train) with several 
+different neural models (training, you can find some in [src/extras/](src/extras/) folder) and see it reaches the same 
+outcome. After training also use differently observed ss (after train) files give same results. One example might be to 
+use different mask strategy than what is used here like mappability mask (using 
+[snapable programme](http://lh3lh3.users.sourceforge.net/snpable.shtml)) ss files and compare the results coming from 
+them. Same things can also be achieved by producing same ss from different individuals or use boot strap results from 
+same individuals.     
+- Take care of over fitting by checking accuracy in training data set vs test data set. If training accuracy is very 
+high compared to test data set, try to run a smaller number of epochs and or use more data to train. If you are using 
+less data than what is needed, your train data set accuracy will diverge from test data set accuracy very early on 
+(<50 epochs). This suggests your training might be improved by using more data to train. On the other hand more data is 
+always better. Especially because we can simulate easily more and more data synthetically. In principle, memory is not a
+problem for ABC-DLS as the code is implemented in hdf5 format. Thus you have unlimited memory. But take care, as more 
+data also means it will take more time to converge. As a rule of thumb, we found that 20k simulations for 
+classification, 50k simulations for parameter estimation and 20k simulation for SMC approach per model is generally 
+enough when using SFS as a ss. 
+- It is easy to build different models, but it is your responsibility to make them as much different as possible. For 
+example, a 0% admixture proportion essentially means a model without admixture (aka in this case normal Out of Africa 
+from the paper). Thus, admixture model should be more than 0% of admixture. What minimum percentage of admixture is good
+to train the data depends on the model itself (e.g. older the population split; it is easier to differentiate thus 
+needed lesser admixture to detect). You can look at different models for SMC approach and if they converge then most 
+probably it is better idea to put some hard range thus the two models cannot be equal (fore example the admixture model
+put the admixture amount from 1-99%). 
+- Use migrations (under island model) cautiously, till a better method (or ss) to calculate migrations was found. 
+Although this approach gives the freedom to use migrations, it should be used moderately. We found that migrations make 
+the result less accurate (at least in the current form SFS + Neural network), as well as big amount of migrations 
+between populations has demonstrated to change the underlying tree of demographic history and thus the interpretation of
+the whole model itself. Migrations can affect the result indirectly which is not easy to understand. Try to check if 
+your model gives the same result with or without migrations. If not revisit your model without migration, rather 
+believing your model with migrations. 
+- Remember garbage in garbage out principle. If you use nonsense data as an input, you will get nonsense result as an 
+output. Although using ABC method, it is easier now to catch such situation (as ABC gives posterior distribution rather 
+a single number) but by no means it is full proof. On top of it, neural network is black box thus some time it is near 
+impossible to catch such mistakes (neural network will learn anything if you force it to learn). Suggested direction 
+will be to start from an already known and accepted results. See if you get similar results and then try to make more 
+complex models on top of it. 
 
  
 

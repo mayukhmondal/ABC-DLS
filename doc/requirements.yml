@@ -1,7 +1,7 @@
 channels:
-	- conda-forge
-	- anaconda
+  - conda-forge
+  - anaconda
 dependencies:
-	- sphinx
-	- sphinx-autodoc-typehints
-	- recommonmark
+  - sphinx
+  - sphinx-autodoc-typehints
+  - recommonmark

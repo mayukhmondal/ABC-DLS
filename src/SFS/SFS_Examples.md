@@ -1,23 +1,19 @@
-# ABC-TFK with SFS Examples
-
-In principle ABC-TFK is meant for any summary statistics (ss) that can be used to predict the parameters. But 
+# ABC-DLS with SFS Examples
+In principle ABC-DLS is meant for any summary statistics (ss) that can be used to predict the parameters. But 
 unfortunately it is impossible to give examples for every possible ss. On the other hand, it is harder to understand and
 implement if examples are not given. Thus here we used one of the ss to give an idea how to implement such a pipeline 
 for population genomics background. Joint Site Frequency Spectrum (SFS) were shown to be good ss for this kind of 
-approach. Although they are good but does not mean they are sufficient, thus ABC-TFK should not be shackled by only 
-using SFS but this is a good starting point.      
-
+approach. Although they are good but does not mean they are sufficient, thus ABC-DLS should not be shackled by only 
+using SFS but this is a good starting point. 
 ## Installation
-
-To run and create SFS, we need some other packages. I divided the packages from the default packages of ABC-TFK as SFS 
-are not necessary for ABC-TFK and more packages mean more dependency hell. The packages needed on top of the previous 
+To run and create SFS, we need some new packages. I divided the packages from the default packages of ABC-DLS as SFS 
+are not necessary for ABC-DLS and more packages mean more dependency hell. The packages needed on top of the previous 
 packages are:
-
 - scikit-allel
 - msprime
-- snakemake
+- snakemake   
 
-You can install as previously (of course in the same environment as ABC-TFK):
+You can install as previously (of course in the same environment as ABC-DLS):
 ```shell script
 conda install -c conda-forge -c bioconda --file src/SFS/requirements.txt
 ```
@@ -28,34 +24,40 @@ conda env update -f src/SFS/requirements.yml
 ## VCF to SFS
 First we need a real or observed ss which can be produced from a vcf file. Before using the vcf file we need some filter
 and information so that it can be used for SFS.
-- Every body has their own strategy of filtering. But the strategy I generally use is following (For explanations for 
-the commands used please see the respective software sites [vcftools](https://vcftools.github.io/index.html) and 
-[bcftools](http://samtools.github.io/bcftools/bcftools.html). ):
+- filters: Every body has their own strategy of filtering. But the strategy I generally use is following (for 
+explanations for the commands used please see the respective software sites 
+[vcftools](https://vcftools.github.io/index.html) and [bcftools](http://samtools.github.io/bcftools/bcftools.html). ):
 ```shell script
 vcftools --gzvcf  <in.vcf.gz> --max-missing 1.0 --remove-indels --min-alleles 2 --max-alleles 2 --mac 1 --keep <in.pop> --stdout --recode|bcftools view -T examples/masked_regions.bed.gz| bcftools  annotate -x ^FORMAT/GT -O z -o <out.vcf.gz> 
 bcftools index <out.vcf.gz>
 ```
-- We need to add the ancestral information of the alleles in the INFO tag of the vcf file. You can use bcftools 
-annotate to add those information if you have the ancestral allele file. 
+- Ancestral allele: We need to add the ancestral information of the alleles in the INFO tag of the vcf file. You can use
+bcftools annotate to add those information if you have the ancestral allele file. 
 
-After we have our filtered and annotated vcf file (you can look for an example in examples/Examples.vcf.gz), we can 
-convert it to SFS file using:
+After we have our filtered and annotated vcf file (you can look for an example in 
+[examples/Examples.vcf.gz](../../examples/Examples.vcf.gz), we can convert it to SFS file using:
 ```shell script
-python src/SFS/Run_VCF2SFS.py --popfile Input.pop --sfs_pop YRI,FRN,HAN examples/Examples.vcf.gz
+python src/SFS/Run_VCF2SFS.py --popfile Input.tsv --sfs_pop YRI,FRN,HAN examples/Examples.vcf.gz
 ``` 
  Which will create a Examples.csv. This can be used as observed SFS for further analysis. 
-
+ - --popfile   
+ should have information of populations per individual. The first column should be the individual name as present in the
+ vcf file and the second column should be the population name in a tab separated format. 
+ - --sfs_pop    
+ to give in which sequence the sfs should be produce as sfs(Pop1, Pop2, Pop3) != sfs(Pop2, Pop1, Pop3). Where Pop are 
+ populations.  
+ - [examples/Examples.vcf.gz](../../examples/Examples.vcf.gz) is the vcf file.
 ## Creating Uniform Priors from range
 Before running the simulations, we need to create priors for the parameters on which simulations can run. The priors can
 be created by different methods and from different distributions. But one of the most used scenario is to produce the 
 priors from a uniform distribution with a given range for minimum and maximum values. Here we took the example from a 
-well known model (Gutenkunst et al. 2009, Gravel et al. 2013) 
-To produce uniform distribution 
-you can use:
+well known model ([Gutenkunst et al. 2009](https://doi.org/10.1371/journal.pgen.1000695), 
+[Gravel et al. 2013](https://doi.org/10.1073/pnas.1019276108)).    
+To produce uniform distributions of parameters you can use:
 ```shell script
 python src/SFS/Run_Range2UniParameters.py --upper 25e3,2e5,2e5,2e5,1e4,1e4,1e4,80,320,700,50,50,50,50 --lower 5e3,1e4,1e4,1e4,500,500,500,15,5,5,0,0,0,0 --par_names N_A,N_AF,N_EU,N_AS,N_EU0,N_AS0,N_B,T_EU_AS,T_B,T_AF,m_AF_B,m_AF_EU,m_AF_AS,m_EU_AS  --repeats 10 > Params.csv
 ``` 
-This will create csv files whose every row denote different run for simulations and the columns denote different 
+This will create csv file whose every row denote different run for simulations and the columns denote different 
 parameters with the given range:
 
 | Parameters | Upper Limit | lower Limit | 
@@ -70,10 +72,10 @@ parameters with the given range:
 |T_EU_AS     |80 ky        |15 ky        |
 |T_B         |320 ky       |5 ky         |
 |T_AF        |700 ky       |5 ky         |
-|m_AF_B     |50 x 10<sup>^-5 </sup>|0    |
-|m_AF_EU    |50 x 10<sup>^-5 </sup>|0    |
-|m_AF_AS    |50 x 10<sup>^-5 </sup>|0    |  
-|m_AF_EU    |50 x 10<sup>^-5 </sup>|0    | 
+|m_AF_B     |50 x 10<sup>-5 </sup>|0    |
+|m_AF_EU    |50 x 10<sup>-5 </sup>|0    |
+|m_AF_AS    |50 x 10<sup>-5 </sup>|0    |  
+|m_AF_EU    |50 x 10<sup>-5 </sup>|0    | 
 
 where ky is kilo years
 ## Prior to SFS 
@@ -136,55 +138,71 @@ def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8
     return geno
 ``` 
 The notable difference is with scaling of events and migration rates. msprime uses generations thus our input has to be 
-scaled with 1000/29 as our events are in ky and the migrations are multiplieded by 10<sup>^-5</sup> to make it correct 
-scale. We used more human readable version of priors instead of required one so that we can easily understand the output
- of the results. Of course we could have used directly generations and correct scaled amount of migration matrix but 
- then it will be difficult to understand. Of course if we are running the parameter estimation only for once it does not 
-matter but it become more easier when we use recursively to understand if our results not going awry. You can add your 
-own code in the SFS/Demography.py which has to follow some simple rule:
+scaled with 1000/29 as our events are in ky and the migrations are multiplied by 10<sup>-5</sup> to make it correct 
+scale. We used more human readable version for priors instead of required one so that we can easily understand the 
+output of the results. Of course we could have used directly generations and correct scaled amount of migration matrix 
+but then it will be difficult to understand. Of course if we are running the parameter estimation only for once it does 
+not matter but it become more easier when we use recursively to understand if our results not going awry (specially 
+useful when we are using [recursive.sh](recursive.sh) with snakemake pipeline. See later for more information. You can 
+add your own code in the [src/SFS/Demography.py](Demography.py) which has to follow some simple rule:
 ```python
 import msprime
 def demo(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     your own code
     geno=msprime.simulate(...)
     return geno
-``` 
+```
 ### Creating SFS csv file
 Now after making a correct format for demography now it is time to create csv file from the simulations. 
 ```shell
 python src/SFS/Run_Prior2SFS.py  OOA --params_file Params.csv --inds 5,5,5 --threads 5 --total_length 1e7 |gzip > OOA.csv.gz
 ```
-This will create Out of Africa sfs with parameters files which then can be directly used as an input Parameter 
-Estimation or Sequential Sampling method. 
-No doubt this is the main bottleneck for the whole approach thus this part should be mostly improved if we use more 
-parallelize approach. For example only using threads will not be enough. In my case I used cluster to massively 
-parallelize by submitting multiple production of csv together using snakemake.  
+- OOA   
+is the name of the demography which is present in [src/SFS/Demography.py](Demography.py). You can use what ever name as 
+the definition and can be acessed from here.  
+- --params_file Params.csv   
+is the priors that is produced in the previous step. 
+- --inds 5,5,5   
+The number of individuals per population.
+--threads 5   
+The number of threads to be used. As this step is the bottleneck for the whole approach this is neccesary to use. 
+--total_length 1e7     
+The total length of the genome that has to be simulated. Here we are simualating 10 mb region. In the code by default it
+will run 1mb region at a time. Thus 10mb meaning repeating the 1mb regions 10 times. Because of this approach I would 
+suggest not to use seeds or use it with caution. If not it will produce the same sfs again and again thus running it for
+10 times will not be any improvement. 
 
-## Going forward with ABC-TFK (SFS to Posteriors)
-With this prior stuff done, finally we reached a situation where we can use ABC-TFK method to get out posteriors. 
+This will create Out of Africa sfs with parameters files which then can be directly used as an input Parameter 
+Estimation or SMC method. No doubt this is the main bottleneck for the whole approach thus this part 
+should be mostly improved if we use even more parallelize approach. For example only using threads will not be enough. 
+In my case I used cluster to massively parallelize by submitting multiple production of csv together using snakemake 
+(see later).  
+
+## Going forward with ABC-DLS (SFS to Posteriors)
+With this prior stuff done, finally we reached a situation where we can use ABC-DLS method to get out posterior range. 
 ```shell 
 echo -e "OOA.csv.gz\t14" > Model.info
-python src/Run_NestedSampling.py All --test_size 5 --tolerance .5 --ssfile examples/Examples.csv --scale b Model.info 
+python src/Run_SMC.py All --test_size 5 --tolerance .5 --ssfile examples/Examples.csv --scale b Model.info 
 ``` 
-Of course understandably with 10 simulations we do not expect it to reach any level for correctness at all. To have 
+Of course understandably with 10 simulations we do not expect it to reach any level of correctness at all. To have 
 good level of power we need to use much more simulations:
 ```shell
 python src/SFS/Run_Range2UniParameters.py --upper 25e3,2e5,2e5,2e5,1e4,1e4,1e4,80,320,700,50,50,50,50 --lower 5e3,1e4,1e4,1e4,500,500,500,15,5,5,0,0,0,0 --par_names N_A,N_AF,N_EU,N_AS,N_EU0,N_AS0,N_B,T_EU_AS,T_B,T_AF,m_AF_B,m_AF_EU,m_AF_AS,m_EU_AS  --repeats 2e4 > Params.csv
 python src/SFS/Run_Prior2SFS.py  OOA --params_file Params.csv --inds 5,5,5 --threads 5 --total_length 1e6 |gzip > OOA.csv.gz 
 echo -e "OOA.csv.gz\t14" > Model.info
-python src/Run_SequentialSampling.py All --ssfile Examples.csv --scale b Model.info --frac 0.16442630347307816
+python src/Run_SMC.py All --ssfile Examples.csv --scale b Model.info --frac 0.16442630347307816
 ```
 The frac (fraction) was calculated with available amount of data for chr22 (for the vcf file) which is 6,081,752. Thus 
 to make it equal with the simulations we have to multiply 1e6/6081752 or 0.16442630347307816. You will definitely see
-improvement (imp) for several parameters. But this ran only once. To use it recursively, we can use the output of
-Newrange.csv and run it again till there is no improvement possible.   
+improvement (imp) for several parameters. But this ran only once. To use it recursively, we can use the output 
+(Newrange.csv) and use it as input to run it again till there is no improvement possible.   
 ## Snakemake 
-We added a snakemake pipeline to run those commands automatically. snakemake pipeline will be extremely useful for 
+We added a snakemake pipeline to run those commands automatically. Snakemake pipeline will be extremely useful for 
 clusters, where we can run multiple jobs together. Unfortunately, here we can not talk in details about how to install 
 and implement snakemake pipeline in the cluster. For further information you have to see 
 [snakemake](https://snakemake.readthedocs.io/en/stable/) tutorial. 
-The snakemake pipeline takes config.yml as an input which takes several neccesary configuration parameters together 
-inside a yml file. here we add an example in [config.yml](config.yml) file:
+The snakemake pipeline takes config.yml as an input which takes several necessary configuration parameters together 
+inside a yml file. Here we add an example in [config.yml](config.yml) file:
 ```yaml
 sc_priors: Run_Range2UniParameters.py
 sc_sfs: Run_Prior2SFS.py
@@ -202,14 +220,14 @@ improvement: 0.95
 tolerance: .1
 frac: 0.0015455858426908665
 ``` 
- - sc_priors, sc_sfs and sc_abc is tha scripts for running the necessary commands for Run_Range2UniParameters.py, 
- Run_Prior2SFS.py and Run_SequentialSampling.py. If you want to run it somewhere else you can put the full path instead 
+ - sc_priors, sc_sfs and sc_abc is the scripts for running the necessary commands for Run_Range2UniParameters.py, 
+ Run_Prior2SFS.py and Run_SMC.py. If you want to run it somewhere else you can put the full path instead 
  of relative path. 
  - sfsfile is the full path where you have your real or observed sfs file in csv format. You can use 
  python src/SFS/Run_VCF2SFS.py to produce such file. Please see above how to do it. Here we used one real observed data
  of Yoruba, French and Han Chinese downloaded from [High Coverage HGDP data](https://doi.org/10.1126/science.aay5012).
  -  priors_range is the file path for a csv file which has 3 columns. First columns are the parameters name, second 
- columns is the lower limit and third columns are the upper limit for every parameters. No header is expected. Example:
+ column is the lower limit and third column is the upper limit for every parameters. No header is expected. Example:
 ```csv
 N_A,5000,25000
 N_AF,10000,200000
@@ -232,19 +250,19 @@ m_EU_AS,0,50
 Run_Prior2SFS.py. 
 - jobs is the number of different jobs you want to run separately. This will break the Priors.csv several number of 
 smaller but independent files which then can run separately in parallel. 
-- repeats is the number of repeats that is needed to run ABC-TFK Sequential Sampling. Remember this does not 
+- repeats is the number of repeats that is needed to run ABC-DLS SMC. Remember this does not 
 correspondent to  the number of simulation run for this loop as we reuse some of the older simulations using 
 Narrowed.csv
-- total_length is the total length of chromosomes that we want to run. Remember the total length are divided by equal 
+- total_length is the total length of the simulation that we want to run. Remember the total length are divided by equal 
 1mb of LD region or chromosome to run it separately. 
-- test_size is the number of test_size that would be kept for ABC-TFK. Every thing else will be used for training. 
+- test_size is the number of test_size that would be kept for ABC-DLS. Every thing else will be used for training. 
 - imp is the amount of improvement necessary to regard it as true improvement. For more information please see 
-[Examples](../../examples/Examples.md) under Sequential Sampling. 
-- tolerance amount of tolerance that is neccesary for ABc analysis.
+[examples/Examples.md](../../examples/Examples.md) under SMC. 
+- tolerance amount of tolerance that is necessary for ABC analysis.
  - frac is the amount of fraction to multiply with observed sfs so that it can be equal to the simulated sfs. It is 
  unlikely that we'll simulate same length of chromosomes in total as the real or observed data. This will mitigate 
- this problem. For example here we are simulating 1mb region but weknow our observed data was produced from ~647 mb
- region. Meaning we should multipy our observed sfs with 1mb/647mb which is close to 0.0015455858426908665. You can 
+ this problem. For example here we are simulating 1mb region but we know our observed data was produced from ~647 mb
+ region. Meaning we should multiply our observed sfs with 1mb/647mb which is close to 0.0015455858426908665. You can 
  also write there !!float 1/647 
  
  
@@ -281,6 +299,5 @@ This will automatically run the recursion of snakemake pipeline inside a while l
 starting point of the whole recursion and Oldrange.csv as the starting point of the every loop. The snakemake
 pipeline will submit 6 jobs in parallel and when it reaches convergence (which is minimum of imp > 0.95) it will stop
 the while loop and save it as Finalrange.csv This is a very basic way to do it. Of course, you are free to update it and
-make it more complex so that it is more useful for your stuff. 
- 
+make it more complex so that it is more useful for your stuff.  
     

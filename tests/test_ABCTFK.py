@@ -239,7 +239,7 @@ def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelPar
         shutil.rmtree('ns')
 
 
-def test_vcf2ss(vcffile='../examples/Examples.vcf.gz', popfile='../examples/Input.pop', sfs_pop=('YRI', 'FRN', 'HAN'),
+def test_vcf2ss(vcffile='../examples/Examples.vcf.gz', popfile='../examples/Input.tsv', sfs_pop=('YRI', 'FRN', 'HAN'),
                 chunk_length=int(100), out='test_out'):
     out = Class.VCF2SFS.wrapper(vcffile=vcffile, popfile=popfile, sfs_pop=sfs_pop, chunk_length=chunk_length, out=out)
     print(out.sum())
