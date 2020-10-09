@@ -1,0 +1,24 @@
+# adding all the dependencies together
+channels:
+  - conda-forge
+  - bioconda
+  - anaconda
+dependencies:
+  - python=3.7.7
+  - numpy=1.18.1
+  - scikit-learn=0.22.1
+  - joblib=0.14.1
+  - pandas=1.0.3
+  - h5py=2.10.0
+  - rpy2=2.9.4
+  - r-essentials=3.6.0
+  - tzlocal=2.0.0
+  - tensorflow=1.14.0
+  - keras=2.3.1
+  - scikit-allel=1.2.1
+  - msprime=0.7.1
+  - snakemake=5.5.4
+  - sphinx=3.2.1
+  - sphinx-autodoc-typehints=1.11.0
+  - recommonmark=0.6.0
+  - pytest=6.1.1
