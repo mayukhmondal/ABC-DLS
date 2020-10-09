@@ -1,6 +1,6 @@
 # !/usr/bin/python
 """
-This is snakemake pipeline which will produce posterior range from prior range using msprime SFS and ABC-TFK sequential
+This is snakemake pipeline which will produce posterior range from prior range using msprime SFS and ABC-DLS sequential
 sampling method.
 """
 import os
@@ -58,7 +58,7 @@ rule finalize:
 
 rule params_sfs:
     """
-    Main run for ABC-TFK sequential sampling method. This will using Priors+SFS will give Posterior range which are 
+    Main run for ABC-DLS sequential sampling method. This will using Priors+SFS will give Posterior range which are 
     slightly closer to the real observed data that priors range
     input: output from info_sfs. demography/demography.csv.gz
     output: will produce Newrange.csv which has information of posterior range.  also to recycle
@@ -79,7 +79,7 @@ rule params_sfs:
 
 rule info_sfs:
     """
-    Creating Model.info which can be used in ABC-TFK to know the file path and the number of columns designated for 
+    Creating Model.info which can be used in ABC-DLS to know the file path and the number of columns designated for 
     parameters.
     input: output from join_SFS_All. demography/demography.csv.gz
     output: tab formatted file path and the parameters columns. demography/Model.info
@@ -111,7 +111,7 @@ rule join_SFS_All:
 rule run_SFS:
     """
     The slowest but most important part of the pipeline. Given priors it will produce SFS which then can be used for 
-    ABC-TFK. The simulation here is implemented on msprime. 
+    ABC-DLS. The simulation here is implemented on msprime. 
     input: output of priors_add_header. demography/Priors_xxx.csv
     output: pramaters+sfs together. demography/demography_xxx.csv
     """

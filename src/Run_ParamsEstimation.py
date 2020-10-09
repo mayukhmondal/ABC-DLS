@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-This file to run ABC-TFK for parameter estimation of a given model
+This file to run ABC-DLS for parameter estimation of a given model
 """
 import argparse
 import os
@@ -13,7 +13,7 @@ from _version import __version__
 # input argument is done
 parser = argparse.ArgumentParser(description='This file will run Parameter estimation.')
 parser.add_argument('-v', '--version', action='version',
-                    version='ABC-TFK {version}'.format(version=__version__))
+                    version='ABC-DLS {version}'.format(version=__version__))
 subparsers = parser.add_subparsers(help='sub-commands help')
 
 sp = subparsers.add_parser('All', help='The whole run of the NN for parameter estimation from first to last')
@@ -153,7 +153,7 @@ if args.cmd == 'All':
         print('test_size:', args.test_size)
         sys.exit(1)
     # running
-    ABC.ABC_TFK_Params(info=args.info, ssfile=args.ssfile, nn=args.nn, together=args.together,
+    ABC.ABC_DLS_Params(info=args.info, ssfile=args.ssfile, nn=args.nn, together=args.together,
                        method=args.method, tol=args.tolerance, test_size=args.test_size,
                        chunksize=args.chunksize,
                        csvout=args.csvout, scaling_x=scaling_x, scaling_y=scaling_y, cvrepeats=args.cvrepeats,
@@ -173,14 +173,14 @@ elif args.cmd == 'Pre_train':
     elif args.scale == 'b':
         scaling_x = True
         scaling_y = True
-    ABC.ABC_TFK_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scaling_x=scaling_x,
+    ABC.ABC_DLS_Params_PreTrain(info=args.info, chunksize=args.chunksize, test_size=10, scaling_x=scaling_x,
                                 scaling_y=scaling_y, folder=args.folder)
 elif args.cmd == 'Train':
-    ABC.ABC_TFK_Params_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
+    ABC.ABC_DLS_Params_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
                              together=args.together)
 elif args.cmd == 'CV':
     if args.cvrepeats <= args.test_size:
-        ABC.ABC_TFK_Params_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,
+        ABC.ABC_DLS_Params_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,
                               cvrepeats=args.cvrepeats, folder=args.folder)
     else:
         print('CV repeats has to be smaller than the sample size (test_size)')
@@ -195,5 +195,5 @@ elif args.cmd == 'After_train':
         print('CV:', args.cvrepeats)
         print('test_size:', args.test_size)
         sys.exit(1)
-    ABC.ABC_TFK_Params_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance, method=args.method,
+    ABC.ABC_DLS_Params_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance, method=args.method,
                                    csvout=args.csvout, cvrepeats=args.cvrepeats, folder=args.folder, frac=args.frac)

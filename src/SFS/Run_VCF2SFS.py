@@ -11,7 +11,7 @@ from _version import __version__
 ##input argument is done
 parser = argparse.ArgumentParser(description='To convert a vcf file for the distant matrix which can be used in ABC')
 parser.add_argument('-v', '--version', action='version',
-                    version='ABC-TFK {version}'.format(version=__version__))
+                    version='ABC-DLS {version}'.format(version=__version__))
 parser.add_argument('vcffile',
                     help='the path of the vcf file. can be zipped')
 parser.add_argument('--popfile',

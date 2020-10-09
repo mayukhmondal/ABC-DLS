@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-This file to run ABC-TFK for parameter estimation of a given model
+This file to run ABC-DLS for parameter estimation of a given model for specifically Sequential Monte Carlo Approach
 """
 import argparse
 import os
@@ -12,7 +12,7 @@ from _version import __version__
 # input argument is done
 parser = argparse.ArgumentParser(description='This file will run Nested Sampling Approach for Parameter Estimation.')
 parser.add_argument('-v', '--version', action='version',
-                    version='ABC-TFK {version}'.format(version=__version__))
+                    version='ABC-DLS {version}'.format(version=__version__))
 subparsers = parser.add_subparsers(help='sub-commands help')
 
 sp = subparsers.add_parser('All', help='The whole run of the NN for parameter estimation from first to last')
@@ -81,7 +81,7 @@ if args.cmd == 'All':
         scaling_x = True
         scaling_y = True
     # running
-    newrange = ABC.ABC_TFK_NS(info=args.info, ssfile=args.ssfile, nn=args.nn,
+    newrange = ABC.ABC_DLS_NS(info=args.info, ssfile=args.ssfile, nn=args.nn,
                               method=args.method, tol=args.tolerance, test_size=args.test_size,
                               chunksize=args.chunksize, csvout=args.csvout,
                               scaling_x=scaling_x, scaling_y=scaling_y, imp=args.imp,

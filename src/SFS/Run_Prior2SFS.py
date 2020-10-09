@@ -15,7 +15,7 @@ from _version import __version__
 ##input argument is done
 parser = argparse.ArgumentParser(description='To run msprime and create sfs from priors')
 parser.add_argument('-v','--version', action='version',
-                    version='ABC-TFK {version}'.format(version=__version__))
+                    version='ABC-DLS {version}'.format(version=__version__))
 parser.add_argument('demography', help='The msprime demography function that has to be load from Demogrpahy.py')
 parser.add_argument('--inds',
                     help='The number of inds per populations. All the output populations should be mentioned in the '

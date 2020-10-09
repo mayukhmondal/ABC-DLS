@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-This file to run ABC-TFK for classification between models
+This file to run ABC-DLS for classification between models
 """
 import argparse
 
@@ -11,7 +11,7 @@ from _version import __version__
 # input argument is done
 parser = argparse.ArgumentParser(description='This file will run Model Selection.')
 parser.add_argument('-v', '--version', action='version',
-                    version='ABC-TFK {version}'.format(version=__version__))
+                    version='ABC-DLS {version}'.format(version=__version__))
 subparsers = parser.add_subparsers(help='sub-commands help')
 
 sp = subparsers.add_parser('All', help='The whole run of the NN for parameter estimation from first to last')
@@ -123,24 +123,24 @@ args = parser.parse_args()
 if args.cmd == 'All':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
-    ABC.ABC_TFK_Classification(info=args.info, ssfile=args.ssfile, chunksize=args.chunksize,
+    ABC.ABC_DLS_Classification(info=args.info, ssfile=args.ssfile, chunksize=args.chunksize,
                                nn=args.nn, method=args.method, together=args.together,
                                tolerance=args.tolerance, test_size=args.test_size, scale=args.scale, csvout=args.csvout,
                                cvrepeats=args.cvrepeats, folder=args.folder, frac=args.frac)
 elif args.cmd == 'Pre_train':
     if args.chunksize:
         args.chunksize = int(args.chunksize)
-    ABC.ABC_TFK_Classification_PreTrain(info=args.info, test_size=10, chunksize=args.chunksize,
+    ABC.ABC_DLS_Classification_PreTrain(info=args.info, test_size=10, chunksize=args.chunksize,
                                         scale=args.scale, folder=args.folder)
 elif args.cmd == 'Train':
-    ABC.ABC_TFK_Classification_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
+    ABC.ABC_DLS_Classification_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
                                      together=args.together)
 
 elif args.cmd == 'CV':
-    ABC.ABC_TFK_Classification_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,
+    ABC.ABC_DLS_Classification_CV(test_size=args.test_size, tol=args.tolerance, method=args.method,
                                   cvrepeats=args.cvrepeats, folder=args.folder)
 
 elif args.cmd == 'After_train':
-    ABC.ABC_TFK_Classification_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance,
+    ABC.ABC_DLS_Classification_After_Train(ssfile=args.ssfile, test_size=args.test_size, tol=args.tolerance,
                                            method=args.method, csvout=args.csvout, cvrepeats=args.cvrepeats,
                                            folder=args.folder, frac=args.frac)

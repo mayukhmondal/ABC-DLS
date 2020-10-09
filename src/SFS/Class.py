@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-This file will hold all the classes for a specific case which is SFS. This should taken as example how to use ABC-TFK
+This file will hold all the classes for a specific case which is SFS. This should taken as example how to use ABC-DLS
 rather than only way to use it
 """
 import itertools
@@ -248,7 +248,7 @@ class Range2UniformPrior():
                 repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
         """
         Main def for the class. given upper and lower limit it will create a uniform distribution of parameters which
-        then can used as prior for our analysis (ABC-TFK)
+        then can used as prior for our analysis (ABC-DLS)
 
         :param upper: upper limit for the parameters. string format
         :param lower: lower limit for the parameters. string format

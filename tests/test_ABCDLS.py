@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-This file to test the Classification part of the ABC-TFK file
+This file to test the Classification part of the ABC-DLS file
 """
 import sys
 
@@ -24,7 +24,7 @@ import os
 def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                                   outfolder: str = 'cls'):
     # main check
-    assert ABC.ABC_TFK_Classification_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
+    assert ABC.ABC_DLS_Classification_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
                                                scale=scale,
                                                folder=outfolder), 'The code even did not run properly for pretrain ' \
                                                                   'classification '
@@ -32,7 +32,7 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
     # file existen check
     files = ['cls/x.h5', 'cls/y.h5', 'cls/y_cat_dict.txt', 'cls/scale_x.sav']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_PreTrain'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_PreTrain'
 
     # model name check
     assert eval(open('cls/y_cat_dict.txt', 'r').read()), 'Cant read the y_cat_dict.txt file. Look likes the' \
@@ -108,49 +108,49 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
 
 def test_Classification_Train(nn: str = '../src/extras/ModelClass.py', test_size: int = 0, folder: str = 'cls'):
     # main check
-    ABC.ABC_TFK_Classification_Train(nn=nn, test_rows=test_size, folder=folder)
+    ABC.ABC_DLS_Classification_Train(nn=nn, test_rows=test_size, folder=folder)
 
     # file checks
     files = ['cls/ModelClassification.h5']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_Train'
 
 
 def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic', folder: str = 'cls'):
     # main check
-    ABC.ABC_TFK_Classification_CV(test_size=test_size, tol=tol, method=method, cvrepeats=2, folder=folder)
+    ABC.ABC_DLS_Classification_CV(test_size=test_size, tol=tol, method=method, cvrepeats=2, folder=folder)
     # file checks
     files = ['cls/CV.pdf']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_CV'
 
 
 def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic',
                                     ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
                                     folder: str = 'cls', csvout=True):
     # main check
-    ABC.ABC_TFK_Classification_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
+    ABC.ABC_DLS_Classification_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
                                            ssfile=ssfile, folder=folder, csvout=csvout)
 
     # file checks
     files = ['cls/NN.pdf', 'cls/model_index.csv.gz', 'cls/ss_predicted.csv.gz', 'cls/ss_target.csv.gz']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_CV'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_CV'
 
 
 def test_Classification_Train_together(nn: str = '../src/extras/ModelClassTogether.py', test_size: int = 3,
                                        folder: str = 'cls'):
     # main check
-    ABC.ABC_TFK_Classification_PreTrain(info='Model.info', chunksize=1, scale=True, folder=folder)
-    y_train, _ = ABC.ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
+    ABC.ABC_DLS_Classification_PreTrain(info='Model.info', chunksize=1, scale=True, folder=folder)
+    y_train, _ = ABC.ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
     assert 12 == y_train.shape[0]
 
-    ABC.ABC_TFK_Classification_Train(nn=nn, test_rows=test_size, folder=folder, together=True)
+    ABC.ABC_DLS_Classification_Train(nn=nn, test_rows=test_size, folder=folder, together=True)
 
     # file checks
     files = ['cls/ModelClassification.h5']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Classification_Train_together'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_Train_together'
     if os.path.isdir('cls'):
         shutil.rmtree('cls')
 
@@ -158,7 +158,7 @@ def test_Classification_Train_together(nn: str = '../src/extras/ModelClassTogeth
 def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                           folder: str = 'par'):
     # main check
-    assert ABC.ABC_TFK_Params_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
+    assert ABC.ABC_DLS_Params_PreTrain(info=info, test_size=test_size, chunksize=chunksize,
                                        scaling_x=scale,
                                        scaling_y=scale,
                                        folder=folder), 'The code did not even run properly for pretrain ' \
@@ -166,41 +166,41 @@ def test_Params_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksiz
     # file existen check
     files = ['par/x.h5', 'par/y.h5', 'par/scale_x.sav', 'par/scale_y.sav', 'par/params_header.csv']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_PreTrain'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Params_PreTrain'
 
 
 def test_Params_Train(nn: str = '../src/extras/ModelParams.py', test_size: int = 0, folder: str = 'par'):
     # main check
-    ABC.ABC_TFK_Params_Train(nn=nn, test_rows=test_size, folder=folder)
+    ABC.ABC_DLS_Params_Train(nn=nn, test_rows=test_size, folder=folder)
 
     # file checks
     files = ['par/ModelParamPrediction.h5']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Params_Train'
 
 
 def test_Params_CV(test_size: int = 5, tol: float = 0.5, method: str = 'rejection', folder: str = 'par',
                    cvrepeats: int = 1):
     # main check
-    ABC.ABC_TFK_Params_CV(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats, folder=folder)
+    ABC.ABC_DLS_Params_CV(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats, folder=folder)
 
     # file checks
     files = ['par/nnparamcv.pdf', 'par/nnparamcv_together.pdf']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_CV'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Params_CV'
 
 
 def test_Params_After_train(test_size: int = 5, tol: float = 0.5, method: str = 'rejection',
                             ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
                             folder: str = 'par', csvout=True):
     # main check
-    ABC.ABC_TFK_Params_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
+    ABC.ABC_DLS_Params_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
                                    ssfile=ssfile, folder=folder, csvout=csvout)
 
     # file checks
     files = ['par/paramposterior.pdf', 'par/params.csv.gz', 'par/ss_predicted.csv.gz', 'par/ss_target.csv.gz']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_After_Train'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Params_After_Train'
 
 
 if os.path.isdir('par2'):
@@ -209,32 +209,32 @@ if os.path.isdir('par2'):
 
 def test_Params_Train_together(nn: str = '../src/extras/Dynamic.py', test_size: int = 1, folder: str = 'par'):
     # main check
-    ABC.ABC_TFK_Params_PreTrain(info='Model.info', chunksize=1,
+    ABC.ABC_DLS_Params_PreTrain(info='Model.info', chunksize=1,
                                 scaling_x=True,
                                 scaling_y=True, folder=folder)
-    y_train, _ = ABC.ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
+    y_train, _ = ABC.ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
     assert 4 == y_train.shape[0]
 
-    ABC.ABC_TFK_Params_Train(nn=nn, test_rows=test_size, folder=folder, together=True)
+    ABC.ABC_DLS_Params_Train(nn=nn, test_rows=test_size, folder=folder, together=True)
 
     # file checks
     files = ['par/ModelParamPrediction.h5']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_Params_Train_together'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Params_Train_together'
     if os.path.isdir('par'):
         shutil.rmtree('par')
 
 
-def test_ABC_TFK_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
+def test_ABC_DLS_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
                     ssfile: str = '../examples/YRI_CEU_CHB.observed.csv',
                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
                     csvout=True, folder: str = 'ns', noise_injection=0.005):
-    ABC.ABC_TFK_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
+    ABC.ABC_DLS_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                    csvout=csvout, folder=folder, nn=nn, noise_injection=noise_injection)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]
-    assert not not_exist, f'{not_exist} file was not created by ABC_TFK_NS'
+    assert not not_exist, f'{not_exist} file was not created by ABC_DLS_NS'
     if os.path.isdir('ns'):
         shutil.rmtree('ns')
 

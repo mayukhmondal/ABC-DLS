@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../src'))
 # -- Project information -----------------------------------------------------
 
-project = 'ABC-TFK'
+project = 'ABC-DLS'
 copyright = '2019, Mayukh Mondal'
 author = 'Mayukh Mondal'
 

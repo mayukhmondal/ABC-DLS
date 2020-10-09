@@ -38,7 +38,7 @@ abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
 
 
-class ABC_TFK_Classification:
+class ABC_DLS_Classification:
     """
     Main classification class. It will distinguish between different models. with given underlying models it will
     compare with real data and will predict how much it sure about which model can bet predict the real data.
@@ -925,9 +925,9 @@ class ABC_TFK_Classification:
         Misc.removefiles(filesremove)
 
 
-class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
+class ABC_DLS_Classification_PreTrain(ABC_DLS_Classification):
     """
-    Subset of class ABC_TFK_Classification. Specifically to do the pre train stuff. it will produce data in hdf5 format
+    Subset of class ABC_DLS_Classification. Specifically to do the pre train stuff. it will produce data in hdf5 format
     which then easily can be used in training part of the classification. it will also delete all the files that can be
     output by the classification. so that it will work on a clean sheet.
 
@@ -945,7 +945,7 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
     def __new__(cls, info: str, test_size: int = int(1e4), chunksize: int = int(1e4), scale: bool = False,
                 folder: str = ''):
         """
-        Will call the wrapper_pre_train function from ABC_TFK_Classification
+        Will call the wrapper_pre_train function from ABC_DLS_Classification
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters
@@ -960,9 +960,9 @@ class ABC_TFK_Classification_PreTrain(ABC_TFK_Classification):
         return cls.wrapper_pre_train(info=info, test_size=test_size, chunksize=chunksize, scale=scale, folder=folder)
 
 
-class ABC_TFK_Classification_Train(ABC_TFK_Classification):
+class ABC_DLS_Classification_Train(ABC_DLS_Classification):
     """
-    Subset of class ABC_TFK_Classification. Specifically to do the train stuff. it need training data set for x.h5 and
+    Subset of class ABC_DLS_Classification. Specifically to do the train stuff. it need training data set for x.h5 and
     y.h5 in the cwd in hdf5 matrix format (HD5matrix) of keras
 
     :param nn: custom function made for keras model. the path of that .py file. should have a def
@@ -993,7 +993,7 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
     def wrapper(cls, nn: Optional[str] = None, test_rows: int = int(1e4), folder: str = '',
                 together: bool = False) -> None:
         """
-        wrapper for the class ABC_TFK_Classification_Train. it will train the data set in a given folder where x.h5 and
+        wrapper for the class ABC_DLS_Classification_Train. it will train the data set in a given folder where x.h5 and
         y.h5 present.
 
         :param nn: custom function made for keras model. the path of that .py file. should have a def
@@ -1016,9 +1016,9 @@ class ABC_TFK_Classification_Train(ABC_TFK_Classification):
             cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn, folder=folder)
 
 
-class ABC_TFK_Classification_CV(ABC_TFK_Classification):
+class ABC_DLS_Classification_CV(ABC_DLS_Classification):
     """
-    Subset of class ABC_TFK_Classification. Specifically to calculate cross validation test. good if you do not have
+    Subset of class ABC_DLS_Classification. Specifically to calculate cross validation test. good if you do not have
     real data
 
     :param test_size: the number of test rows. everything else will be used for train. 10k is default
@@ -1192,9 +1192,9 @@ class ABC_TFK_Classification_CV(ABC_TFK_Classification):
         return y_cat_dict
 
 
-class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
+class ABC_DLS_Classification_After_Train(ABC_DLS_Classification_CV):
     """
-    Subset of class ABC_TFK_Classification. To do the ABC part.  after training is done it will test on the test
+    Subset of class ABC_DLS_Classification. To do the ABC part.  after training is done it will test on the test
     data set to see the power and then use a real data set to show how likely it support one model over another.
     it will use abc to give the power or standard deviation of the model that is predicted to know how much we are
     sure about the results. mainly it will do three parts of abc. one cv error , model selection and goodness of fit
@@ -1261,10 +1261,10 @@ class ABC_TFK_Classification_After_Train(ABC_TFK_Classification_CV):
                                 tolerance=tol, csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
 
-# TFK parameter estimation stuff
-class ABC_TFK_Params(ABC_TFK_Classification):
+# DLS parameter estimation stuff
+class ABC_DLS_Params(ABC_DLS_Classification):
     """
-    This is the main class to do the parameter estimation of ABC_TFK method. with given model underlying parameters
+    This is the main class to do the parameter estimation of ABC_DLS method. with given model underlying parameters
     it will compare with real data and will predict which parameter best predict the real data.
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
@@ -1391,7 +1391,7 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         """
         This is a a wrapper on the pretrain for parameter estimation. this will build stuff just before the training in
         ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
-        also delete all the files that can be output from ABC-TFK thus not clashing with them
+        also delete all the files that can be output from ABC-DLS thus not clashing with them
         Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5 ;else
         preparingdata->Misc.removefiles
 
@@ -1922,11 +1922,11 @@ class ABC_TFK_Params(ABC_TFK_Classification):
         Misc.removefiles(notrequired)
 
 
-class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
+class ABC_DLS_Params_PreTrain(ABC_DLS_Params):
     """
     Subset of Parameter estimation. just to prepare the data for tfk.this will build stuff just before the training in
     ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
-    also delete all the files that can be output from ABC-TFK thus not clashing with them
+    also delete all the files that can be output from ABC-DLS thus not clashing with them
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters. only first line will be used
@@ -1943,7 +1943,7 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
     def __new__(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                 scaling_x: bool = False, scaling_y: bool = False, folder: str = ''):
         """
-        This will  call the wrapper_pre_train function from ABC_TFK_Params
+        This will  call the wrapper_pre_train function from ABC_DLS_Params
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
             number of  parameters. only first line will be used
@@ -1960,7 +1960,7 @@ class ABC_TFK_Params_PreTrain(ABC_TFK_Params):
                                      scaling_y=scaling_y, folder=folder)
 
 
-class ABC_TFK_Params_Train(ABC_TFK_Params):
+class ABC_DLS_Params_Train(ABC_DLS_Params):
     """
     Subset for the training of parameter estimation. the slowest part of the code.it need training data set for x and y.
     can be hdf5 matrix format (HD5matrix) of keras
@@ -2004,8 +2004,8 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
         :return: will not return anything but save the keras model
         """
         folder = Misc.creatingfolders(folder)
-        y_train, y_test = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
-        x_train, x_test = ABC_TFK_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
+        y_train, y_test = ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5', test_rows=test_rows)
+        x_train, x_test = ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5', test_rows=test_rows)
         if together:
 
             cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
@@ -2016,7 +2016,7 @@ class ABC_TFK_Params_Train(ABC_TFK_Params):
                               folder=folder)
 
 
-class ABC_TFK_Params_CV(ABC_TFK_Params):
+class ABC_DLS_Params_CV(ABC_DLS_Params):
     """
     Subset of parameter estimation Specifically to calculate cross validation test. good if you do not have
     real data
@@ -2087,9 +2087,9 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         :param folder: to define the output folder. default is '' meaning current folder
         :return: The fitted keras model, test data set of x and y, scale of x and y if exists
         """
-        ModelParamPrediction = ABC_TFK_Classification_CV.loadingkerasmodel(folder + 'ModelParamPrediction.h5')
-        y_test = ABC_TFK_Classification_CV.reading_y_test(test_rows=test_rows, folder=folder)
-        x_test = ABC_TFK_Classification_CV.reading_x_test(test_rows=test_rows, folder=folder)
+        ModelParamPrediction = ABC_DLS_Classification_CV.loadingkerasmodel(folder + 'ModelParamPrediction.h5')
+        y_test = ABC_DLS_Classification_CV.reading_y_test(test_rows=test_rows, folder=folder)
+        x_test = ABC_DLS_Classification_CV.reading_x_test(test_rows=test_rows, folder=folder)
         scale_x, scale_y = cls.read_scalex_scaley(folder=folder)
         return ModelParamPrediction, x_test, y_test, scale_x, scale_y
 
@@ -2145,7 +2145,7 @@ class ABC_TFK_Params_CV(ABC_TFK_Params):
         return test_predictions, params_unscaled
 
 
-class ABC_TFK_Params_After_Train(ABC_TFK_Params):
+class ABC_DLS_Params_After_Train(ABC_DLS_Params):
     """
    The subset class to test to parameter estimation. after training is done it will test on the test data set
    to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2208,16 +2208,16 @@ class ABC_TFK_Params_After_Train(ABC_TFK_Params):
         :return: will not return anything but will plot and print the parameters
         """
         folder = Misc.creatingfolders(folder)
-        ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_TFK_Params_CV.read_data(test_rows=test_size,
+        ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_DLS_Params_CV.read_data(test_rows=test_size,
                                                                                              folder=folder)
         cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, ssfile=ssfile, x_test=x_test, y_test=y_test,
                                scale_x=scale_x, scale_y=scale_y, paramfile='params_header.csv', method=method, tol=tol,
                                csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
 
-class ABC_TFK_NS(ABC_TFK_Params):
+class ABC_DLS_NS(ABC_DLS_Params):
     """
-    This is the main class  for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare
+    This is the main class  for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare
     with real data and will predict minima and maxima with in the parameter range can be for real data
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
@@ -2310,7 +2310,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                 frac: float = 1.0, noise_injection: float = 0.0,
                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
-        The main wrapper for ABC_TFK_NS neseted sampling. with given model underlying parameters it will compare with
+        The main wrapper for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
@@ -2407,7 +2407,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
         it will use abc to give the lower minima and upper maxima that can create observed SFS. This is the main
-        difference from parameter estimation part of ABC-TFK. Other part before are ver similar. It will also produce
+        difference from parameter estimation part of ABC-DLS. Other part before are ver similar. It will also produce
         a narrowed csv so that the models ,which are with in the new limit, can be reused.
 
         :param info: the path of info file whose file column is the path of the file and second column defining the
@@ -2585,7 +2585,7 @@ class ABC_TFK_NS(ABC_TFK_Params):
                                noise_injection: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
         """
-        in case you want to use some noise injection to the newrange. important as sometime when ABC-TFK is working
+        in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
         recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
         lowerlimit in a fraction manner, thus even if it misses the true result in a cycle it can come back to the real
         results in further cycle

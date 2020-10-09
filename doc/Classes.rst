@@ -10,43 +10,43 @@ I generally believe in functional programming paradigm, where methods or functio
 Classification
 --------------
 
-ABC_TFK_Classification
+ABC_DLS_Classification
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Classification
+.. autoclass:: Classes.ABC.ABC_DLS_Classification
     :members:
     :inherited-members:
     :show-inheritance:
     :special-members: __new__
 
-ABC_TFK_Classification_PreTrain
+ABC_DLS_Classification_PreTrain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Classification_PreTrain
+.. autoclass:: Classes.ABC.ABC_DLS_Classification_PreTrain
     :members:
     :show-inheritance:
     :special-members: __new__
 
-ABC_TFK_Classification_Train
+ABC_DLS_Classification_Train
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Classification_Train
+.. autoclass:: Classes.ABC.ABC_DLS_Classification_Train
     :members:
     :show-inheritance:
     :special-members: __new__
 
 
-ABC_TFK_Classification_CV
+ABC_DLS_Classification_CV
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Classification_CV
+.. autoclass:: Classes.ABC.ABC_DLS_Classification_CV
     :members:
     :show-inheritance:
     :special-members: __new__
 
-ABC_TFK_Classification_After_Train
+ABC_DLS_Classification_After_Train
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: Classes.ABC.ABC_TFK_Classification_After_Train
+.. autoclass:: Classes.ABC.ABC_DLS_Classification_After_Train
     :members:
     :show-inheritance:
     :special-members: __new__
@@ -54,43 +54,43 @@ ABC_TFK_Classification_After_Train
 Parameter Estimation
 --------------------
 
-ABC_TFK_Params
+ABC_DLS_Params
 ^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Params
+.. autoclass:: Classes.ABC.ABC_DLS_Params
     :members:
     :inherited-members:
     :show-inheritance:
     :special-members: __new__
 
-ABC_TFK_Params_PreTrain
+ABC_DLS_Params_PreTrain
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Params_PreTrain
+.. autoclass:: Classes.ABC.ABC_DLS_Params_PreTrain
     :members:
     :show-inheritance:
     :special-members: __new__
 
-ABC_TFK_Params_Train
+ABC_DLS_Params_Train
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Params_Train
+.. autoclass:: Classes.ABC.ABC_DLS_Params_Train
     :members:
     :show-inheritance:
     :special-members: __new__
 
 
-ABC_TFK_Params_CV
+ABC_DLS_Params_CV
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_Params_CV
+.. autoclass:: Classes.ABC.ABC_DLS_Params_CV
     :members:
     :show-inheritance:
     :special-members: __new__
 
-ABC_TFK_Params_After_Train
+ABC_DLS_Params_After_Train
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: Classes.ABC.ABC_TFK_Params_After_Train
+.. autoclass:: Classes.ABC.ABC_DLS_Params_After_Train
     :members:
     :show-inheritance:
     :special-members: __new__
@@ -98,10 +98,10 @@ ABC_TFK_Params_After_Train
 Parmeter Estimation by SMC
 --------------------------
 
-ABC_TFK_NS
+ABC_DLS_NS
 ^^^^^^^^^^
 
-.. autoclass:: Classes.ABC.ABC_TFK_NS
+.. autoclass:: Classes.ABC.ABC_DLS_NS
     :members:
     :inherited-members:
     :show-inheritance:
