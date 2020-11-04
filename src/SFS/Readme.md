@@ -1,0 +1,1 @@
+This folder is for all the stuff related with joint Site Frequency Spectrum (SFS) only. Please read [SFS_example.md](SFS_Examples.md) for more information.  
