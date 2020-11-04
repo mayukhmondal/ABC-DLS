@@ -13,3 +13,4 @@ test_size: 1000
 improvement: 0.95
 tolerance: .1
 frac: 0.0015455858426908665
+tfknn: ../extras/Dynamic.py
