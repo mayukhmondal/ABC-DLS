@@ -1,4 +1,4 @@
-# adding all the dependencies together
+# adding all the dependencies together. if it takes too much time. install using mamba: https://github.com/mamba-org/mamba
 channels:
   - conda-forge
   - bioconda
