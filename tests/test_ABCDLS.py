@@ -40,7 +40,7 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
 
     y_cat_names = list(eval(open('cls/y_cat_dict.txt', 'r').read()).values())
     assert Counter(y_cat_names) == Counter(
-        ['OOA', 'OOA_B', 'OOA_M']), 'Model.info model names do not match with y_cat_dict.txt'
+        ['BNDX', 'MNDX', 'SNDX']), 'Model.info model names do not match with y_cat_dict.txt'
 
     # checking scale file
     assert joblib.load('cls/scale_x.sav'), "cant read the file properly. scale_x.sav"
@@ -69,7 +69,7 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
     y = HDF5Matrix('cls/y.h5', 'mydata')
     y_cat_dict = eval(open('cls/y_cat_dict.txt', 'r').read())
     modelcount = pandas.DataFrame(numpy.argmax(y[:], axis=1, out=None))[0].replace(y_cat_dict).value_counts().to_dict()
-    assert modelcount == {'OOA': 5, 'OOA_M': 5, 'OOA_B': 5}, 'y.h5 have a different count of names than it should'
+    assert modelcount == {'BNDX': 5, 'MNDX': 5, 'SNDX': 5}, 'y.h5 have a different count of names than it should'
 
     # checking x.h5 file'
     x = HDF5Matrix('cls/x.h5', 'mydata')
@@ -81,8 +81,8 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
     assert xdf.iloc[:, 1:-1].max().sum() == 1329, 'Not all the columns have 1 maximum value'
 
     # reading csv files
-    files = ['OOA.csv', 'OOA_B.csv', 'OOA_M.csv']
-    params = [7, 12, 12]
+    files = ['BNDX.csv', 'MNDX.csv', 'SNDX.csv']
+    params = [24, 24, 19]
     df = pandas.DataFrame()
     for i, file in enumerate(files):
         if df.empty:
@@ -126,7 +126,7 @@ def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 
 
 
 def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic',
-                                    ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
+                                    ssfile: str = '../examples/YRI_FRN_HAN.observed.csv', cvrepeats: int = 2,
                                     folder: str = 'cls', csvout=True):
     # main check
     ABC.ABC_DLS_Classification_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
@@ -138,10 +138,11 @@ def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, metho
     assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_CV'
 
 
-def test_Classification_Train_together(nn: str = '../src/extras/ModelClassTogether.py', test_size: int = 3,
+def test_Classification_Train_together(info: str = 'Model.info', nn: str = '../src/extras/ModelClassTogether.py',
+                                       test_size: int = 3,
                                        folder: str = 'cls'):
     # main check
-    ABC.ABC_DLS_Classification_PreTrain(info='Model.info', chunksize=1, scale=True, folder=folder)
+    ABC.ABC_DLS_Classification_PreTrain(info=info, chunksize=1, scale=True, folder=folder)
     y_train, _ = ABC.ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
     assert 12 == y_train.shape[0]
 
@@ -191,7 +192,7 @@ def test_Params_CV(test_size: int = 5, tol: float = 0.5, method: str = 'rejectio
 
 
 def test_Params_After_train(test_size: int = 5, tol: float = 0.5, method: str = 'rejection',
-                            ssfile: str = '../examples/YRI_CEU_CHB.observed.csv', cvrepeats: int = 2,
+                            ssfile: str = '../examples/YRI_FRN_HAN.observed.csv', cvrepeats: int = 2,
                             folder: str = 'par', csvout=True):
     # main check
     ABC.ABC_DLS_Params_After_Train(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats,
@@ -207,9 +208,10 @@ if os.path.isdir('par2'):
     shutil.rmtree('par2')
 
 
-def test_Params_Train_together(nn: str = '../src/extras/Dynamic.py', test_size: int = 1, folder: str = 'par'):
+def test_Params_Train_together(info: str = 'Model.info', nn: str = '../src/extras/Dynamic.py', test_size: int = 1,
+                               folder: str = 'par'):
     # main check
-    ABC.ABC_DLS_Params_PreTrain(info='Model.info', chunksize=1,
+    ABC.ABC_DLS_Params_PreTrain(info=info, chunksize=1,
                                 scaling_x=True,
                                 scaling_y=True, folder=folder)
     y_train, _ = ABC.ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + '/y.h5', test_rows=test_size)
@@ -226,11 +228,12 @@ def test_Params_Train_together(nn: str = '../src/extras/Dynamic.py', test_size: 
 
 
 def test_ABC_DLS_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
-                    ssfile: str = '../examples/YRI_CEU_CHB.observed.csv',
+                    ssfile: str = '../examples/YRI_FRN_HAN.observed.csv',
                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
                     csvout=True, folder: str = 'ns', noise_injection=0.005):
     ABC.ABC_DLS_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                   csvout=csvout, folder=folder, nn=nn, noise_injection=noise_injection)
+                   csvout=csvout, folder=folder, nn=nn, noise_injection=noise_injection,scaling_x=True,
+                scaling_y = True)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]

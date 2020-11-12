@@ -127,7 +127,7 @@ to differentiate between models.
 This part is similar to CV part, but it has the observed file together in the step thus can be used to see which 
 demographic model can better explain the result.  
 ``` commandline
-python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout 
+python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --csvout 
 ``` 
 - --test_size 1000 and --tolerance .01  
 Same as above for CV 
@@ -146,7 +146,7 @@ from simulated ss by NN) and ss_target.csv.gz (prediction of the observed or rea
 ### All
 In case rather than doing it separately, we can do all these stuffs together in one command.  
 ``` commandline
-python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout --nn src/extras/ModelClass.py examples/Model.info 
+python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --nn src/extras/ModelClass.py examples/Model.info --folder check --scale
 ``` 
 It will produce the same files as previously but all of them together. If we do not use --chunksize it will produce 
 x_test.h5 and y_test.h5 (of course if we use csvout it will be deleted) instead of x.h5 y.h5 as it will keep the 
@@ -243,7 +243,7 @@ the drawback of the ss, or the neural network used by TF.
 ### After_train
 After everything is done, we can use the After_train to use the ABC analysis. 
 ```sh
-python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv
+python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv
 ```
 This will calculate both the CV part as well as will compare with the observed data. This will produce 
 paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of 
@@ -251,7 +251,7 @@ model_index.csv.gz will produce params.csv.gz. Inside those files will be necess
 ### All
 To put all these parts together we can use: 
 ```sh
-python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b examples/Model.info
 ```
 It will produce similar result but running all the commands together.
 ### Optional 
@@ -285,7 +285,7 @@ are making the neural network learn recursively for the amount which we think is
 <img src="https://latex.codecogs.com/gif.latex?imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" title="imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" />  
 To run the SMC for Parameter Estimation for a single time:   
 ```shell
-python src/Run_SMC.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+python src/Run_SMC.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b examples/Model.info
 ``` 
 The code is similar to Parameter Estimation part with some added changes which makes it more efficient for recursion 
 (which basically means it will remove most of the extra test and graphs and only produce the range).  
