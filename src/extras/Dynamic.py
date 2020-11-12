@@ -15,15 +15,18 @@ def ANNModelParams(x, y):
     y_train, y_test = y
 
     model = Sequential()
-    model.add(GaussianNoise(0.01, input_shape=(x_train.shape[1],)))
+    model.add(Masking(input_shape=(x_train.shape[1],)))
+    # model.add(GaussianNoise(0.05, input_shape=(x_train.shape[1],)))
+    model.add(GaussianNoise(0.05))
+    # model.add(ReLU())
     model.add(Dense(256, activation='relu'))
-    model.add(Dropout(.01))
+    # model.add(Dropout(.01))
     model.add(Dense(128, activation='relu'))
-    model.add(Dropout(.01))
+    # model.add(Dropout(.01))
     model.add(Dense(64, activation='relu'))
-    model.add(Dropout(.01))
+    # model.add(Dropout(.01))
     model.add(Dense(32, activation='relu'))
-    model.add(Dropout(.01))
+    # model.add(Dropout(.01))
     model.add(Dense(y_train.shape[1]))
     model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
     # adding an early stop so that it does not overfit

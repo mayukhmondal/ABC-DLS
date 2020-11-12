@@ -24,12 +24,12 @@ back the parameters.
 
 You can look inside the examples/*.csv.gz files to get an idea. 
 ```sh
-N_AF,N_EU,N_AS,N_B,T_AF,T_B,T_EU_AS,0_0_0,0_0_1,0_0_2,...
-41.91238472966386,8.309530807784103,2.765119195470757,0.033056478661619815,0.3241105917566006,1.9075173699598655,0.08600273078185215,0.0,0.01710902810227033,0.0024309585132660265,...
-1.4036446805365959,28.806143458313183,40.793276938448685,0.07667751542033917,2.7942812729697404,0.1611504840934601,0.0009608538419194447,0.0,0.011552644156829899,0.002952178031510643,...
-14.4699687789293,13.076507818094042,15.468141529239466,0.7566621341914272,2.827195148492236,0.2683689967394146,0.019711951401945545,0.0,0.06450083622477325,0.01793789070092734,...
-33.49003204256888,8.991749677628123,38.47138632478331,0.05440611526914164,1.7826816037574387,1.7932789841164765,0.09935861063949145,0.0,0.018857425585701144,0.0017586872079860553,...
-31.045117227506175,10.91187123855422,21.944990557726523,0.5565143283059646,2.8951686614340337,0.3440145000742446,0.10954860391870827,0.0,0.054948080811165076,0.01490294823057456,...
+N_A,N_AF,N_EU,N_AS,...,0_0_0,0_0_1,0_0_2,0_0_3,0_0_4,...
+14542.382466372237,119646.25929867383,75043.3425995741,103496.95227233913,...,0.0,676743.0,128199.0,47163.0,19450.0,...
+14780.566576552284,20743.142386406427,90821.23078107052,117292.89382816535,...,0.0,609543.0,132621.0,54121.0,23711.0,...
+15068.855032319485,71129.50749663456,71222.94672045513,119242.37644455553,...,0.0,611102.0,132722.0,57052.0,27447.0,...
+14533.876139703001,25492.550958201846,78599.68927419234,74284.75369536638,...,0.0,781011.0,169080.0,78278.0,43865.0,...
+14620.827267084273,92068.73287607494,99109.69362439432,140694.91698723484,...,0.0,632596.0,116719.0,44490.0,19010.0,...
 ```
 In principle you do not need parameter columns for the classification part, but we kept it to make it similar to later 
 part where parameters are required. 
@@ -49,7 +49,7 @@ Will show 5 different methods:
 ### Pre_train  
 This is the pre training part. Where the data is prepared for the TF.  
 ``` commandline
-python src/Run_Classification.py Pre_train examples/Model.info  
+python src/Run_Classification.py Pre_train examples/Model.info --scale 
 ``` 
 - input: [examples/Model.info](Model.info)  
 Can be any text file which has all the demographic models that we want to compare together. Every line is denoted for 
@@ -61,6 +61,10 @@ Should look like:
 <Model1.csv.gz> <param_n>
 <Model2.csv.gz> <param_n>
 ```
+- --scale  
+To scale the SFS data per column.So that all the data inside a column should be with in 0-1. This improves the 
+prediction substantially.
+
 This will create in total 3 files. x.h5 (this is for ss), y.h5 (models names in integer format) and y_cat_dict.txt 
 (models name and their corresponding integer number). These first two part will be needed to run the neural network 
 training for TF. The last part will be used later. 
@@ -119,15 +123,15 @@ This is the number of simulation rows (in total) will be used for test data set.
 by the neural network, thus useful to see if your model is over fitting. Only this test data set will be used for ABC 
 (r package) analysis.  
 - --tolerance .01  
-This parameter is needed by the ABC analysis to tell how much tolerance your model can have.  
-
+This parameter is needed by the ABC analysis to tell how much tolerance your model can have. 
+ 
 This will print out the confusion matrix as well as save the CV.pdf where we can understand the power of neural network 
 to differentiate between models. 
 ### After_train 
 This part is similar to CV part, but it has the observed file together in the step thus can be used to see which 
 demographic model can better explain the result.  
 ``` commandline
-python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout 
+python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --csvout 
 ``` 
 - --test_size 1000 and --tolerance .01  
 Same as above for CV 
@@ -146,8 +150,11 @@ from simulated ss by NN) and ss_target.csv.gz (prediction of the observed or rea
 ### All
 In case rather than doing it separately, we can do all these stuffs together in one command.  
 ``` commandline
-python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_CEU_CHB.observed.csv --csvout --nn src/extras/ModelClass.py examples/Model.info 
-``` 
+python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --nn src/extras/ModelClass.py examples/Model.info --folder check --scale
+```
+- --folder   
+to run the whole stuff inside a folder so that it does not create a lot of files in the current directory.
+ 
 It will produce the same files as previously but all of them together. If we do not use --chunksize it will produce 
 x_test.h5 and y_test.h5 (of course if we use csvout it will be deleted) instead of x.h5 y.h5 as it will keep the 
 training part on the ram itself. If you reach ram memory error, please use chunksize which will be relatively slower 
@@ -170,7 +177,7 @@ CV, After_train.
 ### Pre_train
 As classification part it will prepare the data for training. 
 ```commandline
-python src/Run_ParamsEstimation.py Pre_train examples/Model.info --scale
+python src/Run_ParamsEstimation.py Pre_train examples/Model.info --scale b
 ```
 - input: [examples/Model.info](Model.info)   
 Exactly like classification. But in case the Model.info file has multiple lines; it will only use the first line for the
@@ -243,7 +250,7 @@ the drawback of the ss, or the neural network used by TF.
 ### After_train
 After everything is done, we can use the After_train to use the ABC analysis. 
 ```sh
-python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv
+python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv
 ```
 This will calculate both the CV part as well as will compare with the observed data. This will produce 
 paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of 
@@ -251,7 +258,7 @@ model_index.csv.gz will produce params.csv.gz. Inside those files will be necess
 ### All
 To put all these parts together we can use: 
 ```sh
-python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b examples/Model.info
 ```
 It will produce similar result but running all the commands together.
 ### Optional 
@@ -285,7 +292,7 @@ are making the neural network learn recursively for the amount which we think is
 <img src="https://latex.codecogs.com/gif.latex?imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" title="imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" />  
 To run the SMC for Parameter Estimation for a single time:   
 ```shell
-python src/Run_SMC.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_CEU_CHB.observed.csv --scale b examples/Model.info
+python src/Run_SMC.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b examples/Model.info
 ``` 
 The code is similar to Parameter Estimation part with some added changes which makes it more efficient for recursion 
 (which basically means it will remove most of the extra test and graphs and only produce the range).  

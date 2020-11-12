@@ -8,7 +8,7 @@ import sys
 import pandas
 from Classes import Misc
 ##input info extraction
-configfile: sys.path[0] + '/config.yml'
+configfile: 'config.yml'
 workdir: os.getcwd()
 # extra work
 
