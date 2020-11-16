@@ -150,11 +150,10 @@ rule breaks_priors:
           expand(config['demography'] + "/{jobint}.csv", jobint=joblist)
     input:
          config['demography'] + "/Priors.csv"
-    params:
-          str(int(config["current_repeats"] / config["jobs"]))
     shell:
-         "split --numeric-suffixes=1 -l {params}   -a 3 --additional-suffix=.csv <(tail -n+2 {input}) "
-         "{config[demography]}/"
+         "tail -n+2 {input} > {config[demography]}/Priors_NH.csv\n"
+         "split --numeric-suffixes=1 --number=l/{config[jobs]} -a 3 --additional-suffix=.csv "
+         "{config[demography]}/Priors_NH.csv {config[demography]}/\n"
 
 rule priors_create:
     """
