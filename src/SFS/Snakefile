@@ -44,7 +44,7 @@ rule finalize:
     Newrange.csv and Narrowed.csv
     """
     input:
-         config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
+         config['demography'] + '/Newrange.csv'
     output:
           'Newrange.csv'
     shell:
@@ -68,7 +68,7 @@ rule params_sfs:
     input:
          config['demography'] + '/Model.info'
     output:
-          config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
+          config['demography'] + '/Newrange.csv'
     params:
           tfknn_demo=tfknn_demo,
           noise=noise
