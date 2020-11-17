@@ -1,4 +1,5 @@
 # adding all the dependencies together. if it takes too much time. install using mamba: https://github.com/mamba-org/mamba
+name: ABC-DLS
 channels:
   - conda-forge
   - bioconda
