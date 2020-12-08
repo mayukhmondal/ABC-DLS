@@ -44,7 +44,7 @@ rule finalize:
     Newrange.csv and Narrowed.csv
     """
     input:
-         config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
+         config['demography'] + '/Newrange.csv'
     output:
           'Newrange.csv'
     shell:
@@ -68,7 +68,7 @@ rule params_sfs:
     input:
          config['demography'] + '/Model.info'
     output:
-          config['demography'] + '/Newrange.csv', config['demography'] + '/Narrowed.csv'
+          config['demography'] + '/Newrange.csv'
     params:
           tfknn_demo=tfknn_demo,
           noise=noise
@@ -106,7 +106,7 @@ rule join_SFS_All:
           config['demography'] + '/' + config['demography'] + '.csv.gz'
     shell:
          "touch Narrowed.csv\n"
-         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv| grep . |gzip > {output}"
+         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv| grep , |gzip > {output}"
 
 rule run_SFS:
     """
@@ -150,11 +150,10 @@ rule breaks_priors:
           expand(config['demography'] + "/{jobint}.csv", jobint=joblist)
     input:
          config['demography'] + "/Priors.csv"
-    params:
-          str(int(config["current_repeats"] / config["jobs"]))
     shell:
-         "split --numeric-suffixes=1 -l {params}   -a 3 --additional-suffix=.csv <(tail -n+2 {input}) "
-         "{config[demography]}/"
+         "tail -n+2 {input} > {config[demography]}/Priors_NH.csv\n"
+         "split --numeric-suffixes=1 --number=l/{config[jobs]} -a 3 --additional-suffix=.csv "
+         "{config[demography]}/Priors_NH.csv {config[demography]}/\n"
 
 rule priors_create:
     """
