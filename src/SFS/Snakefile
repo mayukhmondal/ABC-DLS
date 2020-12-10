@@ -29,9 +29,9 @@ if "tfknn" in config:
 else:
     tfknn_demo = ''
 noise = ''
-if 'noise_injection' in config:
-    if config["noise_injection"] > 0:
-        noise = '--noise_injection ' + str(config["noise_injection"]) + ' --hardrange ' + os.path.abspath(
+if 'extend' in config:
+    if config["extend"] > 0:
+        noise = '--extend ' + str(config["extend"]) + ' --hardrange ' + os.path.abspath(
             config["hardrange_file"])
 # real snakemake pipeline starts here
 localrules: finalize, info_sfs

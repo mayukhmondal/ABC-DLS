@@ -2237,14 +2237,13 @@ class ABC_DLS_NS(ABC_DLS_Params):
     :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
     :param folder: to define the output folder. default is '' meaning current folder
-    :param imp: minimum amount of improvement needed to register as true. default is .95.
+    :param shrink: minimum amount of shrinking needed to register as true. default is .95.
     :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
-    :param noise_injection: the amount of fraction for noise injection from the distance between
-            params[min]-params[max]
-        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
-            limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            noise_injection as not go awry for simulation parameters
+    :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
+    :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+        limit. every row is define a parameters. no header. same as Newrange.csv. important when used
+        extend as not go awry for simulation parameters
     :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
         simulations which are within that new range
     """
@@ -2259,13 +2258,13 @@ class ABC_DLS_NS(ABC_DLS_Params):
     scaling_y: bool = False
     csvout: bool = False
     folder: str = ''
-    imp: float = 0.95
+    shrink: float = 0.95
     frac: float = 1.0
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0, noise_injection: float = 0.0,
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', shrink: float = 0.95,
+                frac: float = 1.0, extend: float = 0.0,
                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         This will call the wrapper function
@@ -2287,27 +2286,26 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
-        :param imp: minimum amount of improvement needed to register as true. default is .95.
+        :param shrink: minimum amount of shrinking needed to register as true. default is .95.
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
-        :param noise_injection: the amount of fraction for noise injection from the distance between
-            params[min]-params[max]
+        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            noise_injection as not go awry for simulation parameters
+            extend as not go awry for simulation parameters
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            nn=nn, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
-                           folder=folder, imp=imp, frac=frac, noise_injection=noise_injection,
+                           folder=folder, shrink=shrink, frac=frac, extend=extend,
                            hardrange_file=hardrange_file)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '', imp: float = 0.95,
-                frac: float = 1.0, noise_injection: float = 0.0,
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', shrink: float = 0.95,
+                frac: float = 1.0, extend: float = 0.0,
                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The main wrapper for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare with
@@ -2330,12 +2328,11 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
-        :param imp: minimum amount of improvement needed to register as true. default is .95.
-        :param noise_injection: the amount of fraction for noise injection from the distance between
-            params[min]-params[max]
+        :param shrink: minimum amount of shrinking needed to register as true. default is .95.
+        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            noise_injection as not go awry for simulation parameters
+            extend as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
@@ -2354,8 +2351,9 @@ class ABC_DLS_NS(ABC_DLS_Params):
 
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
-                                      paramfile='params_header.csv', method=method, tol=tol, folder=folder, imp=imp,
-                                      frac=frac, noise_injection=noise_injection, hardrange_file=hardrange_file)
+                                      paramfile='params_header.csv', method=method, tol=tol, folder=folder,
+                                      shrink=shrink,
+                                      frac=frac, extend=extend, hardrange_file=hardrange_file)
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
@@ -2400,8 +2398,8 @@ class ABC_DLS_NS(ABC_DLS_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '', csvout: bool = False, imp: float = 0.95,
-                           frac: float = 1.0, noise_injection: float = 0.0,
+                           folder: str = '', csvout: bool = False, shrink: float = 0.95,
+                           frac: float = 1.0, extend: float = 0.0,
                            hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
@@ -2424,12 +2422,11 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param folder: to define the output folder. default is '' meaning current folder
         :param csvout: n case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
-        :param imp: minimum amount of improvement needed to register as true. default is .95.
-        :param noise_injection: the amount of fraction for noise injection from the distance between
-            params[min]-params[max]
+        :param shrink: minimum amount of shrinking needed to register as true. default is .95.
+        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            noise_injection as not go awry for simulation parameters
+            extend as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
@@ -2452,14 +2449,14 @@ class ABC_DLS_NS(ABC_DLS_Params):
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
         oldrange = pandas.concat([params.min(), params.max()], axis=1)
         oldrange.columns = ['min', 'max']
-        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, imp=imp)
-        if noise_injection > 0:
+        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, shrink=shrink)
+        if extend > 0:
             if hardrange_file:
                 hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['', 'min', 'max'],
                                             usecols=[0, 1, 2])
             else:
                 hardrange = pandas.DataFrame()
-            newrange = cls.noise_injection_update(newrange=newrange, noise_injection=noise_injection,
+            newrange = cls.noise_injection_update(newrange=newrange, extend=extend,
                                                   hardrange=hardrange, oldrange=oldrange)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
@@ -2561,28 +2558,28 @@ class ABC_DLS_NS(ABC_DLS_Params):
 
     @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                          imp: float = .95) -> pandas.DataFrame:
+                          shrink: float = .95) -> pandas.DataFrame:
         """
-        This will check if the new range improvement is more than 95%. if true it will update the new range or else keep
-        the old range assuming there is no direct improvement. this step is necessary so that you do not get smaller
+        This will check if the new range shrinking is more than 95%. if true it will update the new range or else keep
+        the old range assuming there is no direct shrinking. this step is necessary so that you do not get smaller
         range just because you ran it several time
 
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
-        :param imp: the amount of improvement required to update the new improvement. default is 95%
-        :return: will return the updated newrange dataframe. where if imp is less than .95 then new range rows if not
+        :param shrink: the amount of shrinking required to update the new shrinking. default is 95%
+        :return: will return the updated newrange dataframe. where if shrink is less than .95 then new range rows if not
             old range rows
         """
-        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange.loc[newrange['imp'] > imp, ['min', 'max']] = oldrange[newrange['imp'] > imp]
-        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange.loc[newrange['shrink'] > shrink, ['min', 'max']] = oldrange[newrange['shrink'] > shrink]
+        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
     @classmethod
     def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                               noise_injection: float = 0.005,
+                               extend: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
@@ -2594,20 +2591,19 @@ class ABC_DLS_NS(ABC_DLS_Params):
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
-        :param noise_injection: the amount of fraction for noise injection from the distance between
-            params[min]-params[max]
+        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
         :param hardrange: the hard range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
             tested to be within hardrange
         """
-        dist = (newrange['max'] - newrange['min']) * noise_injection * 0.5
+        dist = (newrange['max'] - newrange['min']) * extend * 0.5
         newrange['min'] = newrange['min'] - dist
         newrange['max'] = newrange['max'] + dist
         if not hardrange.empty:
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
-        newrange['imp'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
     @classmethod
