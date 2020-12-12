@@ -65,6 +65,10 @@ and checked in linux system. I can not guarantee it will work on other system bu
 In case you try to install it to already existed conda environment which has already R (r-base), it can conflict with 
 the rpy2 when it tries to automatically download abc package from R saying abc package do not exist. In that case create
  a new environment. 
+## Citation
+###Revisiting the Out of Africa event with a novel Deep Learning approach  
+Francesco Montinaro, Vasili Pankratov, Burak Yelmen, Luca Pagani, Mayukh Mondal  
+bioRxiv 2020.12.10.419069; doi: https://doi.org/10.1101/2020.12.10.419069
 ## Contact 
 The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact 
 <mondal.mayukh@gmail.com>
