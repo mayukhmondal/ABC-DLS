@@ -381,7 +381,7 @@ class MsPrime2SFS:
 
     @classmethod
     def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
-                mut_rate: float = 1.45e-8, replicates: Union[float, int] = 1e2, rec_rate: float = 1e-8,
+                mut_rate: float = 1.45e-8, replicates:  Union[float, int] = 100, rec_rate: float = 1e-8,
                 remainder_length: Union[float, int] = 0):
         """
         simulations2sfs per line or parameters. kind of the real wrapper. but we created another wrapper to take care of
@@ -410,7 +410,7 @@ class MsPrime2SFS:
 
     @classmethod
     def sims2sfs(cls, sim_func: Callable, params: Union[numpy.array, list], samples: Union[List[int], Tuple[int]],
-                 length: float = 1e6, mut_rate: float = 1.45e-8, replicates: float = 1e2,
+                 length: float = 1e6, mut_rate: float = 1.45e-8, replicates: int = 100,
                  rec_rate: float = 1e-8) -> numpy.array:
         """
         msprime simulated function are converted to sfs after running for the parameters.
