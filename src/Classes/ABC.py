@@ -2440,9 +2440,7 @@ class ABC_DLS_NS(ABC_DLS_Params):
         test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
                                                                                  scale_x, scale_y, params_names, ss)
         parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions,
-                                                tol=tol,
-                                                method=method)
-
+                                                tol=tol, method=method)
         newrange = pandas.concat([parmin, parmax], axis=1)
         newrange.index = params_names
         newrange.columns = ['min', 'max']
@@ -2456,9 +2454,8 @@ class ABC_DLS_NS(ABC_DLS_Params):
                                             usecols=[0, 1, 2])
             else:
                 hardrange = pandas.DataFrame()
-            newrange = cls.noise_injection_update(newrange=newrange, extend=extend,hardrange=hardrange,oldrange=oldrange)
-        #updating newrange again to remove data point which is more than shrink due to noise injection
-        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, shrink=shrink)
+            newrange = cls.noise_injection_update(newrange=newrange, extend=extend, hardrange=hardrange,
+                                                  oldrange=oldrange, shrink=shrink)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2558,8 +2555,9 @@ class ABC_DLS_NS(ABC_DLS_Params):
         return params
 
     @classmethod
-    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,extend: float = 0.005,
-                               hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
+    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame, extend: float = 0.005,
+                               hardrange: pandas.DataFrame = pandas.DataFrame(),
+                               shrink: float = .95) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
         recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
@@ -2577,8 +2575,8 @@ class ABC_DLS_NS(ABC_DLS_Params):
             tested to be within hardrange
         """
         dist = (newrange['max'] - newrange['min']) * extend * 0.5
-        newrange['min'] = newrange['min'] - dist
-        newrange['max'] = newrange['max'] + dist
+        newrange.loc[newrange['shrink'] > shrink, 'min'] = (newrange['min'] - dist).loc[newrange['shrink'] > shrink]
+        newrange.loc[newrange['shrink'] > shrink, 'max'] = (newrange['max'] + dist).loc[newrange['shrink'] > shrink]
         if not hardrange.empty:
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
