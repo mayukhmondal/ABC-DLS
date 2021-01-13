@@ -2573,6 +2573,7 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
             tested to be within hardrange
         """
+        print(extend)
         dist = (newrange['max'] - newrange['min']) * extend * 0.5
         newrange['min'] = newrange['min'] - dist
         newrange['max'] = newrange['max'] + dist
