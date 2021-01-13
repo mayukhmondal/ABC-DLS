@@ -2449,14 +2449,15 @@ class ABC_DLS_NS(ABC_DLS_Params):
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
         oldrange = pandas.concat([params.min(), params.max()], axis=1)
         oldrange.columns = ['min', 'max']
+        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, shrink=shrink)
         if extend > 0:
             if hardrange_file:
                 hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['', 'min', 'max'],
                                             usecols=[0, 1, 2])
             else:
                 hardrange = pandas.DataFrame()
-            newrange = cls.noise_injection_update(newrange=newrange, extend=extend,
-                                                  hardrange=hardrange)
+            newrange = cls.noise_injection_update(newrange=newrange, extend=extend,hardrange=hardrange,oldrange=oldrange)
+        #updating newrange again to remove data point which is more than shrink due to noise injection
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, shrink=shrink)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
@@ -2557,7 +2558,7 @@ class ABC_DLS_NS(ABC_DLS_Params):
         return params
 
     @classmethod
-    def noise_injection_update(cls, newrange: pandas.DataFrame, extend: float = 0.005,
+    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,extend: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame()) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
@@ -2570,16 +2571,19 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
         :param hardrange: the hard range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
+        :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
+        the parameters
         :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
             tested to be within hardrange
         """
-        print(extend)
         dist = (newrange['max'] - newrange['min']) * extend * 0.5
         newrange['min'] = newrange['min'] - dist
         newrange['max'] = newrange['max'] + dist
         if not hardrange.empty:
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
+        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+
         return newrange
 
     @classmethod
@@ -2599,7 +2603,8 @@ class ABC_DLS_NS(ABC_DLS_Params):
             old range rows
         """
         newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange.loc[newrange['shrink'] > shrink, ['min', 'max']] = oldrange[newrange['shrink'] > shrink]
+        newrange.loc[(newrange['shrink'] > shrink) & (newrange['shrink'] < 1), ['min', 'max']] = oldrange[
+            (newrange['shrink'] > shrink) & (newrange['shrink'] < 1)]
         newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
