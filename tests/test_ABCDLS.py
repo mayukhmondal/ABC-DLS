@@ -230,9 +230,9 @@ def test_Params_Train_together(info: str = 'Model.info', nn: str = '../src/extra
 def test_ABC_DLS_NS(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
                     ssfile: str = '../examples/YRI_FRN_HAN.observed.csv',
                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
-                    csvout=True, folder: str = 'ns', extend=0.005):
+                    csvout=True, folder: str = 'ns', increase=0.005):
     ABC.ABC_DLS_NS(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                   csvout=csvout, folder=folder, nn=nn, extend=extend,scaling_x=True,
+                   csvout=csvout, folder=folder, nn=nn, increase=increase,scaling_x=True,
                 scaling_y = True)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']
