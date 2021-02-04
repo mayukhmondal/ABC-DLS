@@ -29,9 +29,9 @@ if "tfknn" in config:
 else:
     tfknn_demo = ''
 noise = ''
-if 'extend' in config:
-    if config["extend"] > 0:
-        noise = '--extend ' + str(config["extend"]) + ' --hardrange ' + os.path.abspath(
+if 'increase' in config:
+    if config["increase"] > 0:
+        noise = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
             config["hardrange_file"])
 # real snakemake pipeline starts here
 localrules: finalize, info_sfs
@@ -68,14 +68,14 @@ rule params_sfs:
     input:
          config['demography'] + '/Model.info'
     output:
-          config['demography'] + '/Newrange.csv'
+          config['demography'] + '/Newrange.csv',config['demography']+ '/Narrowed.csv'
     params:
           tfknn_demo=tfknn_demo,
           noise=noise
     shell:
          "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
          "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --csvout --frac {config[frac]} "
-         "{params.tfknn_demo} {params.noise} --folder {config[demography]} {input} "
+         "{params.tfknn_demo} {params.noise} --folder {config[demography]} --decrease {config[decrease]} {input} "
 
 rule info_sfs:
     """
