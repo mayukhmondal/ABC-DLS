@@ -44,7 +44,7 @@ rule finalize:
     Newrange.csv and Narrowed.csv
     """
     input:
-         config['demography'] + '/Newrange.csv'
+         config['demography'] + '/Newrange.csv',config['demography']+ '/Narrowed.csv'
     output:
           'Newrange.csv'
     shell:
