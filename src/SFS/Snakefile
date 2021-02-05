@@ -7,6 +7,53 @@ import os
 import sys
 import pandas
 from Classes import Misc
+from Classes import ABC
+##required functions
+
+def narrowing_input(paramsnumbers,inputfile,rangefile,folder=''):
+    """
+    Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle
+
+    :param paramsnumbers: the number of parameters in the files. so that the ss part is separated
+    :param inputfile: generally all.csv file. whose first few columns are the parameters and last few columns are
+        ss
+    :param rangefile: the new range in pandas dataframe format. columns should be max and min and indexes should be
+            the parameters
+    :param folder: to define the output folder. default is '' meaning current folder
+    :return: will return the number of lines present in Narrowed.csv file which is created by the function
+    """
+    newrange=pandas.read_csv(rangefile,header=None,index_col=0).iloc[:,:2]
+    newrange.columns=['min','max']
+    if Misc.getting_line_count(inputfile) >0:
+        params=pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
+        linenumbers = (ABC.ABC_DLS_NS.narrowing_params(params=params, parmin=newrange['min'], parmax=newrange['max']))-1
+        temp=ABC.ABC_DLS_NS.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
+                                                    outputfile=folder + 'Narrows.csv')
+        if Misc.getting_line_count(temp) > 0:
+                    _ = ABC.ABC_DLS_NS.shufling_joined_models(inputcsv=temp, output=folder + 'Narrowed.csv', header=False)
+                    Misc.removefiles([folder + 'Narrows.csv'], printing=False)
+        else:
+            os.rename(temp, folder + 'Narrowed.csv')
+    else:
+        with open("Narrowed.csv", "w") as my_empty_csv:
+            pass
+    narrow_count=Misc.getting_line_count(folder + 'Narrowed.csv')
+    return narrow_count
+def remove_repeated_params(inputfile,paramsnumbers,outputfile):
+    """
+    remove the repeated parameters lines. We donot need different runs for same simulated parameters
+
+    :param inputfile: generally all.csv file. whose first few columns are the parameters and last few columns are
+        ss
+    :param paramsnumbers: the number of parameters in the files. so that the ss part is separated
+    :param outputfile: the path of the output file
+    :return: will return the path of outputfile
+    """
+    params=pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
+    linenumbers=params.drop_duplicates().index.values
+    temp=ABC.ABC_DLS_NS.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
+                                                    outputfile= outputfile)
+    return temp
 ##input info extraction
 configfile: 'config.yml'
 workdir: os.getcwd()
@@ -37,44 +84,58 @@ if 'increase' in config:
 localrules: finalize, info_sfs
 rule finalize:
     """
-    Finalizing everything and removing unecessary file. Also counts how many time it ran important if you put the 
+    Finalizing everything and removing unnecessary file. Also counts how many time it ran important if you put the 
     snakemake inside a while loop and you want to count it
-    input: output from params_sfs. demography/Newrange.csv. demography/Narrowed.csv
-    output: remove demography folder so that we can start a run again. moving important file to current directory
-    Newrange.csv and Narrowed.csv
+    input: output from params_sfs. demography/Newrange.csv. demography/Narrowed.csv updated All_rr.csv
+    output: remove demography folder so that we can start a run again. moving important file to current directory 
+    All.csv, Newrange.csv and Narrowed.csv
     """
     input:
-         config['demography'] + '/Newrange.csv',config['demography']+ '/Narrowed.csv'
+         config['demography'] + '/Newrange.csv',config['demography']+'/All_rr.csv',config['demography']+'/Narrowed.csv'
     output:
           'Newrange.csv'
     shell:
          """
          mv {input[0]} ./
-         mv {input[1]} ./
+         mv {input[1]} ./All.csv 
+         mv {input[2]} ./
          rm -fR {config[demography]}
          touch count.out
          awk '{{print $1+1}}' count.out > tmp && mv tmp count.out
          """
 
+rule reusing_simulations:
+    """
+    to recycle previous run of simulation will produce Narrowed.csv which has Priors+SFS within the new range output. 
+    input: All_rr.csv with all the sfs ever ran and the Newrange.csv created by ABC-DLS
+    output: Will produce Narrowed.csv which has information of recyclable SFS that was created before
+    """
+    output:
+        config['demography']+'/Narrowed.csv'
+    input:
+        config['demography']+'/All_rr.csv',config['demography'] + '/Newrange.csv'
+    params:
+        parameteres.shape[0]
+    run:
+        narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],folder=config['demography']+'/')
 rule params_sfs:
     """
     Main run for ABC-DLS sequential sampling method. This will using Priors+SFS will give Posterior range which are 
     slightly closer to the real observed data that priors range
     input: output from info_sfs. demography/demography.csv.gz
-    output: will produce Newrange.csv which has information of posterior range.  also to recycle
-    previous run of simulation will produce Narrowed.csv which has Priors+SFS within the new range output. 
-    demography/Newrange.csv. demography/Narrowed.csv 
+    output: will produce Newrange.csv which has information of posterior range.  
+    demography/Newrange.csv
     """
     input:
          config['demography'] + '/Model.info'
     output:
-          config['demography'] + '/Newrange.csv',config['demography']+ '/Narrowed.csv'
+          config['demography'] + '/Newrange.csv'
     params:
           tfknn_demo=tfknn_demo,
           noise=noise
     shell:
          "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
-         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --csvout --frac {config[frac]} "
+         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --frac {config[frac]} "
          "{params.tfknn_demo} {params.noise} --folder {config[demography]} --decrease {config[decrease]} {input} "
 
 rule info_sfs:
@@ -92,7 +153,34 @@ rule info_sfs:
           str(parameteres.shape[0])
     run:
         print(input[0] + '\t' + params[0], file=open(output[0], "w"))
-
+rule all_repeat_remove:
+    """
+    In case of update there is a chance same line was presented twice (as the new demography.csv.gz has rows from older 
+    All.csv. Thus it is better to remove those repeated lines
+    input: older All.csv
+    output: repeat removed All.csv
+    """
+    input:
+        config['demography'] + '/All.csv'
+    output:
+        config['demography'] + '/All_rr.csv'
+    params:
+        int(parameteres.shape[0])
+    run:
+        remove_repeated_params(inputfile=input[0],paramsnumbers=params[0],outputfile=output[0])
+rule updating_all:
+    """
+    Updating All.csv file which has all the run sfs ran that is done. it will add the newer one that is ran by this
+    loop
+    input: the older All.csv file
+    output: the updated All.csv file
+    """
+    input:
+        'All.csv',config['demography'] + '/' + config['demography'] + '.csv.gz'
+    output:
+        config['demography'] + '/All.csv'
+    shell:
+        "cat {input[0]} <(zcat {input[1]}| tail -n+2)  > {output}"
 rule join_SFS_All:
     """
     Joining all the different run of sfs and creating one single file. Mainly tackling the header problem from every 
@@ -104,9 +192,12 @@ rule join_SFS_All:
          files=expand(config['demography'] + '/' + config['demography'] + '_{jobint}.csv', jobint=joblist)
     output:
           config['demography'] + '/' + config['demography'] + '.csv.gz'
+    params:
+        config['repeats']-config['current_repeats']
     shell:
-         "touch Narrowed.csv\n"
-         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) Narrowed.csv| grep , |gzip > {output}"
+        "touch Narrowed.csv\n"
+         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) <(head -n {params} Narrowed.csv)| grep , "
+        "| gzip > {output}"
 
 rule run_SFS:
     """
