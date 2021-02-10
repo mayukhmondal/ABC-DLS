@@ -131,13 +131,18 @@ to differentiate between models.
 This part is similar to CV part, but it has the observed file together in the step thus can be used to see which 
 demographic model can better explain the result.  
 ``` commandline
-python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --csvout 
+python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --frac  4.636757528 --csvout 
 ``` 
 - --test_size 1000 and --tolerance .01  
 Same as above for CV 
 - ssfile [examples/YRI_FRN_HAN.observed.csv](YRI_FRN_HAN.observed.csv)  
 To define the observed csv file. Here we put YRI_FRN_HAN (Yoruba, French and Han Chinese) from the 
 [High Coverage HGDP data](https://doi.org/10.1126/science.aay5012) sfs file as ss.  
+- --frac  
+  To define a fraction which has to be multiplied with observed data, in case the length of simulated region do no match
+  with observed or real data. For example in this case I have simulated 3gbp regions for individuals, but the real
+  data comes after filtering around 647mbp region. To make it equal I have to multiply the observed data with 
+  (3gbp/647mbp) or 4.636757528
 - --csvout  
 If you are happy with all the result you can use csvout. This will remove .h5 files to free up space but also will 
 produce csv files which then can directly be used R to further improve the results using abc if necessary. As all the 
@@ -150,7 +155,7 @@ from simulated ss by NN) and ss_target.csv.gz (prediction of the observed or rea
 ### All
 In case rather than doing it separately, we can do all these stuffs together in one command.  
 ``` commandline
-python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --nn src/extras/ModelClass.py examples/Model.info --folder check --scale
+python src/Run_Classification.py All --test_size 1000 --tolerance 0.01 --ssfile examples/YRI_FRN_HAN.observed.csv --nn src/extras/ModelClass.py examples/Model.info --folder check --scale --frac  4.636757528
 ```
 - --folder   
 to run the whole stuff inside a folder so that it does not create a lot of files in the current directory.
@@ -250,7 +255,7 @@ the drawback of the ss, or the neural network used by TF.
 ### After_train
 After everything is done, we can use the After_train to use the ABC analysis. 
 ```sh
-python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv
+python src/Run_ParamsEstimation.py After_train --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --frac  4.636757528
 ```
 This will calculate both the CV part as well as will compare with the observed data. This will produce 
 paramposterior.pdf to see the prior vs posterior. It will also produce the same csv file as before but instead of 
@@ -258,7 +263,7 @@ model_index.csv.gz will produce params.csv.gz. Inside those files will be necess
 ### All
 To put all these parts together we can use: 
 ```sh
-python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b examples/Model.info
+python src/Run_ParamsEstimation.py All --nn src/extras/ModelParams.py --test_size 1000 --tolerance .01 --method loclinear --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b --frac  4.636757528 examples/Model.info
 ```
 It will produce similar result but running all the commands together.
 ### Optional 
@@ -376,9 +381,10 @@ less data than what is needed, your train data set accuracy will diverge from te
 (<50 epochs). This suggests your training might be improved by using more data to train. On the other hand more data is 
 always better. Especially because we can simulate easily more and more data synthetically. In principle, memory is not a
 problem for ABC-DLS as the code is implemented in hdf5 format. Thus you have unlimited memory. But take care, as more 
-data also means it will take more time to converge. As a rule of thumb, we found that 20k simulations for 
-classification, 50k simulations for parameter estimation and 20k simulation for SMC approach per model is generally 
-enough when using SFS as a ss. 
+data also means it will take more time to converge. As a rule of thumb, we found that 2k (1k for training and 1k for ABC
+  ) simulations for classification, 60k (50k for training and 10k for ABC) simulations for parameter estimation and 20k 
+  (10 k for training and 10k for ABC) simulations for SMC approach per 
+  model is generally enough when using SFS as a ss. 
 - It is easy to build different models, but it is your responsibility to make them as much different as possible. For 
 example, a 0% admixture proportion essentially means a model without admixture (aka in this case normal Out of Africa 
 from the paper). Thus, admixture model should be more than 0% of admixture. What minimum percentage of admixture is good
