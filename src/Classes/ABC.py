@@ -2237,13 +2237,13 @@ class ABC_DLS_NS(ABC_DLS_Params):
     :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
         later by r
     :param folder: to define the output folder. default is '' meaning current folder
-    :param shrink: minimum amount of shrinking needed to register as true. default is .95.
+    :param decrease: minimum amount of decreaseing of range needed to register as true. default is .95.
     :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
-    :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
+    :param increase: the amount of fraction for increasing of range from the distance between  params[min]-params[max]
     :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
         limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-        extend as not go awry for simulation parameters
+        increase as not go awry for simulation parameters
     :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
         simulations which are within that new range
     """
@@ -2258,13 +2258,13 @@ class ABC_DLS_NS(ABC_DLS_Params):
     scaling_y: bool = False
     csvout: bool = False
     folder: str = ''
-    shrink: float = 0.95
+    decrease: float = 0.95
     frac: float = 1.0
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '', shrink: float = 0.95,
-                frac: float = 1.0, extend: float = 0.0,
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', decrease: float = 0.95,
+                frac: float = 1.0, increase: float = 0.0,
                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         This will call the wrapper function
@@ -2286,26 +2286,26 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
-        :param shrink: minimum amount of shrinking needed to register as true. default is .95.
+        :param decrease: minimum amount of decreasing of range needed to register as true. default is .95.
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
-        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
+        :param increase: the amount of fraction for increase of range from the distance between  params[min]-params[max]
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            extend as not go awry for simulation parameters
+            increase as not go awry for simulation parameters
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            nn=nn, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
-                           folder=folder, shrink=shrink, frac=frac, extend=extend,
+                           folder=folder, decrease=decrease, frac=frac, increase=increase,
                            hardrange_file=hardrange_file)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
-                scaling_y: bool = False, csvout: bool = False, folder: str = '', shrink: float = 0.95,
-                frac: float = 1.0, extend: float = 0.0,
+                scaling_y: bool = False, csvout: bool = False, folder: str = '', decrease: float = 0.95,
+                frac: float = 1.0, increase: float = 0.0,
                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The main wrapper for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare with
@@ -2328,11 +2328,11 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param csvout: in case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
         :param folder: to define the output folder. default is '' meaning current folder
-        :param shrink: minimum amount of shrinking needed to register as true. default is .95.
-        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
+        :param decrease: minimum amount of decreasing of range needed to register as true. default is .95.
+        :param increase: the amount of fraction for increase of range from the distance between  params[min]-params[max]
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            extend as not go awry for simulation parameters
+            increase as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
@@ -2352,8 +2352,8 @@ class ABC_DLS_NS(ABC_DLS_Params):
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder,
-                                      shrink=shrink,
-                                      frac=frac, extend=extend, hardrange_file=hardrange_file)
+                                      decrease=decrease,
+                                      frac=frac, increase=increase, hardrange_file=hardrange_file)
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
@@ -2398,8 +2398,8 @@ class ABC_DLS_NS(ABC_DLS_Params):
                            y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
-                           folder: str = '', csvout: bool = False, shrink: float = 0.95,
-                           frac: float = 1.0, extend: float = 0.0,
+                           folder: str = '', csvout: bool = False, decrease: float = 0.95,
+                           frac: float = 1.0, increase: float = 0.0,
                            hardrange_file: Optional[str] = None) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
@@ -2422,11 +2422,11 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :param folder: to define the output folder. default is '' meaning current folder
         :param csvout: n case of everything satisfied. this will output the test dataset in csv format. can be used
             later by r
-        :param shrink: minimum amount of shrinking needed to register as true. default is .95.
-        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
+        :param decrease: minimum amount of decreasing of range needed to register as true. default is .95.
+        :param increase: the amount of fraction for increase of range from the distance between  params[min]-params[max]
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
-            extend as not go awry for simulation parameters
+            increase as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
@@ -2447,15 +2447,15 @@ class ABC_DLS_NS(ABC_DLS_Params):
         params = cls.extracting_params(variable_names=params_names, scale_y=scale_y, yfile=folder + 'y.h5')
         oldrange = pandas.concat([params.min(), params.max()], axis=1)
         oldrange.columns = ['min', 'max']
-        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, shrink=shrink)
-        if extend > 0:
+        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, decrease=decrease)
+        if increase > 0:
             if hardrange_file:
                 hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['', 'min', 'max'],
                                             usecols=[0, 1, 2])
             else:
                 hardrange = pandas.DataFrame()
-            newrange = cls.noise_injection_update(newrange=newrange, extend=extend, hardrange=hardrange,
-                                                  oldrange=oldrange, shrink=shrink)
+            newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
+                                                  oldrange=oldrange, decrease=decrease)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2555,9 +2555,9 @@ class ABC_DLS_NS(ABC_DLS_Params):
         return params
 
     @classmethod
-    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame, extend: float = 0.005,
+    def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame, increase: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame(),
-                               shrink: float = .95) -> pandas.DataFrame:
+                               decrease: float = .95) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
         recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
@@ -2566,7 +2566,7 @@ class ABC_DLS_NS(ABC_DLS_Params):
 
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
-        :param extend: the amount of fraction for extension of range from the distance between  params[min]-params[max]
+        :param increase: the amount of fraction for increase of range from the distance between  params[min]-params[max]
         :param hardrange: the hard range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
@@ -2574,36 +2574,38 @@ class ABC_DLS_NS(ABC_DLS_Params):
         :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
             tested to be within hardrange
         """
-        dist = (newrange['max'] - newrange['min']) * extend * 0.5
-        newrange.loc[newrange['shrink'] > shrink, 'min'] = (newrange['min'] - dist).loc[newrange['shrink'] > shrink]
-        newrange.loc[newrange['shrink'] > shrink, 'max'] = (newrange['max'] + dist).loc[newrange['shrink'] > shrink]
+        dist = (newrange['max'] - newrange['min']) * increase * 0.5
+        newrange.loc[newrange['decrease'] > decrease, 'min'] = (newrange['min'] - dist).loc[
+            newrange['decrease'] > decrease]
+        newrange.loc[newrange['decrease'] > decrease, 'max'] = (newrange['max'] + dist).loc[
+            newrange['decrease'] > decrease]
         if not hardrange.empty:
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
-        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
 
         return newrange
 
     @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                          shrink: float = .95) -> pandas.DataFrame:
+                          decrease: float = .95) -> pandas.DataFrame:
         """
-        This will check if the new range shrinking is more than 95%. if true it will update the new range or else keep
-        the old range assuming there is no direct shrinking. this step is necessary so that you do not get smaller
+        This will check if the new range decreasing is more than 95%. if true it will update the new range or else keep
+        the old range assuming there is no direct decreasing. this step is necessary so that you do not get smaller
         range just because you ran it several time
 
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
-        :param shrink: the amount of shrinking required to update the new shrinking. default is 95%
-        :return: will return the updated newrange dataframe. where if shrink is less than .95 then new range rows if not
+        :param decrease: the amount of decreasing required to update the new decreasing. default is 95%
+        :return: will return the updated newrange dataframe. where if decrease is less than .95 then new range rows if not
             old range rows
         """
-        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange.loc[(newrange['shrink'] > shrink) & (newrange['shrink'] < 1), ['min', 'max']] = oldrange[
-            (newrange['shrink'] > shrink) & (newrange['shrink'] < 1)]
-        newrange['shrink'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange.loc[(newrange['decrease'] > decrease) & (newrange['decrease'] < 1), ['min', 'max']] = oldrange[
+            (newrange['decrease'] > decrease) & (newrange['decrease'] < 1)]
+        newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
     @classmethod
