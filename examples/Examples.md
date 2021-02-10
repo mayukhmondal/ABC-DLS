@@ -292,7 +292,7 @@ are making the neural network learn recursively for the amount which we think is
  much more specialized. The simplified idea is to get the minimum and maximum value for every parameter as a posterior 
  and use that posterior as a prior to create new simulation and repeat it again (aka Sequential Monte Carlo or SMC which
  is also sometime called Particle Filter). This recursion should be done till convergence is reached. In this case when 
- imp (improvement) of every parameter is more than 95% (default value), we can assume we have reached enough convergence
+ dec (decrease) of every parameter is more than 95% (default value), we can assume we have reached enough convergence
  and neural network now cannot make any more improvement.
 <img src="https://latex.codecogs.com/gif.latex?imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" title="imp=\frac{Posterior_{max}-Posterior_{min}}{Prior_{max}-Prior_{min}}" />  
 To run the SMC for Parameter Estimation for a single time:   

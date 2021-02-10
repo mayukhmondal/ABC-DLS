@@ -194,8 +194,8 @@ python src/Run_SMC.py All --ssfile Examples.csv --scale b Model.info --frac 0.16
 ```
 The frac (fraction) was calculated with available amount of data for chr22 (for the vcf file) which is 6,081,752. Thus 
 to make it equal with the simulations we have to multiply 1e6/6081752 or 0.16442630347307816. You will definitely see
-improvement (imp) for several parameters. But this ran only once. To use it recursively, we can use the output 
-(Newrange.csv) and use it as input to run it again till there is no improvement possible.   
+decrease (dec) for several parameters. But this ran only once. To use it recursively, we can use the output 
+(Newrange.csv) and use it as input to run it again till there is no decrease possible.   
 ## Snakemake 
 We added a snakemake pipeline to run those commands automatically. Snakemake pipeline will be extremely useful for 
 clusters, where we can run multiple jobs together. Unfortunately, here we can not talk in details about how to install 
@@ -216,7 +216,9 @@ jobs: 10
 repeats: 2000
 total_length: 1000000
 test_size: 1000
-improvement: 0.95
+decrease: 0.95
+increase: .01
+hardrange_file: Startrange.csv
 tolerance: .1
 frac: 0.0015455858426908665
 ``` 
@@ -256,8 +258,21 @@ Narrowed.csv
 - total_length is the total length of the simulation that we want to run. Remember the total length are divided by equal 
 1mb of LD region or chromosome to run it separately. 
 - test_size is the number of test_size that would be kept for ABC-DLS. Every thing else will be used for training. 
-- imp is the amount of improvement necessary to regard it as true improvement. For more information please see 
+- decrease is the amount of decrease necessary to regard it as true improvement. For more information please see 
 [examples/Examples.md](../../examples/Examples.md) under SMC. 
+- increase there is always a chance when some decrease of range happened in one cycle, it missed the real target 
+  value (suppose your true introgression amount is 3% but it was predicted in a cycle 1-2% wrongly). To get it back the 
+  true introgression in the subsequent cycle we use this parameter. This will increase the distance between lower and 
+  upper limit by 1% (if 0.01 was used). So in a sense you can treat increase and decrease two opposing force, decrease 
+  will shorten the distance between upper and lower range whereas increase will broaden it up. After mulitiple cycle 
+  generally they (increase and decrease) together reach a convergence. But remember to put decrease much lower than 
+  increase (generally 5 times lesser than 1-decrease) if not in one cycle you will decrease but the next cycle you'll 
+  get back exactly the previous distance and it will never really reach convergence or stuck in infinite loop.
+- hardrange_file if increase was not used this file is not required as in every cycle the distance between lower and 
+  upper limit can only go lower. But in case of increase is used, the range can grow bigger and sometime comes to a 
+  point where the range does not make sense (for example admixture amount more than 100%) or the range is outside of 
+  what is your prior belief started with. Thus it is a good idea to give the starting range as a hardrange file so that
+  your simulations will be always within that limit. 
 - tolerance amount of tolerance that is necessary for ABC analysis.
  - frac is the amount of fraction to multiply with observed sfs so that it can be equal to the simulated sfs. It is 
  unlikely that we'll simulate same length of chromosomes in total as the real or observed data. This will mitigate 
