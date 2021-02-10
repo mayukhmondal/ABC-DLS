@@ -1,13 +1,5 @@
 # ABC-DLS Examples
-This is a python pipeline where you can simply use summary statistics created from pop genome simulation files (ms, 
-msprime, FastSimcoal etc.) to predict which underlying model can better explain the observed results, as well as which 
-parameters can produce such results with the help of Deep Learning (using Tensorflow Keras Backended), Sequential Monte
-Carlo (SMC) and Aproximate Bayesian Computation (ABC). The whole method is written in python and thus easy to read as 
-well as can be accessed completely through command line thus knowing python is not needed. Although it will be helpful 
-to know python as well as R as some of the packages here used is based on those languages. Remember both Classification 
-and Parameter estimation will create file in the current working directory, thus you cannot run multiple runs together 
-(as it would conflict with other runs). Thus either run one code at a time or run them in different folders using 
---folder option. 
+This software is a python pipeline where you can use simulated summary statistics to predict which underlying model can better explain the observed or real-world results (classification) and can guess which parameters can produce such results (parameter estimation) with the help of Deep Learning (using Tensorflow Keras Backend), Sequential Monte Carlo (SMC) and Approximate Bayesian Computation (ABC). The simulations are preferably coming from pop genome simulators i.e. ms, msprime, FastSimcoal etc. but not necessarily bounded only by that. The whole method is written in python and thus easy to read. It can be accessed entirely through the command line, therefore knowing python is not essential, though it will be helpful to know python and a little bit of R as some of the packages in the pipeline is based on those languages. Remember, both classification and parameter estimation will create files in the current working directory or a directory mentioned in the command. Thus you cannot run multiple runs together (as it would conflict with other runs) in the same folder. Either run one code at a time or run them in different folders using the --folder option.
 
 ## Classification and Model Selection 
 This part explains how to choose the best model which can explain the observed data (in this case real sequenced data). 
