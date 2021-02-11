@@ -135,9 +135,9 @@ This is the name of the demography, which is present in [src/SFS/Demography.py](
 This file is the priors that are produced in the previous step. 
 - --inds 5,5,5   
 The number of individuals per population.
---threads 5   
+- --threads 5   
 The number of threads to be used. As this step is the bottleneck for the whole approach, this is important to use. 
---total_length 1e7     
+- --total_length 1e7     
 The total length of the genome has to be simulated. Here we are simulating 10 mbp region. The code will run 1mb region at a time by default. Thus 10mbp means repeating the 1mbp regions ten times. Because of this approach, I would suggest not to use seeds or use them with caution. If not, it will produce the same SFS again and again. Thus running it ten times will not be any improvement. 
 
 This command will create an Out of Africa simulated SFS with parameter file, which then can be directly used as an input for the parameter estimation or SMC method. Undoubtedly, this part is the main bottleneck for the whole approach. Thus this part should be mostly improved if we use an even more, parallelize approach. For example, only using threads will not be enough. 
@@ -217,7 +217,7 @@ snakemake --jobs 10
 ```  
 This snkamake command will run all the necessary commands. It will run parallel ten jobs and will produce a Newrange.csv and Narrowed.csv. But this only one recursion. We need to do multiple recursion to make our posterior range much smaller. To do it, we need to put this code inside a while loop. We should also change the Newrange.csv to Oldrange.csv to run inside a loop until it reaches convergence.     
 ## Recursion 
-The last and final part of this approach is to put it (snakemake pipeline) inside a recursive loop. We can do this in several ways. Here we present a simple shell script approach to do it. ([recursive.sh](recursive.sh))
+The last and final part of this approach is to put it (snakemake pipeline) inside a recursive loop. We can do this in several ways. Here we present a simple shell script approach to do it ([recursive.sh](recursive.sh)).
 ```shell script
 #!/bin/bash
 imp=0
@@ -235,6 +235,6 @@ To run this code, we have to use:
 ```commandline
 sh recursive.sh
 ```
-This script will automatically run the recursion of the snakemake pipeline inside a while loop. We used Startrange.csv as a starting point of the whole recursion and Oldrange.csv as the starting point of every loop. The snakemake pipeline will submit six jobs in parallel, and when it reaches convergence (which is a minimum of imp > 0.95), it will stop
+This script will automatically run the recursion of the snakemake pipeline inside a while loop. We used [Startrange.csv](Startrange.csv) as a starting point of the whole recursion and Oldrange.csv as the starting point of every loop. The snakemake pipeline will submit six jobs in parallel, and when it reaches convergence (which is a minimum of imp > 0.95), it will stop
 the while loop and save it as Finalrange.csv. This script is a very basic way to do it. Of course, you are free to update it and make it more complex to benefit your analysis.  
     

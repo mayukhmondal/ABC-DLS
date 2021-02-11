@@ -55,7 +55,7 @@ The next part is to run the training part by NN. This command will train the NN 
 python src/Run_Classification.py Train --demography src/extras/ModelClass.py --test_size 1000 
 ``` 
 This command will train the model.  
--  --nn src/extras/ModelClass.py 
+-  --nn [src/extras/ModelClass.py](../src/extras/ModelClass.py)  
 ABC-DLS has a default training neural model. But it is impossible to predict which model should be better for the input data. Thus, we can define custom made model cater to our own need. One such example is [src/extras/ModelClass.py](../src/extras/ModelClass.py). Here, we put very few epochs (only 20) to get faster results. More is merrier, of course. The *.py should have a definition name ANNModelCheck, which should return the trained model (after model.fit) and has two inputs, x and y. Example:
 ```python
 from tensorflow.python import keras
@@ -150,7 +150,7 @@ Same as the classification part, this will train the model. Unlike the classific
 ```commandline
 python src/Run_ParamsEstimation.py Train --nn src/extras/ModelParams.py --test_size 1000
 ```
-- --demography src/extras/ModelParams.py
+- --demography [src/extras/ModelParams.py](../src/extras/ModelParams.py)  
 Although there is a default method present in ABC-DLS (meaning python src/Run_ParamsEstimation.py Train --test_size 1000 will also work), we can give a model from outside. Here we kept 100 epochs to make it faster. *.py must have a def name ANNModelParams. We can decide the number of epochs and other stuff inside that definition. The structure of the file is very similar. Only ANNModelParams instead of ANNModelCheck and the NN output is linear (which is default for keras) instead of softmax. Everything else should be done as your model prefers. Example:
 ```python
 from tensorflow.python.keras.models import Sequential
@@ -228,7 +228,7 @@ To run the SMC for Parameter Estimation for a single time:
 python src/Run_SMC.py All --folder SMC --nn src/extras/ModelParamsTogether.py --test_size 1000 --tolerance .05 --csvout --ssfile examples/YRI_FRN_HAN.observed.csv --scale b examples/Model.info --decrease 0.95 --increase .01 --hardrange examples/hardrange.csv
 ``` 
 The code is similar to the parameter estimation part. Some added changes make it more efficient for recursion (removing most of the extra tests and graphs and only producing the range).  
- - --demography src/extras/ModelParamsTogether.py  
+ - --demography [src/extras/ModelParamsTogether.py](../src/extras/ModelParamsTogether.py)  
 The format is slightly different than the Parameter Estimation. The idea is train and test are send together for the training part to make it more efficient. As it is a recursive method, wasting of simulations does not make sense. In case you want, you can use the default NN, which works most of the time. In case you want to use your own NN model, you have to follow this format:
 ```python
 from tensorflow.python.keras.models import Sequential
@@ -270,11 +270,11 @@ def ANNModelParams(x, y):
 ```   
 - --csvout  
 This option will keep the simulations that are within the new (posterior) range of parameters. Thus can be reused for another round(s) of iteration.  
-- --decrease 0.95
+- --decrease 0.95  
 This option is the amount of decrease necessary to regard it as a genuine improvement. Because we are choosing the top 5% for the parameters in ABC, we always expect that the posterior range would be smaller than prior (even though the NN do not have power to predict that). To remove such estimation, we use this 95% filter, which means if the posterior is not less than 95% of the prior, we will regard the prior range as the posterior range. This filtering is essential as we are recursing so that the ranges do not decrease incorrectly.
 - --increase .01  
 There is always a chance when some decrease of range happened in one cycle, it missed the actual target value (suppose your actual introgression amount is 3%, but it was predicted in a cycle to be 1-2% wrongly). We use this parameter to get back the true introgression in the subsequent cycle.  This option will increase the distance between the lower and upper limit by 1% (if 0.01 was used). So in a sense, you can treat increase and decrease two opposing forces. The decrease will shorten the distance between the upper and lower range, whereas the increase will broaden it up. After multiple cycles, they (increase and decrease) together generally reach a convergence. But remember to put the increase much lower than the decrease (typically five times lesser than 1-decrease). If not, it can be stuck in an infinite loop.
-- --hardrange examples/hardrange.csv 
+- --hardrange [examples/hardrange.csv](hardrange.csv)    
 If the increase was not used, this file is not required as in every cycle the distance between lower and  upper limit can only go lower. But in case of increase is used, the range can grow bigger and sometimes come to a  point where the range does not make sense anymore (for example, admixture amount more than 100%), or the range is outside of what is your prior belief. Thus it is a good idea to give the starting range as a hardrange file so that your simulations will always be within that limit of starting range. Please follow the format in the examples/hardrange.csv file.
 
 It will also save a new file called Newrange.csv which would have information about the posterior range (which has information from ABC minimum and maximum range). 
