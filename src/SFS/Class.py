@@ -488,3 +488,20 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         temp = cls.extracting_by_linenumber(file=inputfile,linenumbers=linenumbers,
             outputfile=outputfile)
         return temp
+
+    @classmethod
+    def lmrd4mcsv(cls,hardrange_file: str,newrange_file:str) -> float:
+        """
+        This will read hardrange_file and newrange_file and calcualte log of mean range decrease (lmrd). So you know how
+        much improvement you got in this cycle
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+            limit. every row is define a parameters. no header. important when used increase as not to go awry for
+            simulation parameters
+        :param newrange_file: the updated range of parameters. same as hardrange_file
+        :return: will return the lmrd in float
+        """
+        hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['lower', 'upper'])
+        newrange = pandas.read_csv(newrange_file, index_col=0, header=None, names=['lower', 'upper', 'imp'])
+
+        lmrd=cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
+        return lmrd

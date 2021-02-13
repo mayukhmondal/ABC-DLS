@@ -2457,6 +2457,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
                                                   oldrange=oldrange, decrease=decrease)
+            lmrd=cls.lmrd_calculation(newrange=newrange,hardrange=hardrange)
+            print('log of mean range decrease:',lmrd)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2676,3 +2678,17 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         output.close()
         Misc.removefiles(['temp.csv'], printing=False)
         return outputfile
+
+    @classmethod
+    def lmrd_calculation(cls, newrange:pandas.DataFrame, hardrange:pandas.DataFrame)-> float:
+        """
+        this will output log of mean range decrease for every cycle
+
+        :param newrange:  the new and updated range
+        :param hardrange: the old and hard range from where it all started
+        :return: will return the lmrd
+        """
+        newrange_dist = (newrange.iloc[:, 1] - newrange.iloc[:, 0]).abs()
+        hardrange_dist = (hardrange.iloc[:, 1] - hardrange.iloc[:, 0]).abs()
+        lmrd = numpy.log((newrange_dist / hardrange_dist).mean())
+        return lmrd
