@@ -82,7 +82,7 @@ if args.cmd == 'All':
         scaling_x = True
         scaling_y = True
     # running
-    newrange = ABC.ABC_DLS_NS(info=args.info, ssfile=args.ssfile, nn=args.nn,
+    newrange = ABC.ABC_DLS_SMC(info=args.info, ssfile=args.ssfile, nn=args.nn,
                               method=args.method, tol=args.tolerance, test_size=args.test_size,
                               chunksize=args.chunksize, csvout=args.csvout,
                               scaling_x=scaling_x, scaling_y=scaling_y,decrease=args.decrease,

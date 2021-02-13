@@ -7,57 +7,9 @@ import os
 import sys
 import pandas
 from Classes import Misc
-from Classes import ABC
-
+from Class import ABC_DLS_SMC_Snakemake
 
 ##required functions
-
-def narrowing_input(paramsnumbers, inputfile, rangefile, folder=''):
-    """
-    Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle
-
-    :param paramsnumbers: the number of parameters in the files. so that the ss part is separated
-    :param inputfile: generally all.csv file. whose first few columns are the parameters and last few columns are
-        ss
-    :param rangefile: the new range in pandas dataframe format. columns should be max and min and indexes should be
-            the parameters
-    :param folder: to define the output folder. default is '' meaning current folder
-    :return: will return the number of lines present in Narrowed.csv file which is created by the function
-    """
-    newrange = pandas.read_csv(rangefile,header=None,index_col=0).iloc[:, :2]
-    newrange.columns = ['min', 'max']
-    if Misc.getting_line_count(inputfile) > 0:
-        params = pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
-        linenumbers = (ABC.ABC_DLS_NS.narrowing_params(params=params,parmin=newrange['min'],parmax=newrange['max'])) - 1
-        temp = ABC.ABC_DLS_NS.extracting_by_linenumber(file=inputfile,linenumbers=linenumbers,
-            outputfile=folder + 'Narrows.csv')
-        if Misc.getting_line_count(temp) > 0:
-            _ = ABC.ABC_DLS_NS.shufling_joined_models(inputcsv=temp,output=folder + 'Narrowed.csv',header=False)
-            Misc.removefiles([folder + 'Narrows.csv'],printing=False)
-        else:
-            os.rename(temp,folder + 'Narrowed.csv')
-    else:
-        with open("Narrowed.csv","w") as my_empty_csv:
-            pass
-    narrow_count = Misc.getting_line_count(folder + 'Narrowed.csv')
-    return narrow_count
-
-
-def remove_repeated_params(inputfile, paramsnumbers, outputfile):
-    """
-    remove the repeated parameters lines. We donot need different runs for same simulated parameters
-
-    :param inputfile: generally all.csv file. whose first few columns are the parameters and last few columns are
-        ss
-    :param paramsnumbers: the number of parameters in the files. so that the ss part is separated
-    :param outputfile: the path of the output file
-    :return: will return the path of outputfile
-    """
-    params = pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
-    linenumbers = params.drop_duplicates().index.values
-    temp = ABC.ABC_DLS_NS.extracting_by_linenumber(file=inputfile,linenumbers=linenumbers,
-        outputfile=outputfile)
-    return temp
 
 
 ##input info extraction
@@ -88,19 +40,20 @@ if 'increase' in config:
         noise = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
             config["hardrange_file"])
 # real snakemake pipeline starts here
-localrules: finalize,info_sfs
+localrules: finalize,info_sfs,calculating_lmrd
 
 rule finalize:
     """
-    Finalizing everything and removing unnecessary file. Also counts how many time it ran important if you put the 
-    snakemake inside a while loop and you want to count it
-    input: output from params_sfs. demography/Newrange.csv. demography/Narrowed.csv updated All_rr.csv
+    Finalizing everything and removing unnecessary file. Also add the log of mean range decrease (lmrd) in lmrd.out 
+    file. So you can see how the lmrd evolves per cycle. 
+    input: output from params_sfs. demography/Newrange.csv. demography/Narrowed.csv updated All_rr.csv 
+    demography/lmrd.out
     output: remove demography folder so that we can start a run again. moving important file to current directory 
-    All.csv, Newrange.csv and Narrowed.csv
+    All.csv, Newrange.csv and Narrowed.csv adding new lmrd in lmrd.out
     """
     input:
         config['demography'] + '/Newrange.csv',config['demography'] + '/All_rr.csv',
-        config['demography'] + '/Narrowed.csv'
+        config['demography'] + '/Narrowed.csv',config['demography'] + '/lmrd.out'
     output:
         'Newrange.csv'
     shell:
@@ -108,11 +61,28 @@ rule finalize:
         mv {input[0]} ./
         mv {input[1]} ./All.csv 
         mv {input[2]} ./
-        rm -fR {config[demography]}
-        touch count.out
-        awk '{{print $1+1}}' count.out > tmp && mv tmp count.out
+        touch lmrd.out
+        cat {input[3]} >> lmrd.out
+        rm -fR {config[demography]}        
         """
-
+rule calculating_lmrd:
+    """
+    calculating log of mean range decrease (lmrd) for the newrange over hardrange. 
+    input: Newrange.csv which has information of posterior range of this cycle and hardrage.csv which has hardrange 
+    information
+    output: will create lmrd.out in demography folder and print lmrd there
+    """
+    input:
+        config['demography'] + '/Newrange.csv'
+    output:
+        config['demography'] + '/lmrd.out'
+    run:
+        if "hardrange_file" in config:
+            lmrd=ABC_DLS_SMC_Snakemake.lmrd4mcsv(hardrange_file=config["hardrange_file"],newrange_file=input[0])
+        else:
+            lmrd=0
+        with open(output[0],'w') as f:
+            print(lmrd,file=f)
 rule reusing_simulations:
     """
     to recycle previous run of simulation will produce Narrowed.csv which has Priors+SFS within the new range output. 
@@ -126,11 +96,11 @@ rule reusing_simulations:
     params:
         parameteres.shape[0]
     run:
-        narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],folder=config['demography'] + '/')
+        ABC_DLS_SMC_Snakemake.narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],folder=config['demography'] + '/')
 
 rule params_sfs:
     """
-    Main run for ABC-DLS sequential sampling method. This will using Priors+SFS will give Posterior range which are 
+    Main run for ABC-DLS SMC sampling method. This will using Priors+SFS will give Posterior range which are 
     slightly closer to the real observed data that priors range
     input: output from info_sfs. demography/demography.csv.gz
     output: will produce Newrange.csv which has information of posterior range.  
@@ -178,7 +148,7 @@ rule all_repeat_remove:
     params:
         int(parameteres.shape[0])
     run:
-        remove_repeated_params(inputfile=input[0],paramsnumbers=params[0],outputfile=output[0])
+        ABC_DLS_SMC_Snakemake.remove_repeated_params(inputfile=input[0],paramsnumbers=params[0],outputfile=output[0])
 
 rule updating_all:
     """

@@ -2215,9 +2215,10 @@ class ABC_DLS_Params_After_Train(ABC_DLS_Params):
                                csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
 
-class ABC_DLS_NS(ABC_DLS_Params):
+# SMC stuff
+class ABC_DLS_SMC(ABC_DLS_Params):
     """
-    This is the main class  for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare
+    This is the main class  for ABC_DLS_NS SMC. with given model underlying parameters it will compare
     with real data and will predict minima and maxima with in the parameter range can be for real data
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
@@ -2456,6 +2457,9 @@ class ABC_DLS_NS(ABC_DLS_Params):
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
                                                   oldrange=oldrange, decrease=decrease)
+            if hardrange_file:
+                lmrd=cls.lmrd_calculation(newrange=newrange,hardrange=hardrange)
+                print('log of mean range decrease:',lmrd)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2675,3 +2679,17 @@ class ABC_DLS_NS(ABC_DLS_Params):
         output.close()
         Misc.removefiles(['temp.csv'], printing=False)
         return outputfile
+
+    @classmethod
+    def lmrd_calculation(cls, newrange:pandas.DataFrame, hardrange:pandas.DataFrame)-> float:
+        """
+        this will output log of mean range decrease for every cycle
+
+        :param newrange:  the new and updated range
+        :param hardrange: the old and hard range from where it all started
+        :return: will return the lmrd
+        """
+        newrange_dist = (newrange.iloc[:, 1] - newrange.iloc[:, 0]).abs()
+        hardrange_dist = (hardrange.iloc[:, 1] - hardrange.iloc[:, 0]).abs()
+        lmrd = numpy.log((newrange_dist / hardrange_dist).mean())
+        return lmrd
