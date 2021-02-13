@@ -2457,8 +2457,9 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
                                                   oldrange=oldrange, decrease=decrease)
-            lmrd=cls.lmrd_calculation(newrange=newrange,hardrange=hardrange)
-            print('log of mean range decrease:',lmrd)
+            if hardrange_file:
+                lmrd=cls.lmrd_calculation(newrange=newrange,hardrange=hardrange)
+                print('log of mean range decrease:',lmrd)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
