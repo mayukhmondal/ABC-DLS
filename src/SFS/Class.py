@@ -5,6 +5,7 @@ rather than only way to use it
 """
 import itertools
 import sys
+import os
 from multiprocessing import Pool as ThreadPool
 # type hint for readability
 from typing import Optional, Union, List, Tuple, Callable
@@ -14,7 +15,7 @@ import numpy
 import pandas
 
 from Classes import Misc
-
+from Classes import ABC
 
 class VCF2SFS():
     """
@@ -433,3 +434,57 @@ class MsPrime2SFS:
         for sim in sims:
             sfs += sim.allele_frequency_spectrum(sample_shape, polarised=True, span_normalise=False)
         return sfs
+
+
+class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
+    """
+    Just to have extrac function required for Snakemake file for SFS creation
+    """
+    @classmethod
+    def narrowing_input(cls,paramsnumbers, inputfile, rangefile, folder=''):
+        """
+        Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle
+
+        :param paramsnumbers: the number of parameters in the files. so that the ss part is separated
+        :param inputfile: generally all.csv file. whose first few columns are the parameters and last few columns are
+            ss
+        :param rangefile: the new range in pandas dataframe format. columns should be max and min and indexes should be
+                the parameters
+        :param folder: to define the output folder. default is '' meaning current folder
+        :return: will return the number of lines present in Narrowed.csv file which is created by the function
+        """
+        newrange = pandas.read_csv(rangefile, header=None, index_col=0).iloc[:, :2]
+        newrange.columns = ['min', 'max']
+        if Misc.getting_line_count(inputfile) > 0:
+            params = pandas.read_csv(inputfile, usecols=range(paramsnumbers), header=None)
+            linenumbers = (cls.narrowing_params(params=params, parmin=newrange['min'],
+                                                            parmax=newrange['max'])) - 1
+            temp = cls.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
+                                                            outputfile=folder + 'Narrows.csv')
+            if Misc.getting_line_count(temp) > 0:
+                _ = cls.shufling_joined_models(inputcsv=temp, output=folder + 'Narrowed.csv', header=False)
+                Misc.removefiles([folder + 'Narrows.csv'], printing=False)
+            else:
+                os.rename(temp, folder + 'Narrowed.csv')
+        else:
+            with open("Narrowed.csv", "w") as my_empty_csv:
+                pass
+        narrow_count = Misc.getting_line_count(folder + 'Narrowed.csv')
+        return narrow_count
+
+    @classmethod
+    def remove_repeated_params(cls,inputfile, paramsnumbers, outputfile):
+        """
+        remove the repeated parameters lines. We donot need different runs for same simulated parameters
+
+        :param inputfile: generally all.csv file. whose first few columns are the parameters and last few columns are
+            ss
+        :param paramsnumbers: the number of parameters in the files. so that the ss part is separated
+        :param outputfile: the path of the output file
+        :return: will return the path of outputfile
+        """
+        params = pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
+        linenumbers = params.drop_duplicates().index.values
+        temp = cls.extracting_by_linenumber(file=inputfile,linenumbers=linenumbers,
+            outputfile=outputfile)
+        return temp

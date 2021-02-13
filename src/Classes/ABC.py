@@ -2215,9 +2215,10 @@ class ABC_DLS_Params_After_Train(ABC_DLS_Params):
                                csvout=csvout, cvrepeats=cvrepeats, folder=folder, frac=frac)
 
 
-class ABC_DLS_NS(ABC_DLS_Params):
+# SMC stuff
+class ABC_DLS_SMC(ABC_DLS_Params):
     """
-    This is the main class  for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare
+    This is the main class  for ABC_DLS_NS SMC. with given model underlying parameters it will compare
     with real data and will predict minima and maxima with in the parameter range can be for real data
 
     :param info: the path of info file whose file column is the path of the file and second column defining the
