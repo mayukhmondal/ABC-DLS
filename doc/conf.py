@@ -55,5 +55,3 @@ html_static_path = ['_static']
 source_suffix=['.rst','.md']
 # no sort for source clasess
 autodoc_member_order = 'bysource'
-extensions = ['rst2pdf.pdfbuilder']
-pdf_documents = [('index', u'rst2pdf', u'ABC-DLS', u'Mayukh Mondal'),]
