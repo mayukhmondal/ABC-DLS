@@ -720,13 +720,15 @@ class ABC_DLS_Classification:
             else:
                 predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
+        print("Number of Samples per model for test:")
+        print(indexnn.value_counts().sort_index().to_frame().T)
         ssnn.index = indexnn
         # prepare for R as it do not like very small numbers
         ssnn = ssnn.round(5)
         predictednn = predictednn.round(5)
         # abc and plot by r
         print('Predicted by NN')
-        #print(sorted(y_cat_dict.items()))
+        # print(sorted(y_cat_dict.items()))
         with numpy.printoptions(threshold=numpy.inf):
             print(predictednn.rename(columns=y_cat_dict))
         if indexnn.value_counts().min() < cvrepeats:
@@ -2458,8 +2460,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
                                                   oldrange=oldrange, decrease=decrease)
             if hardrange_file:
-                lmrd=cls.lmrd_calculation(newrange=newrange,hardrange=hardrange)
-                print('log of mean range decrease:',lmrd)
+                lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
+                print('log of mean range decrease:', lmrd)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2681,7 +2683,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         return outputfile
 
     @classmethod
-    def lmrd_calculation(cls, newrange:pandas.DataFrame, hardrange:pandas.DataFrame)-> float:
+    def lmrd_calculation(cls, newrange: pandas.DataFrame, hardrange: pandas.DataFrame) -> float:
         """
         this will output log of mean range decrease for every cycle
 
