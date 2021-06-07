@@ -800,7 +800,6 @@ class ABC_DLS_Classification:
         ssnn = numpy.mean(numpy.array(ssnn), axis=0)
         return pandas.DataFrame(ssnn)
 
-
     @classmethod
     def print_after_match_linestart(cls, file: str, match: str) -> None:
         """
@@ -818,7 +817,6 @@ class ABC_DLS_Classification:
             for line in ifile:
                 print(line.strip())
         return None
-
 
     @classmethod
     def r_summary(cls, rmodel: robjects, target: str = 'Data:') -> None:
@@ -838,7 +836,6 @@ class ABC_DLS_Classification:
         robjects.r['sink']()
         cls.print_after_match_linestart(temp_name, target)
         os.remove(temp_name)
-
 
     @classmethod
     def plot_power_of_ss(cls, ss: pandas.DataFrame, index: Union[pandas.Series, pandas.Index],
@@ -878,7 +875,6 @@ class ABC_DLS_Classification:
         # instead we could have used robjects.r['summary'](cvmodsel) if it was not bugged
         robjects.r['plot'](cvmodsel)
 
-
     @classmethod
     def model_selection(cls, target: pandas.DataFrame, ss: pandas.DataFrame,
                         index: Union[pandas.Series, pandas.Index], tol: float = .005,
@@ -900,7 +896,6 @@ class ABC_DLS_Classification:
         modsel = abc.postpr(target=target, index=index, sumstat=ss, tol=tol, method=method)
         cls.r_summary(modsel)
         return None
-
 
     @classmethod
     def gfit_all(cls, observed: pandas.DataFrame, ss: pandas.DataFrame, y_cat_dict: Dict[int, str], extra: str = '',
@@ -924,7 +919,6 @@ class ABC_DLS_Classification:
             ss_sub = ss.iloc[modelindex]
             cls.goodness_fit(target=observed, ss=ss_sub, name=y_cat_dict[key], extra=extra, tol=tol, repeats=repeats)
 
-
     @classmethod
     def goodness_fit(cls, target: pandas.DataFrame, ss: pandas.DataFrame, name: str, tol: float = .005,
                      extra: str = '', repeats: int = 100):
@@ -944,7 +938,6 @@ class ABC_DLS_Classification:
         print(robjects.r['summary'](fit))
         out = name + ' ' + extra
         robjects.r['plot'](fit, main="Histogram under H0:" + out)
-
 
     @classmethod
     def outputing_csv(cls, modelindex: Union[pandas.Series, pandas.Index],
