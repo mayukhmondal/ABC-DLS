@@ -39,6 +39,8 @@ if 'increase' in config:
     if config["increase"] > 0:
         noise = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
             config["hardrange_file"])
+if not 'mutation_rate' in config:
+    config['mutation_rate'] = 1.45e-8
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd
 
@@ -65,6 +67,7 @@ rule finalize:
         cat {input[3]} >> lmrd.out
         rm -fR {config[demography]}        
         """
+
 rule calculating_lmrd:
     """
     calculating log of mean range decrease (lmrd) for the newrange over hardrange. 
@@ -78,11 +81,12 @@ rule calculating_lmrd:
         config['demography'] + '/lmrd.out'
     run:
         if "hardrange_file" in config:
-            lmrd=ABC_DLS_SMC_Snakemake.lmrd4mcsv(hardrange_file=config["hardrange_file"],newrange_file=input[0])
+            lmrd = ABC_DLS_SMC_Snakemake.lmrd4mcsv(hardrange_file=config["hardrange_file"],newrange_file=input[0])
         else:
-            lmrd=0
+            lmrd = 0
         with open(output[0],'w') as f:
             print(lmrd,file=f)
+
 rule reusing_simulations:
     """
     to recycle previous run of simulation will produce Narrowed.csv which has Priors+SFS within the new range output. 
@@ -96,7 +100,8 @@ rule reusing_simulations:
     params:
         parameteres.shape[0]
     run:
-        ABC_DLS_SMC_Snakemake.narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],folder=config['demography'] + '/')
+        ABC_DLS_SMC_Snakemake.narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],
+            folder=config['demography'] + '/')
 
 rule params_sfs:
     """
@@ -198,7 +203,8 @@ rule run_SFS:
     threads: config['threads']
     shell:
         "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
-        "--total_length {config[total_length]} {config[demography]} > {output}"
+        "--total_length {config[total_length]} --mutation_rate {config[mutation_rate]} {config[demography]} >"
+        " {output}"
 
 rule priors_add_header:
     """
