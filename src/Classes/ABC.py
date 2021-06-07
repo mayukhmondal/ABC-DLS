@@ -711,13 +711,14 @@ class ABC_DLS_Classification:
         ssnn, predictednn = cls.prepare4ABC(ModelSeparation=ModelSeparation, sfs=sfs, x_test=x_test, y_test=y_test,
                                             scale_x=scale_x, y_cat_dict=y_cat_dict, pred_repeat=pred_repeat)
         print("Number of Samples per model for test:")
-        print(ssnn.index.value_counts().sort_index().to_frame().T.to_string())
+        model_counts = cls.count_samples(indexes=ssnn.index, y_cat_dict=y_cat_dict)
+        print(model_counts.to_string())
         print('Predicted by NN')
         print(predictednn.rename(columns=y_cat_dict).to_string())
-        if ssnn.index.value_counts().min() < cvrepeats:
+        if model_counts.iloc[0].min() < cvrepeats:
             print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
-                  'lesser number.')
-            print(ssnn.index.value_counts())
+                  'lesser number of cv repeats or more number of samples per model.')
+            print(model_counts.T)
             sys.exit(1)
         robjects.r['pdf'](folder + "NN.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
@@ -734,7 +735,8 @@ class ABC_DLS_Classification:
     @classmethod
     def prepare4ABC(cls, ModelSeparation: keras.models.Model, sfs: pandas.Series,
                     x_test: Union[numpy.ndarray, HDF5Matrix], y_test: Union[numpy.ndarray, HDF5Matrix],
-                    scale_x: Optional[preprocessing.MinMaxScaler], y_cat_dict: Dict[int, str], pred_repeat: int = 1):
+                    scale_x: Optional[preprocessing.MinMaxScaler], y_cat_dict: Dict[int, str],
+                    pred_repeat: int = 1) -> [pandas.DataFrame, pandas.DataFrame]:
         """
         prepare data for ABC from NN predictions.
         :param ModelSeparation: The fitted keras model
@@ -769,6 +771,19 @@ class ABC_DLS_Classification:
         return ssnn, predictednn
 
     @classmethod
+    def count_samples(cls, indexes: Union[pandas.Series, pandas.Index], y_cat_dict: Dict[int, str]) -> pandas.DataFrame:
+        """
+        counting the number of samples present in y_test data
+
+        :param indexes: the index of the models
+        :param y_cat_dict: name of all the models in a dict format
+        :return: will return the counts per model in pandas dataframe format
+        """
+        counts = pandas.Series(0, index=y_cat_dict.values()).sort_index()
+        counts.update(indexes.value_counts())
+        return counts.to_frame().T
+
+    @classmethod
     def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
                              repeats: int = 100) -> pandas.DataFrame:
         """
@@ -784,6 +799,7 @@ class ABC_DLS_Classification:
         ssnn = [Model.predict(x[:]) for _ in range(repeats)]
         ssnn = numpy.mean(numpy.array(ssnn), axis=0)
         return pandas.DataFrame(ssnn)
+
 
     @classmethod
     def print_after_match_linestart(cls, file: str, match: str) -> None:
@@ -802,6 +818,7 @@ class ABC_DLS_Classification:
             for line in ifile:
                 print(line.strip())
         return None
+
 
     @classmethod
     def r_summary(cls, rmodel: robjects, target: str = 'Data:') -> None:
@@ -822,8 +839,9 @@ class ABC_DLS_Classification:
         cls.print_after_match_linestart(temp_name, target)
         os.remove(temp_name)
 
+
     @classmethod
-    def plot_power_of_ss(cls, ss: pandas.DataFrame, index: Union[pandas.Series, pandas.core.indexes.base.Index],
+    def plot_power_of_ss(cls, ss: pandas.DataFrame, index: Union[pandas.Series, pandas.Index],
                          tol: float = .005, repeats: int = 100,
                          method: str = "mnlogistic") -> None:
         """
@@ -860,9 +878,10 @@ class ABC_DLS_Classification:
         # instead we could have used robjects.r['summary'](cvmodsel) if it was not bugged
         robjects.r['plot'](cvmodsel)
 
+
     @classmethod
     def model_selection(cls, target: pandas.DataFrame, ss: pandas.DataFrame,
-                        index: Union[pandas.Series, pandas.core.indexes.base.Index], tol: float = .005,
+                        index: Union[pandas.Series, pandas.Index], tol: float = .005,
                         method: str = "mnlogistic") -> None:
         """
         As the name suggest. Given the number of model it will select correct model using postpr in abc
@@ -881,6 +900,7 @@ class ABC_DLS_Classification:
         modsel = abc.postpr(target=target, index=index, sumstat=ss, tol=tol, method=method)
         cls.r_summary(modsel)
         return None
+
 
     @classmethod
     def gfit_all(cls, observed: pandas.DataFrame, ss: pandas.DataFrame, y_cat_dict: Dict[int, str], extra: str = '',
@@ -904,6 +924,7 @@ class ABC_DLS_Classification:
             ss_sub = ss.iloc[modelindex]
             cls.goodness_fit(target=observed, ss=ss_sub, name=y_cat_dict[key], extra=extra, tol=tol, repeats=repeats)
 
+
     @classmethod
     def goodness_fit(cls, target: pandas.DataFrame, ss: pandas.DataFrame, name: str, tol: float = .005,
                      extra: str = '', repeats: int = 100):
@@ -924,8 +945,9 @@ class ABC_DLS_Classification:
         out = name + ' ' + extra
         robjects.r['plot'](fit, main="Histogram under H0:" + out)
 
+
     @classmethod
-    def outputing_csv(cls, modelindex: Union[pandas.Series, pandas.core.indexes.base.Index],
+    def outputing_csv(cls, modelindex: Union[pandas.Series, pandas.Index],
                       ss_predictions: pandas.DataFrame,
                       predict4mreal: pandas.DataFrame, folder: str = ''):
         """
