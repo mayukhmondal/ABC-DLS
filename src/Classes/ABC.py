@@ -721,16 +721,14 @@ class ABC_DLS_Classification:
                 predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         print("Number of Samples per model for test:")
-        print(indexnn.value_counts().sort_index().to_frame().T)
+        print(indexnn.value_counts().sort_index().to_frame().T.to_string())
         ssnn.index = indexnn
         # prepare for R as it do not like very small numbers
         ssnn = ssnn.round(5)
         predictednn = predictednn.round(5)
         # abc and plot by r
         print('Predicted by NN')
-        # print(sorted(y_cat_dict.items()))
-        with numpy.printoptions(threshold=numpy.inf):
-            print(predictednn.rename(columns=y_cat_dict))
+        print(predictednn.rename(columns=y_cat_dict).to_string())
         if indexnn.value_counts().min() < cvrepeats:
             print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
                   'lesser number.')
