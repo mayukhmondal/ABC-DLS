@@ -726,9 +726,9 @@ class ABC_DLS_Classification:
         predictednn = predictednn.round(5)
         # abc and plot by r
         print('Predicted by NN')
-        #print(sorted(y_cat_dict.items()))
+        print(sorted(y_cat_dict.items()))
         with numpy.printoptions(threshold=numpy.inf):
-            print(predictednn.rename(columns=y_cat_dict))
+            print(predictednn)
         if indexnn.value_counts().min() < cvrepeats:
             print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
                   'lesser number.')
