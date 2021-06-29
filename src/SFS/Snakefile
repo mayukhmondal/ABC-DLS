@@ -41,8 +41,8 @@ if 'increase' in config:
             config["hardrange_file"])
 if not 'mutation_rate' in config:
     config['mutation_rate'] = 1.45e-8
-if 'LDblock' in config:
-    ld='--LDblock '+config['LDblock']
+if 'ldblock' in config:
+    ld='--ldblock '+config['ldblock']
 else:
     ld=''
 
