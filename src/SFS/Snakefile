@@ -41,6 +41,11 @@ if 'increase' in config:
             config["hardrange_file"])
 if not 'mutation_rate' in config:
     config['mutation_rate'] = 1.45e-8
+if 'ldblock' in config:
+    ld='--ldblock '+config['ldblock']
+else:
+    ld=''
+
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd
 
@@ -198,13 +203,15 @@ rule run_SFS:
         config['demography'] + '/Priors_{jobint}.csv'
     output:
         config['demography'] + '/' + config['demography'] + '_{jobint}.csv'
+    params:
+        ld=ld
     resources:
         mem=6000
     threads: config['threads']
     shell:
         "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
-        "--total_length {config[total_length]} --mutation_rate {config[mutation_rate]} {config[demography]} >"
-        " {output}"
+        "--total_length {config[total_length]} --mutation_rate {config[mutation_rate]} {config[demography]} {params.ld}"
+        " > {output}"
 
 rule priors_add_header:
     """

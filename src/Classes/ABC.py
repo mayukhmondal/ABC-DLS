@@ -707,6 +707,50 @@ class ABC_DLS_Classification:
         cls.check_results(results=[x_test[0:2]], observed=sfs)
         print("Evaluate with test:")
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
+        # abc and plot by r
+        ssnn, predictednn = cls.prepare4ABC(ModelSeparation=ModelSeparation, sfs=sfs, x_test=x_test, y_test=y_test,
+                                            scale_x=scale_x, y_cat_dict=y_cat_dict, pred_repeat=pred_repeat)
+        print("Number of Samples per model for test:")
+        model_counts = cls.count_samples(indexes=ssnn.index, y_cat_dict=y_cat_dict)
+        print(model_counts.to_string())
+        print('Predicted by NN')
+        print(predictednn.rename(columns=y_cat_dict).to_string())
+        if model_counts.iloc[0].min() < cvrepeats:
+            print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
+                  'lesser number of cv repeats or more number of samples per model.')
+            print(model_counts.T)
+            sys.exit(1)
+        robjects.r['pdf'](folder + "NN.pdf")
+        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
+        cls.model_selection(target=predictednn, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
+        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance,
+                     repeats=cvrepeats)
+        robjects.r['dev.off']()
+        if csvout:
+            cls.outputing_csv(modelindex=ssnn.index,
+                              ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(
+                                  columns=y_cat_dict),
+                              predict4mreal=predictednn.rename(columns=y_cat_dict), folder=folder)
+
+    @classmethod
+    def prepare4ABC(cls, ModelSeparation: keras.models.Model, sfs: pandas.Series,
+                    x_test: Union[numpy.ndarray, HDF5Matrix], y_test: Union[numpy.ndarray, HDF5Matrix],
+                    scale_x: Optional[preprocessing.MinMaxScaler], y_cat_dict: Dict[int, str],
+                    pred_repeat: int = 1) -> [pandas.DataFrame, pandas.DataFrame]:
+        """
+        prepare data for ABC from NN predictions.
+        :param ModelSeparation: The fitted keras model
+        :param sfs: the sfs in series format
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the test part of y aka models name. should be used keras.utils.to_categorical to better result
+        :param scale_x: the MinMax scaler of x axis. can be None
+        :param y_cat_dict: name of all the models in a dict format
+        :param pred_repeat: in case you want to run multiple run of prediction on observed data. if you use it your
+            training must need some randomization like the custom Gaussian noise i have implemented here. The idea is by
+            using random noise you are producing multiple run of the same observed data
+        :return: will return nn predicted summary statistics ssnn and nn predicted on real data predictednn
+        """
+
         if pred_repeat > 1:
             ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=pred_repeat)
             if scale_x:
@@ -724,27 +768,20 @@ class ABC_DLS_Classification:
         # prepare for R as it do not like very small numbers
         ssnn = ssnn.round(5)
         predictednn = predictednn.round(5)
-        # abc and plot by r
-        print('Predicted by NN')
-        #print(sorted(y_cat_dict.items()))
-        with numpy.printoptions(threshold=numpy.inf):
-            print(predictednn.rename(columns=y_cat_dict))
-        if indexnn.value_counts().min() < cvrepeats:
-            print('Cv repeats cannot be more than the number of samples present for a particular model. Please use '
-                  'lesser number.')
-            print(indexnn.value_counts())
-            sys.exit(1)
-        robjects.r['pdf'](folder + "NN.pdf")
-        cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
-        cls.model_selection(target=predictednn, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
-        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance,
-                     repeats=cvrepeats)
-        robjects.r['dev.off']()
-        if csvout:
-            cls.outputing_csv(modelindex=indexnn,
-                              ss_predictions=pandas.DataFrame(ModelSeparation.predict(x_test[:])).rename(
-                                  columns=y_cat_dict),
-                              predict4mreal=predictednn.rename(columns=y_cat_dict), folder=folder)
+        return ssnn, predictednn
+
+    @classmethod
+    def count_samples(cls, indexes: Union[pandas.Series, pandas.Index], y_cat_dict: Dict[int, str]) -> pandas.DataFrame:
+        """
+        counting the number of samples present in y_test data
+
+        :param indexes: the index of the models
+        :param y_cat_dict: name of all the models in a dict format
+        :return: will return the counts per model in pandas dataframe format
+        """
+        counts = pandas.Series(0, index=y_cat_dict.values()).sort_index()
+        counts.update(indexes.value_counts())
+        return counts.to_frame().T
 
     @classmethod
     def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
@@ -801,7 +838,8 @@ class ABC_DLS_Classification:
         os.remove(temp_name)
 
     @classmethod
-    def plot_power_of_ss(cls, ss: pandas.DataFrame, index: pandas.Series, tol: float = .005, repeats: int = 100,
+    def plot_power_of_ss(cls, ss: pandas.DataFrame, index: Union[pandas.Series, pandas.Index],
+                         tol: float = .005, repeats: int = 100,
                          method: str = "mnlogistic") -> None:
         """
         now to test the power of summary statistics using r_abc
@@ -838,7 +876,8 @@ class ABC_DLS_Classification:
         robjects.r['plot'](cvmodsel)
 
     @classmethod
-    def model_selection(cls, target: pandas.DataFrame, ss: pandas.DataFrame, index: pandas.Series, tol: float = .005,
+    def model_selection(cls, target: pandas.DataFrame, ss: pandas.DataFrame,
+                        index: Union[pandas.Series, pandas.Index], tol: float = .005,
                         method: str = "mnlogistic") -> None:
         """
         As the name suggest. Given the number of model it will select correct model using postpr in abc
@@ -901,7 +940,8 @@ class ABC_DLS_Classification:
         robjects.r['plot'](fit, main="Histogram under H0:" + out)
 
     @classmethod
-    def outputing_csv(cls, modelindex: pandas.Series, ss_predictions: pandas.DataFrame,
+    def outputing_csv(cls, modelindex: Union[pandas.Series, pandas.Index],
+                      ss_predictions: pandas.DataFrame,
                       predict4mreal: pandas.DataFrame, folder: str = ''):
         """
         in case of everything satisfied. this will output the test data set in csv format which then later can be used
@@ -915,7 +955,7 @@ class ABC_DLS_Classification:
         :return: will not return anything but will create files model_index.csv.gz,ss_predicted.csv.gz,ss_target.csv.gz
             and will remove x_test.h5, y_test.h5, x.h5, y.h5, scale_x.sav, scale_y.sav, params_header.csv
         """
-        modelindex = modelindex.rename('model_name')
+        modelindex = pandas.Series(modelindex).rename('model_name')
         modelindex.to_csv(folder + 'model_index.csv.gz', index=False, header=True)
         ss_predictions.to_csv(folder + 'ss_predicted.csv.gz', index=False)
         predict4mreal.to_csv(folder + 'ss_target.csv.gz', index=False)
@@ -2458,8 +2498,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
                                                   oldrange=oldrange, decrease=decrease)
             if hardrange_file:
-                lmrd=cls.lmrd_calculation(newrange=newrange,hardrange=hardrange)
-                print('log of mean range decrease:',lmrd)
+                lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
+                print('log of mean range decrease:', lmrd)
         newrange.to_csv(folder + 'Newrange.csv', header=False)
         if csvout:
             _ = cls.narrowing_input(info=info, params=params, newrange=newrange, folder=folder)
@@ -2681,7 +2721,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         return outputfile
 
     @classmethod
-    def lmrd_calculation(cls, newrange:pandas.DataFrame, hardrange:pandas.DataFrame)-> float:
+    def lmrd_calculation(cls, newrange: pandas.DataFrame, hardrange: pandas.DataFrame) -> float:
         """
         this will output log of mean range decrease for every cycle
 

@@ -55,9 +55,9 @@ For Model selection, parameters estimation and parameter estimation using SMC, r
 ### Installation Issues 
 In case you try to install it to an already existed conda environment that already has R (r-base), it can conflict with the rpy2 when it tries to automatically download an abc package from R saying abc package does not exist. In that case, create a new environment. 
 ## Citation
-### Revisiting the out of Africa event with a novel deep learning approach  
+### Revisiting the out of Africa event with a deep learning approach  
 Francesco Montinaro, Vasili Pankratov, Burak Yelmen, Luca Pagani, Mayukh Mondal  
-bioRxiv 2020.12.10.419069; doi: https://doi.org/10.1101/2020.12.10.419069
+The American Journal of Human Genetics; doi: https://doi.org/10.1016/j.ajhg.2021.09.006
 ## Contact 
 The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact 
 <mondal.mayukh@gmail.com>
