@@ -58,7 +58,6 @@ class VCF2SFS():
             pandas.Series: SFS in pandas.Series format
         """
         popdict = cls.popdict4sickitallel(vcffile=vcffile, popfile=popfile)
-        print(popdict)
         subpopdict = cls.subsetting_pop(popdict=popdict, sfs_pop=sfs_pop)
         fs_shape = [len(popdict[pop]) * 2 + 1 for pop in sfs_pop]
         sfs = cls.vcf2sfs(vcf=vcffile, fs_shape=fs_shape, sfs_pop=sfs_pop, subpopdict=subpopdict,
