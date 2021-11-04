@@ -16,7 +16,7 @@ parser.add_argument('vcffile',
                     help='the path of the vcf file. can be zipped')
 parser.add_argument('--popfile',
                     help="The file where population format is written. first column is individual, second column is "
-                         "population. the file should be sorted according the simulation paradigm",
+                         "population",
                     required=True)
 parser.add_argument('--sfs_pop', help="the name of pop. important for the order. example: pop1,pop2,pop3 ",
                     required=True)
