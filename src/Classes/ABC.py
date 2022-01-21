@@ -2707,15 +2707,15 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         :param outputfile: the path of output file where you want to write
         :return: will return the path of output file
         """
-
-        import linecache
         if file[-3:] == '.gz':
             os.system("zcat " + file + " > temp.csv ")
             file = 'temp.csv'
 
         output = open(outputfile, 'w')
-        for ln in linenumbers:
-            print(linecache.getline(file, ln), file=output, end='')
+        with open(file) as f:
+            for lno, ln in enumerate(f):
+                if lno in linenumbers:
+                    print(ln, file=output, end='')
         output.close()
         Misc.removefiles(['temp.csv'], printing=False)
         return outputfile
