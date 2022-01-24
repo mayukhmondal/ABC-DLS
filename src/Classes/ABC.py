@@ -249,20 +249,8 @@ class ABC_DLS_Classification:
         :param file: the path of the sfs file
         :return: will return the sfs in series format
         """
-        count = Misc.getting_line_count(file)
-        if count == 1:
-            # without header format
-            ss = pandas.read_csv(file, header=None).transpose()
-        elif count == 2:
-            # with header format
-            ss = pandas.read_csv(file).transpose()
-        elif count == 3:
-            # dadi or moments format
-            ss = pandas.read_csv(file, skiprows=1, nrows=2, header=None, sep=' ').transpose()
-        else:
-            print('Cant understand the format of the input sfs file. Please check')
-            sys.exit(1)
-        return ss[0]
+        ss=pandas.read_csv(file)
+        return ss
 
     @classmethod
     def check_results(cls, results: List[pandas.DataFrame], observed: pandas.Series) -> None:
@@ -275,11 +263,18 @@ class ABC_DLS_Classification:
         :return: will not return anything. but in case of problem will stop
         """
         result_columns = [result.shape[1] for result in results]
-        if len(set(result_columns + [observed.shape[0]])) > 1:
-            print("the observed columns and/or result columns do no match. check")
-            print("result_columns:", result_columns)
-            print("observed_columns", observed.shape[0])
-            sys.exit(1)
+        if observed.ndim > 1:
+            if len(set(result_columns + [observed.shape[1]])) > 1:
+                print("the observed columns and/or result columns do no match. check")
+                print("result_columns:", result_columns)
+                print("observed_columns", observed.shape[0])
+                sys.exit(1)
+        else:
+            if len(set(result_columns + [observed.shape[0]])) > 1:
+                print("the observed columns and/or result columns do no match. check")
+                print("result_columns:", result_columns)
+                print("observed_columns", observed.shape[0])
+                sys.exit(1)
 
     @classmethod
     def subsetting_file_concating(cls, filename: str, params_number: int, nrows: int, modelname: str,
@@ -709,7 +704,7 @@ class ABC_DLS_Classification:
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
         # abc and plot by r
         ssnn, predictednn = cls.prepare4ABC(ModelSeparation=ModelSeparation, sfs=sfs, x_test=x_test, y_test=y_test,
-                                            scale_x=scale_x, y_cat_dict=y_cat_dict, pred_repeat=pred_repeat)
+                                        scale_x=scale_x, y_cat_dict=y_cat_dict, pred_repeat=pred_repeat)
         print("Number of Samples per model for test:")
         model_counts = cls.count_samples(indexes=ssnn.index, y_cat_dict=y_cat_dict)
         print(model_counts.to_string())
@@ -722,9 +717,12 @@ class ABC_DLS_Classification:
             sys.exit(1)
         robjects.r['pdf'](folder + "NN.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
-        cls.model_selection(target=predictednn, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
-        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance,
-                     repeats=cvrepeats)
+        for index, row in predictednn.iterrows():
+            ln = index + 1
+            print("# SS_Line", ln)
+            cls.model_selection(target=row, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
+            cls.gfit_all(observed=row, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_: SS_Line ' + str(ln), tol=tolerance,
+                         repeats=cvrepeats)
         robjects.r['dev.off']()
         if csvout:
             cls.outputing_csv(modelindex=ssnn.index,
@@ -750,7 +748,6 @@ class ABC_DLS_Classification:
             using random noise you are producing multiple run of the same observed data
         :return: will return nn predicted summary statistics ssnn and nn predicted on real data predictednn
         """
-
         if pred_repeat > 1:
             ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=pred_repeat)
             if scale_x:
@@ -760,9 +757,16 @@ class ABC_DLS_Classification:
         else:
             ssnn = pandas.DataFrame(ModelSeparation.predict(x_test[:]))
             if scale_x:
-                predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
+                if sfs.shape[0] > 1:
+                    predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values)))
+                else:
+                    predictednn = pandas.DataFrame(
+                        ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
             else:
-                predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
+                if sfs.shape[0] > 1:
+                    predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values))
+                else:
+                    predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         ssnn.index = indexnn
         # prepare for R as it do not like very small numbers
