@@ -2714,7 +2714,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         if file[-3:] == '.gz':
             os.system("zcat " + file + " > temp.csv ")
             file = 'temp.csv'
-
+        linenumbers=linenumbers-1 #as python start with 0
         output = open(outputfile, 'w')
         with open(file) as f:
             for lno, ln in enumerate(f):
