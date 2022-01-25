@@ -105,7 +105,7 @@ python src/Run_Classification.py After_train --test_size 1000 --tolerance 0.01 -
 - --test_size 1000 and --tolerance .01  
 Same as above for CV 
 - --ssfile [examples/YRI_FRN_HAN.observed.csv](YRI_FRN_HAN.observed.csv)  
-To define the observed csv file. Here we put YRI_FRN_HAN (Yoruba, French and Han Chinese) from the [High Coverage HGDP data](https://doi.org/10.1126/science.aay5012) SFS file as SS. Having header is mandatory. It can have multiple lines. Individual line signifies same summary statistics coming from different individuals.  If have many lines, every line will run independently for abc analysis (unlike for parameter estimation or SMC, where an average of the predicted values will be used).  
+To define the observed csv file. Here we put YRI_FRN_HAN (Yoruba, French and Han Chinese) from the [High Coverage HGDP data](https://doi.org/10.1126/science.aay5012) SFS file as SS. Having header is mandatory. It can have multiple lines. Individual line signifies same summary statistics coming from different individuals.  If have many lines, every line will run independently for abc analysis (unlike for parameter estimation or SMC, where an average of the nn predicted values will be used).  
 - --frac  4.636757528
 This option will define a fraction that has to be multiplied with observed data if the length of the simulated region does no match with observed or real data. For example, I have simulated 3gbp regions per individual in this particular case, but the real data comes after filtering around 647mbp region. To make it equal, I have to multiply the observed data with (3gbp/647mbp) or 4.636757528
 - --csvout  
