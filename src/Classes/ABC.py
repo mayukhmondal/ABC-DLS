@@ -1723,8 +1723,9 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
         ss = ss * numpy.array(frac)
-        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
-                                                                                 scale_x, scale_y, params_names, ss)
+        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(
+            ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test, scale_x=scale_x, scale_y=scale_y,
+            params_names=params_names, ss=ss)
 
         print("ANN predict")
         print(predict4mreal.transpose())
