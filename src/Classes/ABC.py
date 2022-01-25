@@ -1729,7 +1729,8 @@ class ABC_DLS_Params(ABC_DLS_Classification):
 
         print("ANN predict")
         print(predict4mreal.transpose())
-
+        if predict4mreal.ndim > 1:
+            predict4mreal = pandas.DataFrame(predict4mreal.mean()).transpose()
         print('correlation between params. Prior')
         print(params_unscaled.corr().to_string())
 
@@ -1803,7 +1804,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
     def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
                           y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                           scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray,
-                          ss: pandas.Series) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
+                          ss: pandas.DataFrame) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
         """
         as the name suggest after ann ran it will prepare the data for abc analysis
 
@@ -1813,7 +1814,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         :param scale_x: the MinMax scaler of x axis. can be None
         :param scale_y: the MinMax scaler of y axis. can be None
         :param params_names: all the parameter or y header in a numpy.array
-        :param ss: the real ss in a pandas series
+        :param ss: the real ss in a pandas series or pandas dataframe in case multiple runs of same ss
         :return: will return test_prediction [ANN(x_test)_ unscaled y], predict4mreal [ANN(real_ss_scaled)_unscaled y]
             params_unscaled [y_test_unscaled y]
         """
@@ -1827,20 +1828,25 @@ class ABC_DLS_Params(ABC_DLS_Classification):
             test_predictions = pandas.DataFrame(test_predictions, columns=params_names[:y_test.shape[1]])
             params_unscaled = pandas.DataFrame(y_test[:], columns=params_names[-y_test.shape[1]:])
         if scale_x:
-            ssscaled = scale_x.transform(ss.values.reshape(1, -1))
+            if ss.ndim > 1:
+                ssscaled = scale_x.transform(ss.values)
+            else:
+                ssscaled = scale_x.transform(ss.values.reshape(1, -1))
             if scale_y:
                 predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
             else:
                 predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
         else:
-            ssscaled = ss.values.reshape(1, -1)
+            if ss.ndim > 1:
+                ssscaled = ss.values
+            else:
+                ssscaled = ss.values.reshape(1, -1)
             if scale_y:
                 predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
             else:
                 predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
 
         predict4mreal.columns = params_names[:y_test.shape[1]]
-
         test_predictions, predict4mreal, params_unscaled = cls.remove_constant(test_predictions=test_predictions,
                                                                                predict4mreal=predict4mreal,
                                                                                params_unscaled=params_unscaled)
@@ -1915,6 +1921,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         """
         import tempfile
         temp_name = next(tempfile._get_candidate_names())
+        print(target)
         if method == 'rejection' or method == 'loclinear':
             print('Separately')
             robjects.r['pdf'](name)

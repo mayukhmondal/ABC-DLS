@@ -29,7 +29,10 @@ sp.add_argument('--test_size',
                 default=10000, type=int)
 sp.add_argument('--chunksize',
                 help='If two big for the memory use chunk size. relatively slow but no problem with ram', type=float)
-sp.add_argument('--ssfile', help="The summary statistics file from real data", required=True)
+sp.add_argument('--ssfile', help="The summary statistics file from real data with header. Can have multiple line"
+                                 " assuming every single line is different run of same summary statistics for different"
+                                 "individuals. The predictions from NN will be averaged in case of multiple"
+                                 " lines.", required=True)
 sp.add_argument('--nn',
                 help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater'
                      'to your own problem. The def ANNModelCheck should be inside')
@@ -109,7 +112,10 @@ sp = subparsers.add_parser('After_train', help='This is to run the ABC analysis 
 sp.set_defaults(cmd='After_train')
 sp.add_argument('--folder',
                 help='in case you want to run the codes not in current working directory give the path', default='')
-sp.add_argument('--ssfile', help="The sfs file created from moments", required=True)
+sp.add_argument('--ssfile', help="The summary statistics file from real data with header. Can have multiple line"
+                                 " assuming every single line is different run of same summary statistics for different"
+                                 "individuals. The predictions from NN will be averaged in case of multiple"
+                                 " lines.", required=True)
 sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
