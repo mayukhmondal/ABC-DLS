@@ -249,7 +249,7 @@ class ABC_DLS_Classification:
         :param file: the path of the sfs file
         :return: will return the sfs in series format
         """
-        ss=pandas.read_csv(file)
+        ss = pandas.read_csv(file)
         return ss
 
     @classmethod
@@ -704,7 +704,7 @@ class ABC_DLS_Classification:
         ModelSeparation.evaluate(x_test, y_test, verbose=2)
         # abc and plot by r
         ssnn, predictednn = cls.prepare4ABC(ModelSeparation=ModelSeparation, sfs=sfs, x_test=x_test, y_test=y_test,
-                                        scale_x=scale_x, y_cat_dict=y_cat_dict, pred_repeat=pred_repeat)
+                                            scale_x=scale_x, y_cat_dict=y_cat_dict, pred_repeat=pred_repeat)
         print("Number of Samples per model for test:")
         model_counts = cls.count_samples(indexes=ssnn.index, y_cat_dict=y_cat_dict)
         print(model_counts.to_string())
@@ -2482,8 +2482,9 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
         ss = ss * numpy.array(frac)
-        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
-                                                                                 scale_x, scale_y, params_names, ss)
+        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(
+            ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test, scale_x=scale_x, scale_y=scale_y,
+            params_names=params_names, ss=ss)
         parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions,
                                                 tol=tol, method=method)
         newrange = pandas.concat([parmin, parmax], axis=1)
@@ -2714,7 +2715,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         if file[-3:] == '.gz':
             os.system("zcat " + file + " > temp.csv ")
             file = 'temp.csv'
-        linenumbers=linenumbers-1 #as python start with 0
+        linenumbers = linenumbers - 1  # as python start with 0
         output = open(outputfile, 'w')
         with open(file) as f:
             for lno, ln in enumerate(f):
