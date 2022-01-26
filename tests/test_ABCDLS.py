@@ -13,7 +13,6 @@ from src.Classes import Misc
 from SFS import Class
 
 from collections import Counter
-from tensorflow.keras.utils import HDF5Matrix
 import pandas
 import numpy
 import joblib
@@ -45,13 +44,11 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
     # checking scale file
     assert joblib.load('cls/scale_x.sav'), "cant read the file properly. scale_x.sav"
     # h5 file checks
-    assert HDF5Matrix('cls/x.h5',
-                      'mydata'), 'Cant even read x.h5. The file do not looks like h5py. At least keras cant read it'
-    assert HDF5Matrix('cls/y.h5',
-                      'mydata'), 'Cant even read y.h5. The file do not looks like h5py. At least keras cant read it'
 
-    xshape = HDF5Matrix('cls/x.h5', 'mydata').shape
-    yshape = HDF5Matrix('cls/y.h5', 'mydata').shape
+    xtrain, _ = ABC.ABC_DLS_Classification.train_test_split_hdf5('cls/x.h5', 'mydata', 0)
+    xshape = xtrain.shape
+    ytrain, _ = ABC.ABC_DLS_Classification.train_test_split_hdf5('cls/y.h5', 'mydata', 0)
+    yshape = ytrain.shape
     # row check
     assert xshape[0] == yshape[0], 'Row numbers between x.h5 and/or y.h5 file do not match'
     assert xshape[0] == 15, 'Row numbers of h5 files do not match with expected number of rows'
@@ -62,18 +59,17 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
     assert xshape[1] == 1331, 'Column number of x.h5 do not match with expected'
     # checking y.h5 file
     # y.h5 either 0 and 1
-    y_unique_val = list(numpy.unique(pandas.DataFrame(HDF5Matrix('cls/y.h5', 'mydata')[:]).values.flatten()))
+    y_unique_val = list(numpy.unique(pandas.DataFrame(ytrain[:]).values.flatten()))
     assert Counter(y_unique_val) == Counter([1, 0.0]), 'y values can either be 0 or 1'
 
     # the number of count  of models
-    y = HDF5Matrix('cls/y.h5', 'mydata')
     y_cat_dict = eval(open('cls/y_cat_dict.txt', 'r').read())
-    modelcount = pandas.DataFrame(numpy.argmax(y[:], axis=1, out=None))[0].replace(y_cat_dict).value_counts().to_dict()
+    modelcount = pandas.DataFrame(numpy.argmax(ytrain[:], axis=1, out=None))[0].replace(
+        y_cat_dict).value_counts().to_dict()
     assert modelcount == {'BNDX': 5, 'MNDX': 5, 'SNDX': 5}, 'y.h5 have a different count of names than it should'
 
     # checking x.h5 file'
-    x = HDF5Matrix('cls/x.h5', 'mydata')
-    xdf = pandas.DataFrame(x[:])
+    xdf = pandas.DataFrame(xtrain[:])
     # col types in x.h5
     assert all(xdf[i].dtype.kind == 'f' for i in xdf), 'Not all the columns are float for x.h5'
     # min and max scaler worked or noy
@@ -116,16 +112,17 @@ def test_Classification_Train(nn: str = '../src/extras/ModelClass.py', test_size
     assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_Train'
 
 
-def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic', folder: str = 'cls'):
+def test_Classification_CV(test_size: int = 15, tol: float = 0.5, method: str = 'rejection', cvrepeats: int = 2,
+                           folder: str = 'cls'):
     # main check
-    ABC.ABC_DLS_Classification_CV(test_size=test_size, tol=tol, method=method, cvrepeats=2, folder=folder)
+    ABC.ABC_DLS_Classification_CV(test_size=test_size, tol=tol, method=method, cvrepeats=cvrepeats, folder=folder)
     # file checks
     files = ['cls/CV.pdf']
     not_exist = [file for file in files if not Path(file).exists()]
     assert not not_exist, f'{not_exist} file was not created by ABC_DLS_Classification_CV'
 
 
-def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'mnlogistic',
+def test_Classification_After_train(test_size: int = 15, tol: float = 0.5, method: str = 'rejection',
                                     ssfile: str = '../examples/YRI_FRN_HAN.observed.csv', cvrepeats: int = 2,
                                     folder: str = 'cls', csvout=True):
     # main check
@@ -228,12 +225,12 @@ def test_Params_Train_together(info: str = 'Model.info', nn: str = '../src/extra
 
 
 def test_ABC_DLS_SMC(info: str = 'Model2.info', nn: str = '../src/extras/ModelParamsTogether.py',
-                    ssfile: str = '../examples/YRI_FRN_HAN.observed.csv',
-                    chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
-                    csvout=True, folder: str = 'ns', increase=0.005):
+                     ssfile: str = '../examples/YRI_FRN_HAN.observed.csv',
+                     chunksize: int = 100, test_size: int = 100, tol: float = 0.5, method: str = 'rejection',
+                     csvout=True, folder: str = 'ns', increase=0.005):
     ABC.ABC_DLS_SMC(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
-                   csvout=csvout, folder=folder, nn=nn, increase=increase,scaling_x=True,
-                scaling_y = True)
+                    csvout=csvout, folder=folder, nn=nn, increase=increase, scaling_x=True,
+                    scaling_y=True)
     files = ['ns/ModelParamPrediction.h5', 'ns/Narrowed.csv', 'ns/params_header.csv', 'ns/x.h5', 'ns/y.h5',
              'ns/Newrange.csv']
     not_exist = [file for file in files if not Path(file).exists()]

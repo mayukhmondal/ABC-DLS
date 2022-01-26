@@ -41,7 +41,7 @@ def ANNModelCheck(x, y):
     combined=Dense(y.shape[1], activation='softmax')(combined)
     model=Model(inputs=x_0,outputs=combined)
     
-    model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['categorical_accuracy'])
+    model.compile(loss=tensorflow.keras.losses.categorical_crossentropy, optimizer='adam', metrics=['categorical_accuracy'])
     # adding an early stop so that it does not overfit
     ES = EarlyStopping(monitor='val_loss', patience=20)
     # checkpoint

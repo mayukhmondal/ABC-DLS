@@ -22,7 +22,7 @@ def importr_tryhard(packname: str):
     from rpy2.robjects.packages import importr
     try:
         rpack = importr(packname)
-    except rpy2.rinterface.RRuntimeError:
+    except rpy2.robjects.packages.PackageNotInstalledError:
         utils = importr('utils')
         utils.chooseCRANmirror(ind=1)
         utils.install_packages(packname)
@@ -175,7 +175,7 @@ def joinginglistbyspecificstring(listinput: list, string: str = " ") -> str:
 # del files
 
 
-def removefilescommands(files: Union[list,Tuple]) -> list:
+def removefilescommands(files: Union[list, Tuple]) -> list:
     """
     Giving a list of files it will give back the commands necessary for deleting such files.
 
@@ -186,7 +186,7 @@ def removefilescommands(files: Union[list,Tuple]) -> list:
     return ['rm -f ' + file for file in files]
 
 
-def removefiles(files: Union[list,Tuple], printing: bool = True) -> None:
+def removefiles(files: Union[list, Tuple], printing: bool = True) -> None:
     """
     Its the wrapper of removefiles commands. if you want ot remove the files right now. also print it is removing.
     good to know which files are getting removed always. It will print remove even if the file do not exist in the first
@@ -199,7 +199,7 @@ def removefiles(files: Union[list,Tuple], printing: bool = True) -> None:
     commands = removefilescommands(files)
     if printing:
         for file in files:
-            print("Removing if exist:", file,flush=True)
+            print("Removing if exist:", file, flush=True)
     [os.system(command) for command in commands]
     return None
 
@@ -261,7 +261,7 @@ def creatingfolders(specificfolder: str) -> str:
     :return: will not return anything. Either it will create if the folder do not exist or not return anything
     """
     import os
-    if specificfolder!='':
+    if specificfolder != '':
         if specificfolder[-1] != '/':
             specificfolder = specificfolder + '/'
 
@@ -269,6 +269,7 @@ def creatingfolders(specificfolder: str) -> str:
         if not os.path.exists(specificfolder):
             os.makedirs(specificfolder)
     return specificfolder
+
 
 def adding_pop(alldata, popfilepath):
     """
@@ -278,7 +279,7 @@ def adding_pop(alldata, popfilepath):
     :return: will return a column (Series) of exact size of input (alldata) so that it can be concatenate with the data itself
     """
     import numpy, pandas
-    popfile = pandas.read_csv(popfilepath, header=None, names=['inds', 'pop'],delim_whitespace=True)
+    popfile = pandas.read_csv(popfilepath, header=None, names=['inds', 'pop'], delim_whitespace=True)
     alldata = alldata[:]
     alldata = alldata.assign(pop=numpy.nan)
     for index, row in alldata.iterrows():

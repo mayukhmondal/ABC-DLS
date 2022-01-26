@@ -2,7 +2,7 @@ from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import numpy
-from tensorflow import keras
+import tensorflow
 
 def ANNModelCheck(x, y):
     """
@@ -28,7 +28,7 @@ def ANNModelCheck(x, y):
     model.add(Dropout(.01))
     model.add(Dense(y_train.shape[1], activation='softmax'))
 
-    model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=tensorflow.keras.losses.categorical_crossentropy, optimizer='adam', metrics=['accuracy'])
     # adding an early stop so that it does not overfit
     ES = EarlyStopping(monitor='val_loss', patience=100)
     # checkpoint
