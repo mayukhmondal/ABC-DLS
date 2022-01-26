@@ -29,7 +29,10 @@ sp.add_argument('--test_size',
 sp.add_argument('--chunksize',
                 help='If two big for the memory use chunk size. relatively slow but no problem with ram', type=float,
                 default=1e2)
-sp.add_argument('--ssfile', help="The summary statistics file from real data", required=True)
+sp.add_argument('--ssfile', help="The summary statistics file from real data with header. Can have multiple line"
+                                 " assuming every single line is different run of same summary statistics for different"
+                                 "individuals. The predictions from NN will be averaged in case of multiple"
+                                 " lines.", required=True)
 sp.add_argument('--nn',
                 help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater '
                      'to your own problem. The def ANNModelCheck should be inside')

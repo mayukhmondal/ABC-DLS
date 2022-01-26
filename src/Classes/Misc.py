@@ -278,7 +278,7 @@ def adding_pop(alldata, popfilepath):
     :return: will return a column (Series) of exact size of input (alldata) so that it can be concatenate with the data itself
     """
     import numpy, pandas
-    popfile = pandas.read_csv(popfilepath, header=None, names=['inds', 'pop'], sep='\t')
+    popfile = pandas.read_csv(popfilepath, header=None, names=['inds', 'pop'],delim_whitespace=True)
     alldata = alldata[:]
     alldata = alldata.assign(pop=numpy.nan)
     for index, row in alldata.iterrows():

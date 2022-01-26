@@ -249,20 +249,8 @@ class ABC_DLS_Classification:
         :param file: the path of the sfs file
         :return: will return the sfs in series format
         """
-        count = Misc.getting_line_count(file)
-        if count == 1:
-            # without header format
-            ss = pandas.read_csv(file, header=None).transpose()
-        elif count == 2:
-            # with header format
-            ss = pandas.read_csv(file).transpose()
-        elif count == 3:
-            # dadi or moments format
-            ss = pandas.read_csv(file, skiprows=1, nrows=2, header=None, sep=' ').transpose()
-        else:
-            print('Cant understand the format of the input sfs file. Please check')
-            sys.exit(1)
-        return ss[0]
+        ss = pandas.read_csv(file)
+        return ss
 
     @classmethod
     def check_results(cls, results: List[pandas.DataFrame], observed: pandas.Series) -> None:
@@ -275,11 +263,18 @@ class ABC_DLS_Classification:
         :return: will not return anything. but in case of problem will stop
         """
         result_columns = [result.shape[1] for result in results]
-        if len(set(result_columns + [observed.shape[0]])) > 1:
-            print("the observed columns and/or result columns do no match. check")
-            print("result_columns:", result_columns)
-            print("observed_columns", observed.shape[0])
-            sys.exit(1)
+        if observed.ndim > 1:
+            if len(set(result_columns + [observed.shape[1]])) > 1:
+                print("the observed columns and/or result columns do no match. check")
+                print("result_columns:", result_columns)
+                print("observed_columns", observed.shape[0])
+                sys.exit(1)
+        else:
+            if len(set(result_columns + [observed.shape[0]])) > 1:
+                print("the observed columns and/or result columns do no match. check")
+                print("result_columns:", result_columns)
+                print("observed_columns", observed.shape[0])
+                sys.exit(1)
 
     @classmethod
     def subsetting_file_concating(cls, filename: str, params_number: int, nrows: int, modelname: str,
@@ -722,9 +717,12 @@ class ABC_DLS_Classification:
             sys.exit(1)
         robjects.r['pdf'](folder + "NN.pdf")
         cls.plot_power_of_ss(ss=ssnn, index=ssnn.index, tol=tolerance, method=method, repeats=cvrepeats)
-        cls.model_selection(target=predictednn, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
-        cls.gfit_all(observed=predictednn, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_', tol=tolerance,
-                     repeats=cvrepeats)
+        for index, row in predictednn.iterrows():
+            ln = index + 1
+            print("# SS_Line", ln)
+            cls.model_selection(target=row, index=ssnn.index, ss=ssnn, method=method, tol=tolerance)
+            cls.gfit_all(observed=row, ss=ssnn, y_cat_dict=y_cat_dict, extra='_nn_: SS_Line ' + str(ln), tol=tolerance,
+                         repeats=cvrepeats)
         robjects.r['dev.off']()
         if csvout:
             cls.outputing_csv(modelindex=ssnn.index,
@@ -750,7 +748,6 @@ class ABC_DLS_Classification:
             using random noise you are producing multiple run of the same observed data
         :return: will return nn predicted summary statistics ssnn and nn predicted on real data predictednn
         """
-
         if pred_repeat > 1:
             ssnn = cls.predict_repeats_mean(ModelSeparation, x_test, repeats=pred_repeat)
             if scale_x:
@@ -760,9 +757,16 @@ class ABC_DLS_Classification:
         else:
             ssnn = pandas.DataFrame(ModelSeparation.predict(x_test[:]))
             if scale_x:
-                predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
+                if sfs.shape[0] > 1:
+                    predictednn = pandas.DataFrame(ModelSeparation.predict(scale_x.transform(sfs.values)))
+                else:
+                    predictednn = pandas.DataFrame(
+                        ModelSeparation.predict(scale_x.transform(sfs.values.reshape(1, -1))))
             else:
-                predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
+                if sfs.shape[0] > 1:
+                    predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values))
+                else:
+                    predictednn = pandas.DataFrame(ModelSeparation.predict(sfs.values.reshape(1, -1)))
         indexnn = pandas.DataFrame(numpy.argmax(y_test, axis=1, out=None))[0].replace(y_cat_dict)
         ssnn.index = indexnn
         # prepare for R as it do not like very small numbers
@@ -1719,12 +1723,14 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
         ss = ss * numpy.array(frac)
-        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
-                                                                                 scale_x, scale_y, params_names, ss)
+        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(
+            ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test, scale_x=scale_x, scale_y=scale_y,
+            params_names=params_names, ss=ss)
 
         print("ANN predict")
         print(predict4mreal.transpose())
-
+        if predict4mreal.ndim > 1:
+            predict4mreal = pandas.DataFrame(predict4mreal.mean()).transpose()
         print('correlation between params. Prior')
         print(params_unscaled.corr().to_string())
 
@@ -1798,7 +1804,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
     def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
                           y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
                           scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray,
-                          ss: pandas.Series) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
+                          ss: pandas.DataFrame) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
         """
         as the name suggest after ann ran it will prepare the data for abc analysis
 
@@ -1808,7 +1814,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         :param scale_x: the MinMax scaler of x axis. can be None
         :param scale_y: the MinMax scaler of y axis. can be None
         :param params_names: all the parameter or y header in a numpy.array
-        :param ss: the real ss in a pandas series
+        :param ss: the real ss in a pandas series or pandas dataframe in case multiple runs of same ss
         :return: will return test_prediction [ANN(x_test)_ unscaled y], predict4mreal [ANN(real_ss_scaled)_unscaled y]
             params_unscaled [y_test_unscaled y]
         """
@@ -1822,20 +1828,25 @@ class ABC_DLS_Params(ABC_DLS_Classification):
             test_predictions = pandas.DataFrame(test_predictions, columns=params_names[:y_test.shape[1]])
             params_unscaled = pandas.DataFrame(y_test[:], columns=params_names[-y_test.shape[1]:])
         if scale_x:
-            ssscaled = scale_x.transform(ss.values.reshape(1, -1))
+            if ss.ndim > 1:
+                ssscaled = scale_x.transform(ss.values)
+            else:
+                ssscaled = scale_x.transform(ss.values.reshape(1, -1))
             if scale_y:
                 predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
             else:
                 predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
         else:
-            ssscaled = ss.values.reshape(1, -1)
+            if ss.ndim > 1:
+                ssscaled = ss.values
+            else:
+                ssscaled = ss.values.reshape(1, -1)
             if scale_y:
                 predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled)))
             else:
                 predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled))
 
         predict4mreal.columns = params_names[:y_test.shape[1]]
-
         test_predictions, predict4mreal, params_unscaled = cls.remove_constant(test_predictions=test_predictions,
                                                                                predict4mreal=predict4mreal,
                                                                                params_unscaled=params_unscaled)
@@ -1910,6 +1921,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         """
         import tempfile
         temp_name = next(tempfile._get_candidate_names())
+        print(target)
         if method == 'rejection' or method == 'loclinear':
             print('Separately')
             robjects.r['pdf'](name)
@@ -2478,8 +2490,11 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         params_names = pandas.read_csv(folder + paramfile).columns
         ss = cls.read_ss_2_series(file=ssfile)
         ss = ss * numpy.array(frac)
-        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(ModelParamPrediction, x_test, y_test,
-                                                                                 scale_x, scale_y, params_names, ss)
+        test_predictions, predict4mreal, params_unscaled = cls.preparing_for_abc(
+            ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test, scale_x=scale_x, scale_y=scale_y,
+            params_names=params_names, ss=ss)
+        if predict4mreal.ndim > 1:
+            predict4mreal = pandas.DataFrame(predict4mreal.mean()).transpose()
         parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions,
                                                 tol=tol, method=method)
         newrange = pandas.concat([parmin, parmax], axis=1)
@@ -2707,15 +2722,15 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         :param outputfile: the path of output file where you want to write
         :return: will return the path of output file
         """
-
-        import linecache
         if file[-3:] == '.gz':
             os.system("zcat " + file + " > temp.csv ")
             file = 'temp.csv'
-
+        linenumbers = linenumbers - 1  # as python start with 0
         output = open(outputfile, 'w')
-        for ln in linenumbers:
-            print(linecache.getline(file, ln), file=output, end='')
+        with open(file) as f:
+            for lno, ln in enumerate(f):
+                if lno in linenumbers:
+                    print(ln, file=output, end='')
         output.close()
         Misc.removefiles(['temp.csv'], printing=False)
         return outputfile

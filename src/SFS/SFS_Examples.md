@@ -21,7 +21,7 @@ First, we need a real or observed ss, which can be produced from a vcf file. Bef
 vcftools --gzvcf  <in.vcf.gz> --max-missing 1.0 --remove-indels --min-alleles 2 --max-alleles 2 --mac 1 --keep <in.pop> --stdout --recode|bcftools view -T examples/masked_regions.bed.gz| bcftools  annotate -x ^FORMAT/GT -O z -o <out.vcf.gz> 
 bcftools index <out.vcf.gz>
 ```
-- Ancestral allele: We need to add the alleles' ancestral information in the INFO tag of the vcf file. You can use bcftools annotate to add that information if you have the ancestral allele file. 
+- Ancestral allele: We need to add the alleles' ancestral information in the INFO tag of the vcf file. You can use bcftools annotate to add that information if you have the ancestral allele file. If you do not have ancestral allele information, you can still use ABC-DLS. You have to fold the SFS. I have not tested it myself but in principle it should be a problem.  
 
 After we have our filtered and annotated vcf file (you can look for an example in [examples/Examples.vcf.gz](../../examples/Examples.vcf.gz), we can convert it to an SFS file using:
 ```shell script
