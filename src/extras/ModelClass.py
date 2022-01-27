@@ -1,7 +1,8 @@
 import tensorflow
-from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import *
-from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.python.keras.models import Sequential
+
+
 def ANNModelCheck(x, y):
     """
     The Tensor flow for model check
