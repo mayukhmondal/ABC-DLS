@@ -9,12 +9,11 @@ import argparse
 import Demography
 # noinspection PyUnresolvedReferences
 from Class import MsPrime2SFS
-
 from _version import __version__
 
 ##input argument is done
 parser = argparse.ArgumentParser(description='To run msprime and create sfs from priors')
-parser.add_argument('-v','--version', action='version',
+parser.add_argument('-v', '--version', action='version',
                     version='ABC-DLS {version}'.format(version=__version__))
 parser.add_argument('demography', help='The msprime demography function that has to be load from Demogrpahy.py')
 parser.add_argument('--inds',
@@ -28,7 +27,7 @@ parser.add_argument('--params_file', required=True,
 parser.add_argument('--total_length',
                     help='total length of the genome. default is 3gb roughly the length of human genome',
                     type=float, default=3e9)
-parser.add_argument('--ldblock', help='Length of simulated blocks. Default is 1mb', default=1e6,type=float)
+parser.add_argument('--ldblock', help='Length of simulated blocks. Default is 1mb', default=1e6, type=float)
 parser.add_argument('--mutation_rate', help='mutation rate. default is 1.45e-8 per gen', type=float, default=1.45e-8)
 parser.add_argument('--threads', help='the number of threads. default is 1', type=int, default=1)
 args = parser.parse_args()

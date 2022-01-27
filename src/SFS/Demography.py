@@ -1,8 +1,10 @@
 #!/usr/bin/python
-import math
 import collections
+import math
+
 import msprime
 import numpy
+
 
 def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
@@ -78,6 +80,7 @@ def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8
         num_replicates=replicates,
         recombination_rate=recombination_rate)
     return geno
+
 
 def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
@@ -192,6 +195,7 @@ def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
         num_replicates=replicates,
         recombination_rate=recombination_rate)
     return geno
+
 
 def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
@@ -327,6 +331,7 @@ def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
         recombination_rate=recombination_rate)
 
     return geno
+
 
 def MNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """

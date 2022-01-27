@@ -4,8 +4,8 @@ This file will hold all the classes for a specific case which is SFS. This shoul
 rather than only way to use it
 """
 import itertools
-import sys
 import os
+import sys
 from multiprocessing import Pool as ThreadPool
 # type hint for readability
 from typing import Optional, Union, List, Tuple, Callable
@@ -14,8 +14,9 @@ import allel
 import numpy
 import pandas
 
-from Classes import Misc
 from Classes import ABC
+from Classes import Misc
+
 
 class VCF2SFS():
     """
@@ -382,7 +383,7 @@ class MsPrime2SFS:
 
     @classmethod
     def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
-                mut_rate: float = 1.45e-8, replicates:  Union[float, int] = 100, rec_rate: float = 1e-8,
+                mut_rate: float = 1.45e-8, replicates: Union[float, int] = 100, rec_rate: float = 1e-8,
                 remainder_length: Union[float, int] = 0):
         """
         simulations2sfs per line or parameters. kind of the real wrapper. but we created another wrapper to take care of
@@ -440,8 +441,9 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
     Just to have extrac function required for Snakemake file for SFS creation
     """
+
     @classmethod
-    def narrowing_input(cls,paramsnumbers, inputfile, rangefile, folder=''):
+    def narrowing_input(cls, paramsnumbers, inputfile, rangefile, folder=''):
         """
         Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle
 
@@ -458,9 +460,9 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         if Misc.getting_line_count(inputfile) > 0:
             params = pandas.read_csv(inputfile, usecols=range(paramsnumbers), header=None)
             linenumbers = (cls.narrowing_params(params=params, parmin=newrange['min'],
-                                                            parmax=newrange['max'])) - 1
+                                                parmax=newrange['max'])) - 1
             temp = cls.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
-                                                            outputfile=folder + 'Narrows.csv')
+                                                outputfile=folder + 'Narrows.csv')
             if Misc.getting_line_count(temp) > 0:
                 _ = cls.shufling_joined_models(inputcsv=temp, output=folder + 'Narrowed.csv', header=False)
                 Misc.removefiles([folder + 'Narrows.csv'], printing=False)
@@ -473,7 +475,7 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         return narrow_count
 
     @classmethod
-    def remove_repeated_params(cls,inputfile, paramsnumbers, outputfile):
+    def remove_repeated_params(cls, inputfile, paramsnumbers, outputfile):
         """
         remove the repeated parameters lines. We donot need different runs for same simulated parameters
 
@@ -483,14 +485,14 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         :param outputfile: the path of the output file
         :return: will return the path of outputfile
         """
-        params = pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
+        params = pandas.read_csv(inputfile, usecols=range(paramsnumbers), header=None)
         linenumbers = params.drop_duplicates().index.values
-        temp = cls.extracting_by_linenumber(file=inputfile,linenumbers=linenumbers,
-            outputfile=outputfile)
+        temp = cls.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
+                                            outputfile=outputfile)
         return temp
 
     @classmethod
-    def lmrd4mcsv(cls,hardrange_file: str,newrange_file:str) -> float:
+    def lmrd4mcsv(cls, hardrange_file: str, newrange_file: str) -> float:
         """
         This will read hardrange_file and newrange_file and calcualte log of mean range decrease (lmrd). So you know how
         much improvement you got in this cycle
@@ -503,5 +505,5 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['lower', 'upper'])
         newrange = pandas.read_csv(newrange_file, index_col=0, header=None, names=['lower', 'upper', 'imp'])
 
-        lmrd=cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
+        lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
         return lmrd
