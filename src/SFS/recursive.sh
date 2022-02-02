@@ -1,6 +1,6 @@
 #!/bin/bash
 imp=0
-touch Narrowed.csv
+touch Narrowed.csv All.csv
 cp Startrange.csv Oldrange.csv
 while [ "$(echo "$imp < 0.95"| bc -l)"  -eq 1 ]
 do
