@@ -243,6 +243,16 @@ class Range2UniformPrior():
 
     def __new__(cls, upper: str, lower: str, variable_names: Optional[str] = None,
                 repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
+        """
+        This will call the wrapper function for Range2UniformPrior so the class will behave like a function
+
+        :param upper: upper limit for the parameters. string format
+        :param lower: lower limit for the parameters. string format
+        :param variable_names: the names of the variables. string format
+        :param repeats: number of repeats that you want create. can use float but will convert it to int
+        :return: wii return the pandas dataframe format of parameters. whose columns are parameters and rows are
+        different repeats (or instance)
+        """
         return cls.wrapper(upper=upper, lower=lower, variable_names=variable_names, repeats=repeats)
 
     @classmethod
@@ -349,12 +359,37 @@ class MsPrime2SFS:
     Given a msprime demographic python file and priors it can produce sfs out of it.
     """
 
+    def __new__(cls, sim_func: Callable, params_file: str, samples: str, total_length: float = 1e7,
+                ldblock: float = 1e6, mut_rate: float = 1.45e-8, rec_rate: float = 1e-8,
+                threads: int = 1) -> pandas.DataFrame:
+        """
+        This will call the wrapper function for MsPrime2SFS so the class will behave like a function
+
+        :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
+        return it
+        :param params_file: the csv file where parameters are written. All the priors for the parameters on which the
+        simulation will run. Should be "," comma separated csv format. Different rows signify different run.
+        columns different parameters
+        :param samples: The number of inds per populations to run simulation. All the output populations should be
+        mentioned in the inds. again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 inds you
+        would get total 11 (0 included) different allele counts
+        :param total_length: total length of the genome. default is 3gb roughly the length of human genome
+        :param ldblock: Length of simulated blocks. Default is 1mb
+        :param mut_rate: the mutation rate. default is the one every body uses
+        :param rec_rate: the recombination rate for msprime. does it matter for sfs?
+        :param threads: the number of threads to run parallel
+        :return: will return a pandas dataframe with parameters and sfs together
+        """
+        return cls.wrapper(sim_func=sim_func, params_file=params_file, samples=samples, total_length=total_length,
+                           ldblock=ldblock, mut_rate=mut_rate, rec_rate=rec_rate, threads=threads)
+
     @classmethod
     def wrapper(cls, sim_func: Callable, params_file: str, samples: str, total_length: float = 1e7,
                 ldblock: float = 1e6, mut_rate: float = 1.45e-8, rec_rate: float = 1e-8,
                 threads: int = 1) -> pandas.DataFrame:
         """
         the wrapper for the class. this just wrapping around perline so that it can run it parallel.
+
         :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
         return it
         :param params_file: the csv file where parameters are written. All the priors for the parameters on which the

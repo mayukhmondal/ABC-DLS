@@ -268,7 +268,7 @@ def test_MsPrime2SFS(demography='OOA', params_file='Priors.csv', samples='5,5,5'
     priors = Class.Range2UniformPrior(upper="25e3, 2e5, 2e5, 2e5,1e4, 1e4, 1e4,80, 320, 700,50,50,50,50",
                                       lower="5000, 10000, 10000, 10000, 500,500,500, 15, 5, 5,0,0,0,0", repeats=10)
     priors.to_csv('Priors.csv', index=False)
-    prisfs = Class.MsPrime2SFS.wrapper(sim_func=demography, params_file=params_file, samples=samples,
+    prisfs = Class.MsPrime2SFS(sim_func=demography, params_file=params_file, samples=samples,
                                        total_length=total_length)
     assert 10 == prisfs.shape[0], "The sfs output do not have same rows as in the prior"
     assert 1345 == prisfs.shape[1], "The sfs do not have expected number of columns (1331+priors)"
