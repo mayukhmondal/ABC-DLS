@@ -350,8 +350,9 @@ class MsPrime2SFS:
     """
 
     @classmethod
-    def wrapper(cls, sim_func, params_file, samples, total_length=1e7, ldblock=1e6, mut_rate=1.45e-8, rec_rate=1e-8,
-                threads=1):
+    def wrapper(cls, sim_func: Callable, params_file: str, samples: str, total_length: float = 1e7,
+                ldblock: float = 1e6, mut_rate: float = 1.45e-8, rec_rate: float = 1e-8,
+                threads: int = 1) -> pandas.DataFrame:
         """
         the wrapper for the class. this just wrapping around perline so that it can run it parallel.
         :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
@@ -443,7 +444,7 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
 
     @classmethod
-    def narrowing_input(cls, paramsnumbers, inputfile, rangefile, folder=''):
+    def narrowing_input(cls, paramsnumbers: int, inputfile: str, rangefile: str, folder: str = '') -> int:
         """
         Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle
 
@@ -475,7 +476,7 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         return narrow_count
 
     @classmethod
-    def remove_repeated_params(cls, inputfile, paramsnumbers, outputfile):
+    def remove_repeated_params(cls, inputfile: str, paramsnumbers: int, outputfile: str) -> str:
         """
         remove the repeated parameters lines. We donot need different runs for same simulated parameters
 

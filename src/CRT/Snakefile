@@ -105,8 +105,8 @@ rule reusing_simulations:
 
 rule params_crt:
     """
-    Main run for ABC-DLS SMC sampling method. This will using Priors+SFS will give Posterior range which are 
-    slightly closer to the real observed data that priors range
+    Main run for ABC-DLS SMC sampling method. This will using Priors+CRT will give Posterior range which are
+    slightly closer to the real observed data than priors range
     input: output from info_sfs. demography/demography.csv.gz
     output: will produce Newrange.csv which has information of posterior range.  
     demography/Newrange.csv
@@ -123,7 +123,7 @@ rule params_crt:
         "--ssfile {config[crtfile]} --tolerance {config[tolerance]} --method rejection  {params.tfknn_demo}"
         " {params.noise} --folder {config[demography]} --decrease {config[decrease]} {input} "
 
-rule info_sfs:
+rule info_crt:
     """
     Creating Model.info which can be used in ABC-DLS to know the file path and the number of columns designated for 
     parameters.
@@ -169,7 +169,7 @@ rule updating_all:
     shell:
         "cat {input[0]} <(zcat {input[1]}| tail -n+2)  > {output}"
 
-rule join_SFS_All:
+rule join_CRT_All:
     """
     Joining all the different run of sfs and creating one single file. Mainly tackling the header problem from every 
     file to one header for concatenated file. also taking care of simulations from previous loop using Narrowed.csv
@@ -189,10 +189,10 @@ rule join_SFS_All:
 
 rule run_CRT:
     """
-    The slowest but most important part of the pipeline. Given priors it will produce SFS which then can be used for 
+    The slowest but most important part of the pipeline. Given priors it will produce CRT which then can be used for
     ABC-DLS. The simulation here is implemented on msprime. 
     input: output of priors_add_header. demography/Priors_xxx.csv
-    output: pramaters+sfs together. demography/demography_xxx.csv
+    output: pramaters+crt together. demography/demography_xxx.csv
     """
     input:
         config['demography'] + '/Priors_{jobint}.csv'
