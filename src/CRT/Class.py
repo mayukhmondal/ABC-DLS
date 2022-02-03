@@ -17,6 +17,28 @@ class MsPrime2CRT:
     Trajectory (CRT) out of it.
     """
 
+    def __new__(cls, sim_func: Callable, params_file: str, samples: str, gen_file: str,
+                threads: int = 1) -> pandas.DataFrame:
+        """
+        This will call the wrapper function for MsPrime2CRT so the class will behave like a function
+
+        :param sim_func: the msprime demography func which will simulate a given demography using
+        msprime.DemographyDebugger and return it
+        :param params_file: the csv file where parameters are written. All the priors for the parameters on which the
+        simulation will run. Should be "," comma separated csv format. Different rows signify different run.
+        columns different parameters
+        :param samples: The number of inds per populations to run simulation. All the output populations should be
+        mentioned in the inds. again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 inds you
+        would get total 11 (0 included) different allele counts
+        :param gen_file: The generations of time step at which point the CRT will be calculated. Every line signifies
+        different generations steps. Should be in increasing order. Does not have to be integer and should not have
+        header
+        :param threads: the number of threads to run parallel
+        :return: will return a pandas dataframe with parameters and crt together
+        """
+        return cls.wrapper(sim_func=sim_func, params_file=params_file, samples=samples, gen_file=gen_file,
+                           threads=threads)
+
     @classmethod
     def wrapper(cls, sim_func: Callable, params_file: str, samples: str, gen_file: str,
                 threads: int = 1) -> pandas.DataFrame:

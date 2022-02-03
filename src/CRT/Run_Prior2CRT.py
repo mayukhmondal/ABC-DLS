@@ -31,6 +31,6 @@ parser.add_argument('--threads', help='the number of threads. default is 1', typ
 args = parser.parse_args()
 
 demography = eval('Demography.' + args.demography)
-params_sfs = MsPrime2CRT.wrapper(sim_func=demography, params_file=args.params, samples=args.inds,
+params_sfs = MsPrime2CRT(sim_func=demography, params_file=args.params, samples=args.inds,
                                  gen_file=args.gen, threads=args.threads)
 print(params_sfs.to_csv(index=False))
