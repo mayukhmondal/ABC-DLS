@@ -10,8 +10,8 @@ sys.path.append("..")
 from pathlib import Path
 from src.Classes import ABC
 from src.Classes import Misc
-from SFS import Class
-
+from SFS import Class as SFS_Class
+from CRT import Class as CRT_Class
 from collections import Counter
 import pandas
 import numpy
@@ -241,7 +241,8 @@ def test_ABC_DLS_SMC(info: str = 'Model2.info', nn: str = '../src/extras/ModelPa
 
 def test_vcf2ss(vcffile='../examples/Examples.vcf.gz', popfile='../examples/Input.tsv', sfs_pop=('YRI', 'FRN', 'HAN'),
                 chunk_length=int(100), out='test_out'):
-    out = Class.VCF2SFS.wrapper(vcffile=vcffile, popfile=popfile, sfs_pop=sfs_pop, chunk_length=chunk_length, out=out)
+    out = SFS_Class.VCF2SFS.wrapper(vcffile=vcffile, popfile=popfile, sfs_pop=sfs_pop, chunk_length=chunk_length,
+                                    out=out)
     print(out.sum())
     assert 22547 == out.sum(), 'The total number of segregating sites do not match with vcf'
     files = ['test_out.csv']
@@ -250,7 +251,7 @@ def test_vcf2ss(vcffile='../examples/Examples.vcf.gz', popfile='../examples/Inpu
 
 
 def test_range2prior(upper="10,1,100", lower="1,0,2.5", repeats=10):
-    priors = Class.Range2UniformPrior(upper=upper, lower=lower, repeats=repeats)
+    priors = SFS_Class.Range2UniformPrior(upper=upper, lower=lower, repeats=repeats)
     assert 10 == priors.shape[0], 'The priors row numbers do not match with repeats. check Class.Range2UniformPrior'
     assert 3 == priors.shape[1], 'The priors column numbers do not match with upper parameters length. ' \
                                  'Class.Range2UniformPrior('
@@ -265,11 +266,24 @@ def test_MsPrime2SFS(demography='OOA', params_file='Priors.csv', samples='5,5,5'
     # noinspection PyUnresolvedReferences
     from src.SFS import Demography
     demography = eval('Demography.' + demography)
-    priors = Class.Range2UniformPrior(upper="25e3, 2e5, 2e5, 2e5,1e4, 1e4, 1e4,80, 320, 700,50,50,50,50",
-                                      lower="5000, 10000, 10000, 10000, 500,500,500, 15, 5, 5,0,0,0,0", repeats=10)
+    priors = SFS_Class.Range2UniformPrior(upper="25e3, 2e5, 2e5, 2e5,1e4, 1e4, 1e4,80, 320, 700,50,50,50,50",
+                                          lower="5000, 10000, 10000, 10000, 500,500,500, 15, 5, 5,0,0,0,0", repeats=10)
     priors.to_csv('Priors.csv', index=False)
-    prisfs = Class.MsPrime2SFS(sim_func=demography, params_file=params_file, samples=samples,
-                                       total_length=total_length)
+    prisfs = SFS_Class.MsPrime2SFS(sim_func=demography, params_file=params_file, samples=samples,
+                                   total_length=total_length)
     assert 10 == prisfs.shape[0], "The sfs output do not have same rows as in the prior"
     assert 1345 == prisfs.shape[1], "The sfs do not have expected number of columns (1331+priors)"
     Misc.removefiles(['Priors.csv', 'test_out.csv'])
+
+
+def test_MsPrimeCRT(demography='OOA', params_file='Priors.csv', samples='5,5,5',
+                    gen_file='../examples/CRT/generations.csv'):
+    demography = eval('Demography.' + demography)
+    priors = SFS_Class.Range2UniformPrior(upper="25e3, 2e5, 2e5, 2e5,1e4, 1e4, 1e4,80, 320, 700,50,50,50,50",
+                                          lower="5000, 10000, 10000, 10000, 500,500,500, 15, 5, 5,0,0,0,0", repeats=10)
+    priors.to_csv('Priors.csv', index=False)
+    prisfs = CRT_Class.MsPrime2CRT(sim_func=demography, params_file=params_file, samples=samples, gen_file=gen_file)
+
+    assert 10 == prisfs.shape[0], "The sfs output do not have same rows as in the prior"
+    print(prisfs.shape)
+    Misc.removefiles(['Priors.csv'])
