@@ -2646,7 +2646,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         """
         This will check if the new range decreasing is more than 95%. if true it will update the new range or else keep
         the old range assuming there is no direct decreasing. this step is necessary so that you do not get smaller
-        range just because you ran it several time
+        range just because you ran it several time. The same thing will also repeat if min and max in new range is same.
+        R_ABC does not like 0 standard deviation in the input data
 
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
@@ -2659,6 +2660,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         newrange.loc[(newrange['decrease'] > decrease) & (newrange['decrease'] < 1), ['min', 'max']] = oldrange[
             (newrange['decrease'] > decrease) & (newrange['decrease'] < 1)]
+        newrange.loc[newrange['decrease'] == 0] = oldrange.loc[newrange['decrease'] == 0]
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         return newrange
 
