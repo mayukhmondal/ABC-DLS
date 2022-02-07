@@ -2637,7 +2637,10 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-
+        doublecheck = newrange.round(6).iloc[:, :2]
+        still_zero = doublecheck['max'] == doublecheck['min']
+        if (still_zero).any():
+            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 1e-6
         return newrange
 
     @classmethod
