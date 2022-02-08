@@ -2637,10 +2637,12 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        doublecheck = newrange.round(6).iloc[:, :2]
+        doublecheck = newrange.round(5).iloc[:, :2]
         still_zero = doublecheck['max'] == doublecheck['min']
         if (still_zero).any():
-            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 1e-6
+            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 1e-5
+            decrease_col = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+            newrange.loc[still_zero, 'decrease'] = decrease_col[still_zero]
         return newrange
 
     @classmethod
@@ -2665,7 +2667,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             (newrange['decrease'] > decrease) & (newrange['decrease'] < 1)]
         newrange.loc[newrange['decrease'] == 0] = oldrange.loc[newrange['decrease'] == 0]
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        return newrange
+        return newrange.round(5)
 
     @classmethod
     def narrowing_input(cls, info: str, params: pandas.DataFrame, newrange: pandas.DataFrame, folder: str = '') -> str:
