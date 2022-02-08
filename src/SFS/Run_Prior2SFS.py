@@ -7,6 +7,7 @@ import argparse
 
 # noinspection PyUnresolvedReferences
 import Demography
+#from Simulation.msprime import Demography
 # noinspection PyUnresolvedReferences
 from Class import MsPrime2SFS
 from _version import __version__
