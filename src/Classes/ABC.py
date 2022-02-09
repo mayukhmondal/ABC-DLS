@@ -437,7 +437,8 @@ class ABC_DLS_Classification:
         os.system(models_command)
         model_index = pandas.read_csv(outfolder + 'models.csv')
         y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
-        y = tensorflow.keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict), 'uint8')
+        y = tensorflow.keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict),
+                                                  'uint8')
         Misc.numpy2hdf5(y, yfile)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
         Misc.removefiles([outfolder + 'ss.csv', outfolder + 'models.csv'])
@@ -629,7 +630,8 @@ class ABC_DLS_Classification:
         model.add(Dropout(.01))
         model.add(Dense(y.shape[1], activation='softmax'))
 
-        model.compile(loss=tensorflow.keras.losses.categorical_crossentropy, optimizer='adam', metrics=['categorical_accuracy'])
+        model.compile(loss=tensorflow.keras.losses.categorical_crossentropy, optimizer='adam',
+                      metrics=['categorical_accuracy'])
 
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
@@ -1141,7 +1143,8 @@ class ABC_DLS_Classification_CV(ABC_DLS_Classification):
         return ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict
 
     @classmethod
-    def loadingkerasmodel(cls, ModelParamPredictionFile: str = 'ModelClassification.h5') -> tensorflow.keras.models.Model:
+    def loadingkerasmodel(cls,
+                          ModelParamPredictionFile: str = 'ModelClassification.h5') -> tensorflow.keras.models.Model:
         """
         to load the saved keras model
 
@@ -2643,6 +2646,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 1e-4
             # decrease_col = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
             newrange.loc[still_zero, 'decrease'] = 1.0
+        newrange = newrange.round(4)
         return newrange
 
     @classmethod
@@ -2667,7 +2671,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             (newrange['decrease'] > decrease) & (newrange['decrease'] < 1)]
         newrange.loc[newrange['decrease'] == 0] = oldrange.loc[newrange['decrease'] == 0]
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange=newrange.round(4) # because r can only use round 4
+        newrange = newrange.round(4)  # because r can only use round 4
         return newrange
 
     @classmethod
