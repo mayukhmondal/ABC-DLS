@@ -2358,7 +2358,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', decrease: float = 0.95,
                 frac: float = 1.0, increase: float = 0.0,
-                hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+                hardrange_file: Optional[str] = None, round:int=3) -> pandas.DataFrame:
         """
         The main wrapper for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2387,6 +2387,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             increase as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two.  default is 3
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2404,7 +2406,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder,
-                                      decrease=decrease,
+                                      decrease=decrease,round=round,
                                       frac=frac, increase=increase, hardrange_file=hardrange_file)
 
     @classmethod
@@ -2451,7 +2453,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            folder: str = '', csvout: bool = False, decrease: float = 0.95,
                            frac: float = 1.0, increase: float = 0.0,
-                           hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+                           hardrange_file: Optional[str] = None, round:int=3) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2480,6 +2482,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             increase as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two. default is 3
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2614,7 +2618,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
     @classmethod
     def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame, increase: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame(),
-                               decrease: float = .95) -> pandas.DataFrame:
+                               decrease: float = .95, round:int=3) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
         recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
@@ -2628,6 +2632,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
         the parameters
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two. default is 3
         :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
             tested to be within hardrange
         """
@@ -2640,18 +2646,18 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        doublecheck = newrange.round(4).iloc[:, :2]
+        doublecheck = newrange.round(round).iloc[:, :2]
         still_zero = doublecheck['max'] == doublecheck['min']
         if (still_zero).any():
-            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 1e-4
+            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 10**(-round)
             # decrease_col = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
             newrange.loc[still_zero, 'decrease'] = 1.0
-        newrange = newrange.round(4)
+        newrange = newrange.round(round)
         return newrange
 
     @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                          decrease: float = .95) -> pandas.DataFrame:
+                          decrease: float = .95, round:int=3) -> pandas.DataFrame:
         """
         This will check if the new range decreasing is more than 95%. if true it will update the new range or else keep
         the old range assuming there is no direct decreasing. this step is necessary so that you do not get smaller
@@ -2663,6 +2669,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :param decrease: the amount of decreasing required to update the new decreasing. default is 95%
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two. default is 3
         :return: will return the updated newrange dataframe. where if decrease is less than .95 then new range rows if not
             old range rows
         """
@@ -2671,7 +2679,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             (newrange['decrease'] > decrease) & (newrange['decrease'] < 1)]
         newrange.loc[newrange['decrease'] == 0] = oldrange.loc[newrange['decrease'] == 0]
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-        newrange = newrange.round(4)  # because r can only use round 4
+        newrange = newrange.round(round)  # because r can only use round 4
         return newrange
 
     @classmethod
