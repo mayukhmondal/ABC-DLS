@@ -42,7 +42,7 @@ if 'increase' in config:
 
 
 # real snakemake pipeline starts here
-localrules: finalize,info_sfs,calculating_lmrd
+localrules: finalize,info_crt,calculating_lmrd
 
 rule finalize:
     """
