@@ -7,9 +7,10 @@ import argparse
 
 # noinspection PyUnresolvedReferences
 import Demography
-#from Simulation.msprime import Demography
+# from Simulation.msprime import Demography
 # noinspection PyUnresolvedReferences
 from Class import MsPrime2SFS
+from Classes import Misc
 from _version import __version__
 
 parser = argparse.ArgumentParser(description='To run msprime and create sfs from priors')
@@ -23,7 +24,8 @@ parser.add_argument('--inds',
                     required=True)
 parser.add_argument('--params_file', required=True,
                     help='All the priors for the parameters on which the simulation will run. Should be "," comma '
-                         'separated csv format. Different rows signify different run. columns different parameters')
+                         'separated csv format. Different rows signify different run. columns different parameters',
+                    type=lambda x: Misc.args_valid_file(parser, x))
 parser.add_argument('--total_length',
                     help='total length of the genome. default is 3gb roughly the length of human genome',
                     type=float, default=3e9)
@@ -34,6 +36,6 @@ args = parser.parse_args()
 
 demography = eval('Demography.' + args.demography)
 params_sfs = MsPrime2SFS(sim_func=demography, params_file=args.params_file, samples=args.inds,
-                                 total_length=args.total_length, ldblock=args.ldblock, mut_rate=args.mutation_rate,
-                                 threads=args.threads)
+                         total_length=args.total_length, ldblock=args.ldblock, mut_rate=args.mutation_rate,
+                         threads=args.threads)
 print(params_sfs.to_csv(index=False))

@@ -155,6 +155,22 @@ def file_existence_checker(names: list, files: list) -> Tuple[str, list]:
             absence.append(file)
     return joinginglistbyspecificstring(printer, "\n"), absence
 
+def args_valid_file(parser, arg):
+    """
+    This will check with in the argparse and report if the file exist or not. should be used in the argparse command
+    parser.add_argument('file',type=lambda x: Misc.args_valid_file(parser, x))
+    Args:
+        parser: argparse.ArgumentParser() which is the main object of argparse command
+        arg: the path of the command itself
+
+    Returns: if the file exist it will return the path if not it will raise an error through argparse itself
+
+    """
+    if arg:
+        if not os.path.exists(arg):
+            parser.error("The file %s does not exist!" % arg)
+    return arg  # return an open file handle
+
 
 # python string commands
 

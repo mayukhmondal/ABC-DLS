@@ -9,6 +9,7 @@ import Demography
 #from Simulation.msprime import DemographyCRT as Demography
 # noinspection PyUnresolvedReferences
 from Class import MsPrime2CRT
+from Classes import Misc
 from _version import __version__
 
 parser = argparse.ArgumentParser(description='To run msprime and create CRT from priors')
@@ -23,11 +24,11 @@ parser.add_argument('--inds',
 parser.add_argument('--params', required=True,
                     help='All file path of the priors for the parameters on which the simulation will run. Should be '
                          ' "," comma separated csv format. Different rows signify different run. columns different '
-                         'parameters')
+                         'parameters', type=lambda x: Misc.args_valid_file(parser, x))
 parser.add_argument('--gen', required=True,
                     help='The generations of time step at which point the CRT will be calculated. Every line signifies '
                          'different generations steps. Should be in increasing order. Does not have to be integer'
-                         'and should not have header')
+                         'and should not have header', type=lambda x: Misc.args_valid_file(parser, x))
 parser.add_argument('--threads', help='the number of threads. default is 1', type=int, default=1)
 args = parser.parse_args()
 
