@@ -18,7 +18,7 @@ class MsPrime2CRT:
     """
 
     def __new__(cls, sim_func: Callable, params_file: str, samples: str, gen_file: str,
-                threads: int = 1) -> pandas.DataFrame:
+                threads: int = 1, noise: float = 0.0) -> pandas.DataFrame:
         """
         This will call the wrapper function for MsPrime2CRT so the class will behave like a function
 
@@ -34,14 +34,16 @@ class MsPrime2CRT:
         different generations steps. Should be in increasing order. Does not have to be integer and should not have
         header
         :param threads: the number of threads to run parallel
+        :param noise: In case you need to add some gaussian noise in the crt, which will be added as the fraction
+        changed on the crt. In this case noise will be the standard deviation and mean is always 0.
         :return: will return a pandas dataframe with parameters and crt together
         """
         return cls.wrapper(sim_func=sim_func, params_file=params_file, samples=samples, gen_file=gen_file,
-                           threads=threads)
+                           threads=threads, noise=noise)
 
     @classmethod
     def wrapper(cls, sim_func: Callable, params_file: str, samples: str, gen_file: str,
-                threads: int = 1) -> pandas.DataFrame:
+                threads: int = 1, noise: float = 0.0) -> pandas.DataFrame:
         """
         the wrapper for the class. This will autamtically run every line coming from Priors.csv and will produce the CRT
         which can then be used as input in the NN
@@ -57,6 +59,8 @@ class MsPrime2CRT:
         different generations steps. Should be in increasing order. Does not have to be integer and should not have
         header
         :param threads: the number of threads to run parallel
+        :param noise: In case you need to add some gaussian noise in the crt, which will be added as the fraction
+        changed on the crt. In this case noise will be the standard deviation and mean is always 0.
         :return: will return a pandas dataframe with parameters and crt together
         """
         pop_indexes = cls.inds2pop_index(samples=samples)
@@ -67,7 +71,7 @@ class MsPrime2CRT:
         paramsdf = pandas.read_csv(params_file, index_col=False).dropna()
         pool = ThreadPool(threads)
         input = zip(itertools.repeat(sim_func), paramsdf.values, itertools.repeat(gen),
-                    itertools.repeat(hom_dict + het_dict))
+                    itertools.repeat(hom_dict + het_dict), itertools.repeat(noise))
         results = pool.starmap(cls.sims2crt, input)
         results = pandas.DataFrame([result.values.flatten() for result in results], columns=crt_header)
         params_sfs = pandas.concat([paramsdf, results], axis=1)
@@ -132,7 +136,7 @@ class MsPrime2CRT:
 
     @classmethod
     def sims2crt(cls, sim_func: Callable, params: Union[numpy.array, List], gen: List[float],
-                 dict_combs: List[Dict]) -> pandas.DataFrame:
+                 dict_combs: List[Dict], noise: float = 0.0) -> pandas.DataFrame:
         """
         for the msprime function this will return CRT for combinations of populations and for the given time steps
         in generations
@@ -143,12 +147,36 @@ class MsPrime2CRT:
         :param gen: the generations for which CRT will be calculated. in a list of array format
         :param dict_combs: all the lineage combinations dict format needed as in msprime.coalescence_rate_trajectory
         in a list format.
+        :param noise: In case you need to add some gaussian noise in the crt, which will be added as the fraction
+        changed on the crt. In this case noise will be the standard deviation and mean is always 0.
         :return: This will return pandas.Dataframe format of the combinations of populations in columns and in rows as
         time steps of crt calculated by msprime
         """
         run = sim_func(params=params)
         crt = cls.crt_combinations(msprime_debug_run=run, dict_combs=dict_combs, gen=gen)
+        if noise > 0:
+            crt = cls.crt_noise(crt=crt, noise=noise)
         return crt
+
+    @classmethod
+    def crt_noise(cls, crt: pandas.DataFrame, noise: float) -> pandas.DataFrame:
+        """
+        This will add some noise in the crt dataframe. the idea is to add some gaussian like noise on the crt as crt
+        produced by msprime is not stochastic. Given the standard deviation in noise parameter, it will produce a
+        gaussian noise with mean 0. Then this will converted to percentage (or portion in this case) of change per crt
+        element. This will make sure high crt has higher amount of change, where as lower values has lower amount of
+        changes.
+
+        :param crt: pandas.Dataframe format of the combinations of populations in columns and in rows as
+        time steps of crt calculated by msprime
+        :param noise: the standard deviation of guassian noise
+        :return: will return a noisier crt pandas.dataframe
+        """
+        gaussian_noise = pandas.DataFrame(
+            numpy.random.normal(0, noise, crt.shape[0] * crt.shape[1]).reshape(crt.shape[0], crt.shape[1]))
+        portion_change = 1 - gaussian_noise
+        noise_crt = crt * portion_change.values
+        return noise_crt
 
     @classmethod
     def crt_combinations(cls, msprime_debug_run, dict_combs: List[Dict], gen: List) -> pandas.DataFrame:

@@ -30,9 +30,13 @@ parser.add_argument('--gen', required=True,
                          'different generations steps. Should be in increasing order. Does not have to be integer'
                          'and should not have header', type=lambda x: Misc.args_valid_file(parser, x))
 parser.add_argument('--threads', help='the number of threads. default is 1', type=int, default=1)
+parser.add_argument('--noise', help='In case you need to add some gaussian noise in the crt, which will be added as the'
+                                    ' fraction changed on the crt. In this case noise will be the standard deviation '
+                                    'and mean is always 0. default is 0 and a good number to start with 0.05',
+                    type=float, default=0.0)
 args = parser.parse_args()
 
 demography = eval('Demography.' + args.demography)
 params_sfs = MsPrime2CRT(sim_func=demography, params_file=args.params, samples=args.inds,
-                                 gen_file=args.gen, threads=args.threads)
+                         gen_file=args.gen, threads=args.threads, noise=args.noise)
 print(params_sfs.to_csv(index=False))
