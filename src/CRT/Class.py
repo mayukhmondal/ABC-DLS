@@ -18,7 +18,7 @@ class MsPrime2CRT:
     """
 
     def __new__(cls, sim_func: Callable, params_file: str, samples: str, gen_file: str,
-                threads: int = 1, noise: float = 0.0) -> pandas.DataFrame:
+                threads: int = 1, noise: float = 0.05) -> pandas.DataFrame:
         """
         This will call the wrapper function for MsPrime2CRT so the class will behave like a function
 
@@ -43,7 +43,7 @@ class MsPrime2CRT:
 
     @classmethod
     def wrapper(cls, sim_func: Callable, params_file: str, samples: str, gen_file: str,
-                threads: int = 1, noise: float = 0.0) -> pandas.DataFrame:
+                threads: int = 1, noise: float = 0.05) -> pandas.DataFrame:
         """
         the wrapper for the class. This will autamtically run every line coming from Priors.csv and will produce the CRT
         which can then be used as input in the NN
@@ -136,7 +136,7 @@ class MsPrime2CRT:
 
     @classmethod
     def sims2crt(cls, sim_func: Callable, params: Union[numpy.array, List], gen: List[float],
-                 dict_combs: List[Dict], noise: float = 0.0) -> pandas.DataFrame:
+                 dict_combs: List[Dict], noise: float = 0.05) -> pandas.DataFrame:
         """
         for the msprime function this will return CRT for combinations of populations and for the given time steps
         in generations
@@ -159,7 +159,7 @@ class MsPrime2CRT:
         return crt
 
     @classmethod
-    def crt_noise(cls, crt: pandas.DataFrame, noise: float) -> pandas.DataFrame:
+    def crt_noise(cls, crt: pandas.DataFrame, noise: float = 0.05) -> pandas.DataFrame:
         """
         This will add some noise in the crt dataframe. the idea is to add some gaussian like noise on the crt as crt
         produced by msprime is not stochastic. Given the standard deviation in noise parameter, it will produce a

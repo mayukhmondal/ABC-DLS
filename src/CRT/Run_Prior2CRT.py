@@ -32,8 +32,8 @@ parser.add_argument('--gen', required=True,
 parser.add_argument('--threads', help='the number of threads. default is 1', type=int, default=1)
 parser.add_argument('--noise', help='In case you need to add some gaussian noise in the crt, which will be added as the'
                                     ' fraction changed on the crt. In this case noise will be the standard deviation '
-                                    'and mean is always 0. default is 0 and a good number to start with 0.05',
-                    type=float, default=0.0)
+                                    'and mean is always 0. default is 0.05',
+                    type=float, default=0.05)
 args = parser.parse_args()
 
 demography = eval('Demography.' + args.demography)
