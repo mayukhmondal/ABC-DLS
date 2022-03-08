@@ -463,9 +463,10 @@ class MsPrime2SFS:
         :param rec_rate: the recombination rate for msprime. does it matter for sfs?
         :return: will return the multi-dimensional sfs in numpy format
         """
-        fs_shape = numpy.asarray(samples) + 1
+        samples_exist = [i for i in samples if i != 0]
+        fs_shape = numpy.asarray(samples_exist) + 1
         sfs = numpy.zeros(fs_shape)
-        sample_shape = numpy.split(numpy.arange(sum(samples)), numpy.cumsum(list(samples))[:-1])
+        sample_shape = numpy.split(numpy.arange(sum(samples_exist)), numpy.cumsum(list(samples_exist))[:-1])
         sims = sim_func(params, samples, length=length, mutation_rate=mut_rate, replicates=replicates,
                         recombination_rate=rec_rate)
         for sim in sims:
