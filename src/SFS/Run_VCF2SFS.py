@@ -23,7 +23,8 @@ parser.add_argument('--popfile',
 parser.add_argument('--sfs_pop', help="the name of pop. important for the order. example: pop1,pop2,pop3 ",
                     required=True)
 parser.add_argument('--chunksize',
-                    help='If too big for the memory use chunk size. relatively slow but no problem with ram',
+                    help='If too big for the memory use chunk size. relatively slow but no problem with ram. default is'
+                         '1e6 (1 million)',
                     type=float, default=1e6)
 parser.add_argument('--outprefix',
                     help='in case you want to name the output. by default it will be your vcf file name ')
