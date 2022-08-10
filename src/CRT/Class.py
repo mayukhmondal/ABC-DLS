@@ -6,7 +6,7 @@ from typing import Callable, List, Dict, Union
 import numpy
 import pandas
 # My stuff
-from Common import Misc
+from Classes import Misc
 
 from SFS.Class import Range2UniformPrior
 
