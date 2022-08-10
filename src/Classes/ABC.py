@@ -26,13 +26,12 @@ from . import Misc
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
     # tensorflow stuff
-    from tensorflow import keras
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.layers import Dense, GaussianNoise, Dropout
     from tensorflow.keras.callbacks import EarlyStopping
     from tensorflow.keras.callbacks import ModelCheckpoint
     from tensorflow.keras.callbacks import ReduceLROnPlateau
-    from tensorflow.keras.utils import HDF5Matrix
+    import tensorflow
 # activating R
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
@@ -157,9 +156,8 @@ class ABC_DLS_Classification:
     def wrapper_pre_train(cls, info: str, test_size: int = int(1e4), chunksize: Optional[int] = int(1e4),
                           scale: bool = False, folder: Optional[str] = None) -> \
             Tuple[
-                Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix],
-                Union[
-                    numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+                numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Dict[
+                    int, str]]:
         """
         This the wrapper for pre_training part of the classification. it will produce data in hdf5 format which then
         easily can be used in training part of the classification. it will also delete all the files that can be output
@@ -228,7 +226,7 @@ class ABC_DLS_Classification:
         :return: will return the the files path, number of parameters and names of the model all in three lists
         """
         infodata = Misc.reading_bylines_small(info)
-        infodata = [info for info in infodata if info is not '']
+        infodata = [info for info in infodata if info != '']
         files = [line.split()[0] for line in infodata]
         paramnumbers = [int(line.split()[1]) for line in infodata]
         names = [Misc.filenamewithoutextension_checking_zipped(file) for file in files]
@@ -387,7 +385,7 @@ class ABC_DLS_Classification:
 
         raw = raw.sample(frac=1)
         y_cat_dict = dict(zip(pandas.Categorical(raw.index).codes, raw.index))
-        y = keras.utils.to_categorical(pandas.Categorical(raw.index).codes, len(y_cat_dict))
+        y = tensorflow.keras.utils.to_categorical(pandas.Categorical(raw.index).codes, len(y_cat_dict))
         if scale:
             scale_x = preprocessing.MinMaxScaler()
             x = scale_x.fit_transform(raw.values)
@@ -404,7 +402,8 @@ class ABC_DLS_Classification:
     @classmethod
     def preparingdata_hdf5(cls, filename: str, chunksize: int, test_size: int = int(1e4), scale: bool = False,
                            outfolder: str = '') -> Tuple[
-        HDF5Matrix, HDF5Matrix, HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], Dict[int, str]]:
+        numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Dict[
+            int, str]]:
         """
         In case of chunk size is mentioned it will be assumed that the data is too big to save in ram and it will be
         saved in hdf5 format and will be split it in necessary steps
@@ -438,7 +437,8 @@ class ABC_DLS_Classification:
         os.system(models_command)
         model_index = pandas.read_csv(outfolder + 'models.csv')
         y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
-        y = keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict), 'uint8')
+        y = tensorflow.keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict),
+                                                  'uint8')
         Misc.numpy2hdf5(y, yfile)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
         Misc.removefiles([outfolder + 'ss.csv', outfolder + 'models.csv'])
@@ -534,7 +534,7 @@ class ABC_DLS_Classification:
 
     @classmethod
     def train_test_split_hdf5(cls, file: str, dataset: str = 'mydata', test_rows: Union[int, float] = int(1e4)) -> \
-            Tuple[HDF5Matrix, HDF5Matrix]:
+            Tuple[numpy.ndarray, numpy.ndarray]:
         """
         Special way to train test split for hdf5. will take the first n-test_rows for training and rest for test
 
@@ -556,11 +556,9 @@ class ABC_DLS_Classification:
             sys.exit(1)
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[
-        numpy.ndarray, HDF5Matrix, Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]],
-                      y_train: Union[numpy.ndarray, HDF5Matrix, Tuple[
-                          Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]],
-                      nn: Optional[str] = None, folder: str = '') -> keras.models.Model:
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, Tuple[numpy.ndarray, numpy.ndarray]],
+                      y_train: Union[numpy.ndarray, Tuple[numpy.ndarray, numpy.ndarray]],
+                      nn: Optional[str] = None, folder: str = '') -> tensorflow.keras.models.Model:
         """
         This the wrapper for training part of the classification method. it need training data set for x and y. can be
         either numpy array or hdf5 matrix format (HD5matrix) of keras
@@ -614,8 +612,8 @@ class ABC_DLS_Classification:
         return input_layer + noise
 
     @classmethod
-    def ANNModelCheck(cls, x: Union[numpy.ndarray, HDF5Matrix],
-                      y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelCheck(cls, x: numpy.ndarray,
+                      y: numpy.ndarray) -> tensorflow.keras.models.Model:
         """
         The Tensor flow for model check
 
@@ -632,7 +630,8 @@ class ABC_DLS_Classification:
         model.add(Dropout(.01))
         model.add(Dense(y.shape[1], activation='softmax'))
 
-        model.compile(loss=keras.losses.categorical_crossentropy, optimizer='adam', metrics=['categorical_accuracy'])
+        model.compile(loss=tensorflow.keras.losses.categorical_crossentropy, optimizer='adam',
+                      metrics=['categorical_accuracy'])
 
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
@@ -646,7 +645,7 @@ class ABC_DLS_Classification:
         return model
 
     @classmethod
-    def check_save_tfk_model(cls, model: keras.models.Model, output: str = 'Model.h5',
+    def check_save_tfk_model(cls, model: tensorflow.keras.models.Model, output: str = 'Model.h5',
                              check_point: str = 'Checkpoint.h5') -> None:
         """
         This will save the keras model as a h5 file. It will also check if check_point (default=Checkpoint.h5)  was
@@ -664,8 +663,8 @@ class ABC_DLS_Classification:
             model.save(output)
 
     @classmethod
-    def wrapper_after_train(cls, ModelSeparation: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
-                            y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+    def wrapper_after_train(cls, ModelSeparation: tensorflow.keras.models.Model, x_test: numpy.ndarray,
+                            y_test: numpy.ndarray, scale_x: Optional[preprocessing.MinMaxScaler],
                             y_cat_dict: Dict[int, str], ssfile: str, method: str = "mnlogistic",
                             tolerance: float = .005, csvout: bool = False, cvrepeats: int = 100,
                             folder: str = '', pred_repeat: int = 1, frac: float = 1.0) -> None:
@@ -731,8 +730,8 @@ class ABC_DLS_Classification:
                               predict4mreal=predictednn.rename(columns=y_cat_dict), folder=folder)
 
     @classmethod
-    def prepare4ABC(cls, ModelSeparation: keras.models.Model, sfs: pandas.Series,
-                    x_test: Union[numpy.ndarray, HDF5Matrix], y_test: Union[numpy.ndarray, HDF5Matrix],
+    def prepare4ABC(cls, ModelSeparation: tensorflow.keras.models.Model, sfs: pandas.Series,
+                    x_test: numpy.ndarray, y_test: numpy.ndarray,
                     scale_x: Optional[preprocessing.MinMaxScaler], y_cat_dict: Dict[int, str],
                     pred_repeat: int = 1) -> [pandas.DataFrame, pandas.DataFrame]:
         """
@@ -788,7 +787,7 @@ class ABC_DLS_Classification:
         return counts.to_frame().T
 
     @classmethod
-    def predict_repeats_mean(cls, Model: keras.models.Model, x: Union[numpy.ndarray, HDF5Matrix],
+    def predict_repeats_mean(cls, Model: tensorflow.keras.models.Model, x: numpy.ndarray,
                              repeats: int = 100) -> pandas.DataFrame:
         """
         Instead of predicting once on NNModel. It will predict multiple times [important to use
@@ -1126,7 +1125,7 @@ class ABC_DLS_Classification_CV(ABC_DLS_Classification):
 
     @classmethod
     def read_data(cls, test_rows: int = int(1e4), folder: str = '') -> Tuple[
-        keras.models.Model, HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], Optional[
+        tensorflow.keras.models.Model, numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], Optional[
             preprocessing.MinMaxScaler], Dict[int, str]]:
         """
         wrapper to read all the data before doing the abc stuff
@@ -1144,7 +1143,8 @@ class ABC_DLS_Classification_CV(ABC_DLS_Classification):
         return ModelSeparation, x_test, y_test, scale_x, scale_y, y_cat_dict
 
     @classmethod
-    def loadingkerasmodel(cls, ModelParamPredictionFile: str = 'ModelClassification.h5') -> keras.models.Model:
+    def loadingkerasmodel(cls,
+                          ModelParamPredictionFile: str = 'ModelClassification.h5') -> tensorflow.keras.models.Model:
         """
         to load the saved keras model
 
@@ -1167,7 +1167,7 @@ class ABC_DLS_Classification_CV(ABC_DLS_Classification):
         return model
 
     @classmethod
-    def reading_y_test(cls, test_rows: int = int(1e4), folder: str = '') -> HDF5Matrix:
+    def reading_y_test(cls, test_rows: int = int(1e4), folder: str = '') -> numpy.ndarray:
         """
         reading the file for y.h5/y_test.h5 and then return the y_test using hdf5matrix
 
@@ -1185,7 +1185,7 @@ class ABC_DLS_Classification_CV(ABC_DLS_Classification):
         return y_test
 
     @classmethod
-    def reading_x_test(cls, test_rows: int = int(1e4), folder: str = '') -> HDF5Matrix:
+    def reading_x_test(cls, test_rows: int = int(1e4), folder: str = '') -> numpy.ndarray:
         """
         reading the file for x.h5/x_test.h5 and then return the x_test using hdf5matrix
 
@@ -1430,8 +1430,8 @@ class ABC_DLS_Params(ABC_DLS_Classification):
     @classmethod
     def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                           scaling_x: bool = False, scaling_y: bool = False, folder: str = '') -> Tuple[
-        Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], Union[
-            numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[preprocessing.MinMaxScaler], str]:
+        numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], numpy.ndarray, numpy.ndarray, Optional[
+            preprocessing.MinMaxScaler], str]:
         """
         This is a a wrapper on the pretrain for parameter estimation. this will build stuff just before the training in
         ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
@@ -1536,7 +1536,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
     @classmethod
     def preparingdata_hdf5(cls, paramfile: str, simss: str, chunksize: int = 100, test_size: int = int(1e4),
                            scaling_x: bool = False, scaling_y: bool = False, folder: str = '') -> Tuple[
-        HDF5Matrix, HDF5Matrix, Optional[preprocessing.MinMaxScaler], HDF5Matrix, HDF5Matrix, Optional[
+        numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], numpy.ndarray, numpy.ndarray, Optional[
             preprocessing.MinMaxScaler]]:
         """
         In case of chunk size is mentioned it will be assumed that the data is too big to save in ram and it will be
@@ -1620,9 +1620,9 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         return x_train, x_test, scale_x, y_train, y_test, scale_y
 
     @classmethod
-    def wrapper_train(cls, x_train: Union[numpy.ndarray, HDF5Matrix, tuple],
-                      y_train: Union[numpy.ndarray, HDF5Matrix, tuple],
-                      nn: Optional[str] = None, folder: str = '') -> keras.models.Model:
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, tuple],
+                      y_train: Union[numpy.ndarray, tuple],
+                      nn: Optional[str] = None, folder: str = '') -> tensorflow.keras.models.Model:
         """
         This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need training
         data set for x and y. can be either numpy array or hdf5 matrix format (HD5matrix) of keras
@@ -1659,8 +1659,8 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         return ModelParamPrediction
 
     @classmethod
-    def ANNModelParams(cls, x: Union[numpy.ndarray, HDF5Matrix],
-                       y: Union[numpy.ndarray, HDF5Matrix]) -> keras.models.Model:
+    def ANNModelParams(cls, x: numpy.ndarray,
+                       y: numpy.ndarray) -> tensorflow.keras.models.Model:
         """
         A basic model for ANN to calculate parameters
 
@@ -1688,8 +1688,8 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         return model
 
     @classmethod
-    def wrapper_aftertrain(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
-                           y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
+    def wrapper_aftertrain(cls, ModelParamPrediction: tensorflow.keras.models.Model, x_test: numpy.ndarray,
+                           y_test: numpy.ndarray, ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            csvout: bool = False, cvrepeats: int = 100, folder: str = '', frac: float = 1.0) -> None:
@@ -1801,8 +1801,8 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         return test_predictions, predict4mreal, params_unscaled
 
     @classmethod
-    def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
-                          y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+    def preparing_for_abc(cls, ModelParamPrediction: tensorflow.keras.models.Model, x_test: numpy.ndarray,
+                          y_test: numpy.ndarray, scale_x: Optional[preprocessing.MinMaxScaler],
                           scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray,
                           ss: pandas.DataFrame) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
         """
@@ -1879,7 +1879,8 @@ class ABC_DLS_Params(ABC_DLS_Classification):
                                       sumstat=pandas.DataFrame(ss.iloc[:, colnum]), nval=repeats, tols=tol,
                                       method=method, trace=trace)
                 print(param.iloc[:, colnum].name)
-                print(robjects.r['summary'](cvresreg))
+                summary = robjects.r['summary'](cvresreg)
+                print(summary[0][0])
                 robjects.r['plot'](cvresreg, ask=False)
             robjects.r['dev.off']()
         if method == 'rejection' or method == 'neuralnet':
@@ -1898,8 +1899,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
             line = open(temp_name).readline()
             print(line)
             os.remove(temp_name)
-            print(pandas.DataFrame(list(together), index=together.colnames,
-                                   columns=together.rownames).transpose().to_string())
+            print(pandas.DataFrame(together, columns=param.columns, index=[tol]).to_string())
             robjects.r['plot'](cvresreg, ask=False)
             # instead we could have used robjects.r['summary'](cvresreg) if it was not bugged
             robjects.r['dev.off']()
@@ -1921,7 +1921,6 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         """
         import tempfile
         temp_name = next(tempfile._get_candidate_names())
-        print(target)
         if method == 'rejection' or method == 'loclinear':
             print('Separately')
             robjects.r['pdf'](name)
@@ -2130,7 +2129,7 @@ class ABC_DLS_Params_CV(ABC_DLS_Params):
 
     @classmethod
     def read_data(cls, test_rows: int = int(1e4), folder: str = '') -> Tuple[
-        keras.models.Model, Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix], Optional[
+        tensorflow.keras.models.Model, numpy.ndarray, numpy.ndarray, Optional[
             preprocessing.MinMaxScaler], Optional[preprocessing.MinMaxScaler]]:
         """
         to read all the data before doing the abc stuff
@@ -2167,8 +2166,8 @@ class ABC_DLS_Params_CV(ABC_DLS_Params):
         return scale_x, scale_y
 
     @classmethod
-    def preparing_for_abc(cls, ModelParamPrediction: keras.models.Model, x_test: Union[numpy.ndarray, HDF5Matrix],
-                          y_test: Union[numpy.ndarray, HDF5Matrix], scale_x: Optional[preprocessing.MinMaxScaler],
+    def preparing_for_abc(cls, ModelParamPrediction: tensorflow.keras.models.Model, x_test: numpy.ndarray,
+                          y_test: numpy.ndarray, scale_x: Optional[preprocessing.MinMaxScaler],
                           scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray) -> Tuple[
         pandas.DataFrame, pandas.DataFrame]:
         """
@@ -2359,7 +2358,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', decrease: float = 0.95,
                 frac: float = 1.0, increase: float = 0.0,
-                hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+                hardrange_file: Optional[str] = None, round:int=3) -> pandas.DataFrame:
         """
         The main wrapper for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2388,6 +2387,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             increase as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two.  default is 3
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2405,13 +2406,12 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder,
-                                      decrease=decrease,
+                                      decrease=decrease,round=round,
                                       frac=frac, increase=increase, hardrange_file=hardrange_file)
 
     @classmethod
-    def ANNModelParams(cls, x: Tuple[Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]],
-                       y: Tuple[
-                           Union[numpy.ndarray, HDF5Matrix], Union[numpy.ndarray, HDF5Matrix]]) -> keras.models.Model:
+    def ANNModelParams(cls, x: Tuple[numpy.ndarray, numpy.ndarray],
+                       y: Tuple[numpy.ndarray, numpy.ndarray]) -> tensorflow.keras.models.Model:
         """
         A basic model for ANN to calculate parameters. to make it more efficient train and test together. but make it
         more memory inefficient
@@ -2446,14 +2446,14 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         return model
 
     @classmethod
-    def wrapper_aftertrain(cls, info: str, ModelParamPrediction: keras.models.Model,
-                           x_test: Union[numpy.ndarray, HDF5Matrix],
-                           y_test: Union[numpy.ndarray, HDF5Matrix], ssfile: str,
+    def wrapper_aftertrain(cls, info: str, ModelParamPrediction: tensorflow.keras.models.Model,
+                           x_test: numpy.ndarray,
+                           y_test: numpy.ndarray, ssfile: str,
                            scale_x: Optional[preprocessing.MinMaxScaler], scale_y: Optional[preprocessing.MinMaxScaler],
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            folder: str = '', csvout: bool = False, decrease: float = 0.95,
                            frac: float = 1.0, increase: float = 0.0,
-                           hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+                           hardrange_file: Optional[str] = None, round:int=3) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2482,6 +2482,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             increase as not go awry for simulation parameters
         :param frac: To multiply all the observed ss with some fraction. Important in case simulated data and observed
             data are not from same length. default is 1
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two. default is 3
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2616,7 +2618,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
     @classmethod
     def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame, increase: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame(),
-                               decrease: float = .95) -> pandas.DataFrame:
+                               decrease: float = .95, round:int=3) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
         recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
@@ -2630,6 +2632,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
         the parameters
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two. default is 3
         :return: will return a newrange pandas dataframe which are with relaxed using the noise injection and then
             tested to be within hardrange
         """
@@ -2642,29 +2646,40 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             newrange['min'] = pandas.concat([hardrange['min'], newrange['min']], axis=1).max(axis=1)
             newrange['max'] = pandas.concat([hardrange['max'], newrange['max']], axis=1).min(axis=1)
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
-
+        doublecheck = newrange.round(round).iloc[:, :2]
+        still_zero = doublecheck['max'] == doublecheck['min']
+        if (still_zero).any():
+            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 10**(-round)
+            # decrease_col = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+            newrange.loc[still_zero, 'decrease'] = 1.0
+        newrange = newrange.round(round)
         return newrange
 
     @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                          decrease: float = .95) -> pandas.DataFrame:
+                          decrease: float = .95, round:int=3) -> pandas.DataFrame:
         """
         This will check if the new range decreasing is more than 95%. if true it will update the new range or else keep
         the old range assuming there is no direct decreasing. this step is necessary so that you do not get smaller
-        range just because you ran it several time
+        range just because you ran it several time. The same thing will also repeat if min and max in new range is same.
+        R_ABC does not like 0 standard deviation in the input data
 
         :param newrange: the new range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :param oldrange: the old range in pandas dataframe format. columns should be max and min and indexes should be
             the parameters
         :param decrease: the amount of decreasing required to update the new decreasing. default is 95%
+        :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
+            right now. pandas can use more. We have to use the lower one between these two. default is 3
         :return: will return the updated newrange dataframe. where if decrease is less than .95 then new range rows if not
             old range rows
         """
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
         newrange.loc[(newrange['decrease'] > decrease) & (newrange['decrease'] < 1), ['min', 'max']] = oldrange[
             (newrange['decrease'] > decrease) & (newrange['decrease'] < 1)]
+        newrange.loc[newrange['decrease'] == 0] = oldrange.loc[newrange['decrease'] == 0]
         newrange['decrease'] = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
+        newrange = newrange.round(round)  # because r can only use round 4
         return newrange
 
     @classmethod

@@ -1,7 +1,8 @@
-from tensorflow.python import keras
-from tensorflow.python.keras.models import Sequential
+import tensorflow
 from tensorflow.python.keras.layers import *
-from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.python.keras.models import Sequential
+
+
 def ANNModelCheck(x, y):
     """
     The Tensor flow for model check
@@ -23,7 +24,7 @@ def ANNModelCheck(x, y):
     model.add(Dropout(.01))
     model.add(Dense(y.shape[1], activation='softmax'))
 
-    model.compile(loss=keras.losses.categorical_crossentropy, optimizer="adam", metrics=['accuracy'])
+    model.compile(loss=tensorflow.keras.losses.categorical_crossentropy, optimizer="adam", metrics=['accuracy'])
     # adding an early stop so that it does not over fit. slow but better
     # ES = EarlyStopping(monitor='val_loss', patience=100)
     # model.fit(x, y, epochs=int(2e6), verbose=2,callbacks=[ES], validation_split=.1)

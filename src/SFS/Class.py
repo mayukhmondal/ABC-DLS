@@ -4,8 +4,8 @@ This file will hold all the classes for a specific case which is SFS. This shoul
 rather than only way to use it
 """
 import itertools
-import sys
 import os
+import sys
 from multiprocessing import Pool as ThreadPool
 # type hint for readability
 from typing import Optional, Union, List, Tuple, Callable
@@ -14,8 +14,9 @@ import allel
 import numpy
 import pandas
 
-from Classes import Misc
 from Classes import ABC
+from Classes import Misc
+
 
 class VCF2SFS():
     """
@@ -242,6 +243,16 @@ class Range2UniformPrior():
 
     def __new__(cls, upper: str, lower: str, variable_names: Optional[str] = None,
                 repeats: Union[float, int] = 2e4) -> pandas.DataFrame:
+        """
+        This will call the wrapper function for Range2UniformPrior so the class will behave like a function
+
+        :param upper: upper limit for the parameters. string format
+        :param lower: lower limit for the parameters. string format
+        :param variable_names: the names of the variables. string format
+        :param repeats: number of repeats that you want create. can use float but will convert it to int
+        :return: wii return the pandas dataframe format of parameters. whose columns are parameters and rows are
+        different repeats (or instance)
+        """
         return cls.wrapper(upper=upper, lower=lower, variable_names=variable_names, repeats=repeats)
 
     @classmethod
@@ -348,11 +359,37 @@ class MsPrime2SFS:
     Given a msprime demographic python file and priors it can produce sfs out of it.
     """
 
+    def __new__(cls, sim_func: Callable, params_file: str, samples: str, total_length: float = 1e7,
+                ldblock: float = 1e6, mut_rate: float = 1.45e-8, rec_rate: float = 1e-8,
+                threads: int = 1) -> pandas.DataFrame:
+        """
+        This will call the wrapper function for MsPrime2SFS so the class will behave like a function
+
+        :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
+        return it
+        :param params_file: the csv file where parameters are written. All the priors for the parameters on which the
+        simulation will run. Should be "," comma separated csv format. Different rows signify different run.
+        columns different parameters
+        :param samples: The number of inds per populations to run simulation. All the output populations should be
+        mentioned in the inds. again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 inds you
+        would get total 11 (0 included) different allele counts
+        :param total_length: total length of the genome. default is 3gb roughly the length of human genome
+        :param ldblock: Length of simulated blocks. Default is 1mb
+        :param mut_rate: the mutation rate. default is the one every body uses
+        :param rec_rate: the recombination rate for msprime. does it matter for sfs?
+        :param threads: the number of threads to run parallel
+        :return: will return a pandas dataframe with parameters and sfs together
+        """
+        return cls.wrapper(sim_func=sim_func, params_file=params_file, samples=samples, total_length=total_length,
+                           ldblock=ldblock, mut_rate=mut_rate, rec_rate=rec_rate, threads=threads)
+
     @classmethod
-    def wrapper(cls, sim_func, params_file, samples, total_length=1e7, ldblock=1e6, mut_rate=1.45e-8, rec_rate=1e-8,
-                threads=1):
+    def wrapper(cls, sim_func: Callable, params_file: str, samples: str, total_length: float = 1e7,
+                ldblock: float = 1e6, mut_rate: float = 1.45e-8, rec_rate: float = 1e-8,
+                threads: int = 1) -> pandas.DataFrame:
         """
         the wrapper for the class. this just wrapping around perline so that it can run it parallel.
+
         :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
         return it
         :param params_file: the csv file where parameters are written. All the priors for the parameters on which the
@@ -382,7 +419,7 @@ class MsPrime2SFS:
 
     @classmethod
     def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
-                mut_rate: float = 1.45e-8, replicates:  Union[float, int] = 100, rec_rate: float = 1e-8,
+                mut_rate: float = 1.45e-8, replicates: Union[float, int] = 100, rec_rate: float = 1e-8,
                 remainder_length: Union[float, int] = 0):
         """
         simulations2sfs per line or parameters. kind of the real wrapper. but we created another wrapper to take care of
@@ -426,9 +463,10 @@ class MsPrime2SFS:
         :param rec_rate: the recombination rate for msprime. does it matter for sfs?
         :return: will return the multi-dimensional sfs in numpy format
         """
-        fs_shape = numpy.asarray(samples) + 1
+        samples_exist = [i for i in samples if i != 0]
+        fs_shape = numpy.asarray(samples_exist) + 1
         sfs = numpy.zeros(fs_shape)
-        sample_shape = numpy.split(numpy.arange(sum(samples)), numpy.cumsum(list(samples))[:-1])
+        sample_shape = numpy.split(numpy.arange(sum(samples_exist)), numpy.cumsum(list(samples_exist))[:-1])
         sims = sim_func(params, samples, length=length, mutation_rate=mut_rate, replicates=replicates,
                         recombination_rate=rec_rate)
         for sim in sims:
@@ -440,8 +478,9 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
     Just to have extrac function required for Snakemake file for SFS creation
     """
+
     @classmethod
-    def narrowing_input(cls,paramsnumbers, inputfile, rangefile, folder=''):
+    def narrowing_input(cls, paramsnumbers: int, inputfile: str, rangefile: str, folder: str = '') -> int:
         """
         Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle
 
@@ -458,9 +497,9 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         if Misc.getting_line_count(inputfile) > 0:
             params = pandas.read_csv(inputfile, usecols=range(paramsnumbers), header=None)
             linenumbers = (cls.narrowing_params(params=params, parmin=newrange['min'],
-                                                            parmax=newrange['max'])) - 1
+                                                parmax=newrange['max'])) - 1
             temp = cls.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
-                                                            outputfile=folder + 'Narrows.csv')
+                                                outputfile=folder + 'Narrows.csv')
             if Misc.getting_line_count(temp) > 0:
                 _ = cls.shufling_joined_models(inputcsv=temp, output=folder + 'Narrowed.csv', header=False)
                 Misc.removefiles([folder + 'Narrows.csv'], printing=False)
@@ -473,7 +512,7 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         return narrow_count
 
     @classmethod
-    def remove_repeated_params(cls,inputfile, paramsnumbers, outputfile):
+    def remove_repeated_params(cls, inputfile: str, paramsnumbers: int, outputfile: str) -> str:
         """
         remove the repeated parameters lines. We donot need different runs for same simulated parameters
 
@@ -483,14 +522,14 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         :param outputfile: the path of the output file
         :return: will return the path of outputfile
         """
-        params = pandas.read_csv(inputfile,usecols=range(paramsnumbers),header=None)
+        params = pandas.read_csv(inputfile, usecols=range(paramsnumbers), header=None)
         linenumbers = params.drop_duplicates().index.values
-        temp = cls.extracting_by_linenumber(file=inputfile,linenumbers=linenumbers,
-            outputfile=outputfile)
+        temp = cls.extracting_by_linenumber(file=inputfile, linenumbers=linenumbers,
+                                            outputfile=outputfile)
         return temp
 
     @classmethod
-    def lmrd4mcsv(cls,hardrange_file: str,newrange_file:str) -> float:
+    def lmrd4mcsv(cls, hardrange_file: str, newrange_file: str) -> float:
         """
         This will read hardrange_file and newrange_file and calcualte log of mean range decrease (lmrd). So you know how
         much improvement you got in this cycle
@@ -503,5 +542,5 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['lower', 'upper'])
         newrange = pandas.read_csv(newrange_file, index_col=0, header=None, names=['lower', 'upper', 'imp'])
 
-        lmrd=cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
+        lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
         return lmrd

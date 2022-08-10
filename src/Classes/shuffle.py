@@ -19,16 +19,16 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import os
+import random
 import sys
 import tempfile
-import random
 
 # need better way to estimate this given overhead for str. setting to
 # 0.5GB uses rougly 4GB of ram.
-memory = int(float(os.environ.get('MEMORY', 4.0)) / 8 * 1024**3)
+memory = int(float(os.environ.get('MEMORY', 4.0)) / 8 * 1024 ** 3)
 
 files = []
-files.append(tempfile.NamedTemporaryFile(mode='w', delete=False,dir='temp/'))
+files.append(tempfile.NamedTemporaryFile(mode='w', delete=False, dir='temp/'))
 total_bytes = 0
 total_lines = 0
 buf = []
@@ -40,15 +40,16 @@ def shuffle_and_close(buf, f):
     f.writelines(buf)
     f.close()
 
+
 for line in sys.stdin:
     bytes_used += len(line)
     total_bytes += len(line)
     total_lines += 1
     buf.append(line)
     if bytes_used >= memory:
-        #sys.stderr.write("wrote %d lines\n" % (len(buf)))
+        # sys.stderr.write("wrote %d lines\n" % (len(buf)))
         shuffle_and_close(buf, files[-1])
-        files.append(tempfile.NamedTemporaryFile(mode='w', delete=False,dir='temp/'))
+        files.append(tempfile.NamedTemporaryFile(mode='w', delete=False, dir='temp/'))
         buf = []
         bytes_used = 0
 if buf:

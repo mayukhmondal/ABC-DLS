@@ -8,6 +8,7 @@ import os
 import sys
 
 from Classes import ABC
+from Classes import Misc
 from _version import __version__
 
 # input argument is done
@@ -21,7 +22,7 @@ sp.set_defaults(cmd='All')
 sp.add_argument('info',
                 help='the path for the info file. whose first column will be file path (.csv or .csv.gz) and tab '
                      'delimited column with and the number of parameter in that file. ex. <file1.csv.gz> <n>. Only '
-                     'the first one will be taken as valid')
+                     'the first one will be taken as valid', type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--folder',
                 help='in case you want to run the codes not in current working directory give the path', default='')
 sp.add_argument('--test_size',
@@ -32,10 +33,11 @@ sp.add_argument('--chunksize',
 sp.add_argument('--ssfile', help="The summary statistics file from real data with header. Can have multiple line"
                                  " assuming every single line is different run of same summary statistics for different"
                                  "individuals. The predictions from NN will be averaged in case of multiple"
-                                 " lines.", required=True)
+                                 " lines.", required=True, type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--nn',
                 help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater'
-                     'to your own problem. The def ANNModelCheck should be inside')
+                     'to your own problem. The def ANNModelCheck should be inside',
+                type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--together',
                 help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
                      " validation test set. need a specific format for NeuralNetwork.py. Look at Extra/Dynamic.py. "
@@ -50,7 +52,7 @@ sp.add_argument('--scale',
                 help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
                      "(parameters), b: to scale both (ss+parameters)",
                 default='x', choices=["n", "x", "y", "b"])
-sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be calculated. default is 100 ',
                 default=100, type=int)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",
@@ -64,7 +66,7 @@ sp.set_defaults(cmd='Pre_train')
 sp.add_argument('info',
                 help='the path for the info file. whose first column will be file path (.csv or .csv.gz) and tab '
                      'delimited column with and the number of parameter in that file. ex. <file1.csv.gz> <n>. Only the '
-                     'first one will be taken as valid')
+                     'first one will be taken as valid', type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--folder',
                 help='in case you want to run the codes not in current working directory give the path', default='')
 sp.add_argument('--chunksize',
@@ -81,12 +83,12 @@ sp.add_argument('--folder',
                 help='in case you want to run the codes not in current working directory give the path', default='')
 sp.add_argument('--nn',
                 help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater'
-                     ' to your own problem. The def it can have ')
+                     ' to your own problem. The def it can have ', type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
 sp.add_argument('--together',
-                help="If the you want to send both train and test together in tfk model fit. Useful for early stoppping"
+                help="If the you want to send both train and test together in tfk model fit. Useful for early stopping"
                      " validation test set. need a specific format for NeuralNetwork.py. Look at Extra/Dynamic.py. "
                      "Should not be used for big test data as it loads in the memory",
                 action="store_true")
@@ -105,7 +107,7 @@ sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .01 ', default=.01, type=float)
-sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be calculated. default is 100 ',
                 default=100, type=int)
 
 sp = subparsers.add_parser('After_train', help='This is to run the ABC analysis after the training part is done')
@@ -115,7 +117,7 @@ sp.add_argument('--folder',
 sp.add_argument('--ssfile', help="The summary statistics file from real data with header. Can have multiple line"
                                  " assuming every single line is different run of same summary statistics for different"
                                  "individuals. The predictions from NN will be averaged in case of multiple"
-                                 " lines.", required=True)
+                                 " lines.", required=True, type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--test_size',
                 help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
                 default=10000, type=int)
@@ -124,7 +126,7 @@ sp.add_argument('--method',
                      'is "loclinear" ',
                 default='loclinear', choices=["rejection", "loclinear", "neuralnet"])
 sp.add_argument('--tolerance', help='tolerance limit for r abc. default is .01 ', default=.01, type=float)
-sp.add_argument('--cvrepeats', help='The number of time cross validation will be caluclated. default is 100 ',
+sp.add_argument('--cvrepeats', help='The number of time cross validation will be calculated. default is 100 ',
                 default=100, type=int)
 sp.add_argument('--csvout',
                 help="If the predicted values are needed to out put as csv format for further use in R_ABC",

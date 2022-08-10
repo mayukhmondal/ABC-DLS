@@ -1,4 +1,3 @@
-from tensorflow.python import keras
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.layers import *
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau

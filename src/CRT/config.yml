@@ -1,0 +1,17 @@
+sc_priors: Run_Range2UniParameters.py
+sc_crt: Run_Prior2CRT.py
+sc_abc: ../Run_SMC.py
+genfile: ../../examples/CRT/generations.csv
+crtfile: ../../examples/CRT/YRI_CEU_CHB.observed.csv
+priors_range: Oldrange.csv
+hardrange_file : Startrange.csv
+demography: OOA
+inds: 5,5,5
+threads: 1
+jobs: 10
+repeats: 2000
+test_size: 1000
+decrease : 0.95
+increase : 0.01
+tolerance: .1
+tfknn: ../extras/Dynamic.py

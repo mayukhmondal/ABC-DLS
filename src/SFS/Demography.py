@@ -1,8 +1,10 @@
 #!/usr/bin/python
-import math
 import collections
+import math
+
 import msprime
 import numpy
+
 
 def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
@@ -16,10 +18,10 @@ def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8
         N_EU0: Effective population size of European population before exponential growth.
         N_AS0: Effective population size of East Asian population before exponential growth.
         N_B: Effective population size of Out of Africa (OOA) populations
-        T_EU_AS: Time interval for separation of European and East Asian from now. in kilo year ago (kya)
-        T_B: Time interval for separation between Africa and OOA populations from T_EU_AS. in kya
+        T_EU_AS: Time interval for separation of European and East Asian from now. in kilo year (ky)
+        T_B: Time interval for separation between Africa and OOA populations from T_EU_AS. in ky
         T_AF: Time interval for decrease of effective population size of African population to ancestral effective
-            population size from T_B. in kya
+            population size from T_B. in ky
         m_AF_B: Bi-directional migration rate between African and OOA populations (x10^-5)
         m_AF_EU: Bi-directional migration rate between African and European populations (x10^-5)
         m_AF_AS: Bi-directional migration rate between African and East Asian populations (x10^-5)
@@ -79,6 +81,7 @@ def OOA(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8
         recombination_rate=recombination_rate)
     return geno
 
+
 def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
     This is the simple out of Africa model with Neanderthal to OOA population, Denisova or Unknown to East Asia and
@@ -92,21 +95,20 @@ def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
         N_EU0: Effective population size of European population before exponential growth.
         N_AS0: Effective population size of East Asian population before exponential growth.
         N_B: Effective population size of Out of Africa (OOA) populations
-        T_DIntro: Time interval for introgression in East Asian from Denisova or Unknown from now. in kilo year ago
-            (kya)
-        T_EU_AS: Time interval for separation of European and East Asian from T_DIntro. in kya
-        T_NIntro: Time interval for introgression in OOA from Neanderthal from T_EU_AS. in kya
-        T_XIntro: Time interval for introgression in African population from African archaic from T_EU_AS. in kya
-        T_B: Time interval for separation between Africa and OOA populations from maximum between T_NIntro and T_XIntro.
-            in kya
+        T_DM: Time interval for introgression in East Asian from Denisova or Unknown from now. in kilo year (ky)
+        T_EU_AS: Time interval for separation of European and East Asian from T_DM. in ky
+        T_NM: Time interval for introgression in OOA from Neanderthal from T_EU_AS. in ky
+        T_XM: Time interval for introgression in African population from African archaic from T_EU_AS. in ky
+        T_B: Time interval for separation between Africa and OOA populations from maximum between T_NM and T_XM.
+            in ky
         T_AF: Time interval for decrease of effective population size of African population to ancestral effective
-            population size from T_B. in kya
-        T_N_D: Time interval for separation between Neanderthal and Denisova or Unknwon from now. in kya
-        T_H_A: Time interval for separation between Neanderthal and modern humans from T_N_D. in kya
-        T_H_X: Time interval for separation between African archaic and modern humans from now. in kya
-        nintro: the fraction of introgression happened to OOA populations.
-        dintro: the fraction of introgression happened to East Asians
-        xintro: the fraction of introgression happened to African populations
+            population size from T_B. in ky
+        T_N_D: Time interval for separation between Neanderthal and Denisova or Unknwon from now. in ky
+        T_H_A: Time interval for separation between Neanderthal and modern humans from T_N_D. in ky
+        T_H_X: Time interval for separation between African archaic and modern humans from now. in ky
+        NMix: the fraction of introgression happened to OOA populations.
+        DMix: the fraction of introgression happened to East Asians
+        XMix: the fraction of introgression happened to African populations
     :param inds: the number of haplotypes per populations for example (10,10,10)
     :param length: the length of chromosome that has to be simulated. default is 1mb region
     :param mutation_rate: the amount of mutation rate. default is 1.45x10^-8 per generation per base
@@ -114,15 +116,15 @@ def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
     :param replicates: the number of replicated of length chromosome. default is 300
     :return: will return the msprime simulations. which then can be used to extract SFS
     """
-    (N_A, N_AF, N_EU, N_AS, N_EU0, N_AS0, N_B, T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_B,
-     T_AF, T_N_D, T_H_A, T_H_X, nintro, dintro, xintro) = params
+    (N_A, N_AF, N_EU, N_AS, N_EU0, N_AS0, N_B, T_DM, T_EU_AS, T_NM, T_XM, T_B,
+     T_AF, T_N_D, T_H_A, T_H_X, NMix, DMix, XMix) = params
     (n1, n2, n3) = inds
-    T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_B, T_AF, T_N_D, T_H_A, T_H_X = numpy.array(
-        [T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_B, T_AF, T_N_D, T_H_A, T_H_X]) * (1e3 / 29.0)
+    T_DM, T_EU_AS, T_NM, T_XM, T_B, T_AF, T_N_D, T_H_A, T_H_X = numpy.array(
+        [T_DM, T_EU_AS, T_NM, T_XM, T_B, T_AF, T_N_D, T_H_A, T_H_X]) * (1e3 / 29.0)
     AFR, EUR, ASN, NEA, DEN, XAF = 0, 1, 2, 3, 4, 5
     events = {}
-    r_EU = (math.log(N_EU / N_EU0) / (T_DIntro + T_EU_AS))
-    r_AS = (math.log(N_AS / N_AS0) / (T_DIntro + T_EU_AS))
+    r_EU = (math.log(N_EU / N_EU0) / (T_DM + T_EU_AS))
+    r_AS = (math.log(N_AS / N_AS0) / (T_DM + T_EU_AS))
     population_configurations = [
         msprime.PopulationConfiguration(
             sample_size=n1, initial_size=N_AF),
@@ -139,9 +141,9 @@ def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
     ]
 
     # Denisova or unknown admixture
-    events['deni_intro_asn'] = T_DIntro
+    events['deni_intro_asn'] = T_DM
     deni_intro_asn = [msprime.MassMigration(
-        time=events['deni_intro_asn'], source=ASN, destination=DEN, proportion=dintro)]
+        time=events['deni_intro_asn'], source=ASN, destination=DEN, proportion=DMix)]
     # CEU and CHB merge into B with rate changes at T_EU_AS
     events['split_eu_as'] = events['deni_intro_asn'] + T_EU_AS
     split_eu_as = [
@@ -150,14 +152,14 @@ def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
         msprime.PopulationParametersChange(
             time=events['split_eu_as'], initial_size=N_B, growth_rate=0, population_id=EUR)]
     # introgression Nean
-    events['nean_intro_eur'] = T_NIntro + events['split_eu_as']
+    events['nean_intro_eur'] = T_NM + events['split_eu_as']
     nean_intro_eur = [msprime.MassMigration(
-        time=events['nean_intro_eur'], source=EUR, destination=NEA, proportion=nintro)]
+        time=events['nean_intro_eur'], source=EUR, destination=NEA, proportion=NMix)]
 
     # introgression XAFR
-    events['xafr_intro_afr'] = T_XIntro + events['split_eu_as']
+    events['xafr_intro_afr'] = T_XM + events['split_eu_as']
     xafr_intro_afr = [msprime.MassMigration(
-        time=events['xafr_intro_afr'], source=AFR, destination=XAF, proportion=xintro)]
+        time=events['xafr_intro_afr'], source=AFR, destination=XAF, proportion=XMix)]
     # Population B merges into YRI at T_B
     events['split_afr_ooa'] = max(events['nean_intro_eur'], events['xafr_intro_afr']) + T_B
     split_afr_ooa = [
@@ -193,6 +195,7 @@ def SNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
         recombination_rate=recombination_rate)
     return geno
 
+
 def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
     This is the back to Africa model with Neanderthal to OOA population, Denisova or Unknown to East Asia and
@@ -200,32 +203,31 @@ def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
 
     :param params: all the parameters necessary for this model in a list or array format
         N_A: The ancestral effective population size
-        N_AF1: Modern effective population size of Africa population
+        N_AF: Modern effective population size of Africa population
         N_EU: Modern effective population size of European population
         N_AS: Modern effective population size of East Asian population
         N_EU0: Effective population size of European population before exponential growth.
         N_AS0: Effective population size of East Asian population before exponential growth.
         N_BC: Effective population size of Back to Africa migrated population.
         N_B: Effective population size of Out of Africa (OOA) populations
-        N_AF2: Effective population size of African populations before Back to Africa migration
-        T_DIntro: Time interval for introgression in East Asian from Denisova or Unknown from now. in kilo year ago
-            (kya)
-        T_EU_AS: Time interval for separation of European and East Asian from T_DIntro. in kya
-        T_NIntro: Time interval for introgression in OOA from Neanderthal from T_EU_AS. in kya
-        T_XIntro: Time interval for introgression in African population from African archaic from T_EU_AS. in kya
-        T_Mix: Time interval for mixing with Back to Africa population from T_EU_AS. in kya
-        T_Sep: Time interval for separation of Back to Africa population from OOA from T_Mix. in kya
-        T_B: Time interval for separation between Africa and OOA populations from maximum between T_NIntro, T_XIntro and
-            T_Sep. in kya
+        N_AF0: Effective population size of African populations before Back to Africa migration
+        T_DM: Time interval for introgression in East Asian from Denisova or Unknown from now. in kilo year (ky)
+        T_EU_AS: Time interval for separation of European and East Asian from T_DM. in ky
+        T_NM: Time interval for introgression in OOA from Neanderthal from T_EU_AS. in ky
+        T_XM: Time interval for introgression in African population from African archaic from T_EU_AS. in kya
+        T_Mix: Time interval for mixing with Back to Africa population from T_EU_AS. in ky
+        T_Sep: Time interval for separation of Back to Africa population from OOA from T_Mix. in ky
+        T_B: Time interval for separation between Africa and OOA populations from maximum between T_NM, T_XM and
+            T_Sep. in ky
         T_AF: Time interval for decrease of effective population size of African population to ancestral effective
-            population size from T_B. in kya
-        T_N_D: Time interval for separation between Neanderthal and Denisova or Unknwon from now. in kya
-        T_H_A: Time interval for separation between Neanderthal and modern humans from T_N_D. in kya
-        T_H_X: Time interval for separation between African archaic and modern humans from now. in kya
-        mix: the fraction of African genome is replaced but Back to Africa population
-        nintro: the fraction of introgression happened to OOA populations.
-        dintro: the fraction of introgression happened to East Asians
-        xintro: the fraction of introgression happened to African populations
+            population size from T_B. in ky
+        T_N_D: Time interval for separation between Neanderthal and Denisova or Unknown from now. in ky
+        T_H_A: Time interval for separation between Neanderthal and modern humans from T_N_D. in ky
+        T_H_X: Time interval for separation between African archaic and modern humans from now. in ky
+        Mix: the fraction of African genome is replaced but Back to Africa population
+        NMix: the fraction of introgression happened to OOA populations.
+        DMix: the fraction of introgression happened to East Asians
+        XMix: the fraction of introgression happened to African populations
     :param inds: the number of haplotypes per populations for example (10,10,10)
     :param length: the length of chromosome that has to be simulated. default is 1mb region
     :param mutation_rate: the amount of mutation rate. default is 1.45x10^-8 per generation per base
@@ -233,22 +235,21 @@ def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
     :param replicates: the number of replicated of length chromosome. default is 300
     :return: will return the msprime simulations. which then can be used to extract SFS
     """
-    (N_A, N_AF1, N_EU, N_AS, N_EU0, N_AS0, N_BC, N_B, N_AF2, T_DIntro, T_EU_AS, T_NIntro,
-     T_XIntro, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X, mix, nintro, dintro,
-     xintro) = params
+    (N_A, N_AF, N_EU, N_AS, N_EU0, N_AS0, N_BC, N_B, N_AF0, T_DM, T_EU_AS, T_NM,
+     T_XM, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X, Mix, NMix, DMix,
+     XMix) = params
     (n1, n2, n3) = inds
-    T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X = numpy.array(
-        [T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X]) * (1e3 / 29.0)
+    T_DM, T_EU_AS, T_NM, T_XM, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X = numpy.array(
+        [T_DM, T_EU_AS, T_NM, T_XM, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X]) * (1e3 / 29.0)
 
     events = {}
     AFR, EUR, ASN, GST, NEA, DEN, XAF = 0, 1, 2, 3, 4, 5, 6
 
-    r_EU = (math.log(N_EU / N_EU0) / (T_DIntro + T_EU_AS))
-    r_AS = (math.log(N_AS / N_AS0) / (T_DIntro + T_EU_AS))
-    # N_B=N_EU0+N_AS0
+    r_EU = (math.log(N_EU / N_EU0) / (T_DM + T_EU_AS))
+    r_AS = (math.log(N_AS / N_AS0) / (T_DM + T_EU_AS))
     population_configurations = [
         msprime.PopulationConfiguration(
-            sample_size=n1, initial_size=N_AF1),
+            sample_size=n1, initial_size=N_AF),
         msprime.PopulationConfiguration(
             sample_size=n2, initial_size=N_EU, growth_rate=r_EU),
         msprime.PopulationConfiguration(
@@ -264,9 +265,9 @@ def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
     ]
 
     # Denisova or unknown admixture
-    events['deni_intro_asn'] = T_DIntro
+    events['deni_intro_asn'] = T_DM
     deni_intro_asn = [msprime.MassMigration(
-        time=events['deni_intro_asn'], source=ASN, destination=DEN, proportion=dintro)]
+        time=events['deni_intro_asn'], source=ASN, destination=DEN, proportion=DMix)]
     # CEU and CHB merge into B with rate changes at T_EU_AS
     events['split_eu_as'] = events['deni_intro_asn'] + T_EU_AS
     split_eu_as = [msprime.MassMigration(
@@ -275,19 +276,19 @@ def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
             time=events['split_eu_as'], initial_size=N_B, growth_rate=0, population_id=EUR),
         msprime.MigrationRateChange(time=events['split_eu_as'], rate=0)]
     # introgression
-    events['nean_intro_eur'] = T_NIntro + events['split_eu_as']
+    events['nean_intro_eur'] = T_NM + events['split_eu_as']
     nean_intro_eur = [msprime.MassMigration(
-        time=events['nean_intro_eur'], source=EUR, destination=NEA, proportion=nintro)]
+        time=events['nean_intro_eur'], source=EUR, destination=NEA, proportion=NMix)]
     # introgression XAFR
-    events['xafr_intro_afr'] = T_XIntro + events['split_eu_as']
+    events['xafr_intro_afr'] = T_XM + events['split_eu_as']
     xafr_intro_afr = [msprime.MassMigration(
-        time=events['xafr_intro_afr'], source=AFR, destination=XAF, proportion=xintro)]
+        time=events['xafr_intro_afr'], source=AFR, destination=XAF, proportion=XMix)]
 
     # back migration
     events['back_migration'] = events['split_eu_as'] + T_Mix
     back_migration = [msprime.MassMigration(time=events['back_migration'], source=AFR,
-                                            destination=GST, proportion=mix), msprime.PopulationParametersChange(
-        time=events['back_migration'], initial_size=N_AF2, population_id=AFR)]
+                                            destination=GST, proportion=Mix), msprime.PopulationParametersChange(
+        time=events['back_migration'], initial_size=N_AF0, population_id=AFR)]
     # spearation between back and OOA
     events['split_ooa_back'] = events['back_migration'] + T_Sep
     split_ooa_back = [msprime.MassMigration(time=events['split_ooa_back'], source=GST,
@@ -328,6 +329,7 @@ def BNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
 
     return geno
 
+
 def MNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-8, replicates=300):
     """
         This is the mix OOA model with Neanderthal to OOA population, Denisova or Unknown to East Asia and
@@ -341,26 +343,25 @@ def MNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
             N_EU0: Effective population size of European population before exponential growth.
             N_AS0: Effective population size of East Asian population before exponential growth.
             N_MX: Effective population size of Mix to OOA population (assume second OOA).
-            N_B1: Effective population size of Out of Africa (OOA) populations after admixture with mix population
-            N_B2: Effective population size of Out of Africa before admixture (assume fist OOA).
-            T_DIntro: Time interval for introgression in East Asian from Denisova or Unknown from now. in kilo year ago
-                (kya)
-            T_EU_AS: Time interval for separation of European and East Asian from T_DIntro. in kya
-            T_NIntro: Time interval for introgression in OOA from Neanderthal from T_EU_AS. in kya
-            T_XIntro: Time interval for introgression in African population from African archaic from T_EU_AS. in kya
-            T_Mix: Time interval for mixing between OOA (OOA_1) and Mix (OOA_2) from T_EU_AS. in kya
-            T_Sep: Time interval for separation of Mix population from Africa from T_Mix. in kya
-            T_B: Time interval for separation between Africa and OOA populations from maximum between T_NIntro,T_XIntro
-                and T_Sep. in kya
+            N_B: Effective population size of Out of Africa (OOA) populations after admixture with mix population
+            N_B0: Effective population size of Out of Africa before admixture (assume fist OOA).
+            T_DM: Time interval for introgression in East Asian from Denisova or Unknown from now. in kilo year (ky)
+            T_EU_AS: Time interval for separation of European and East Asian from T_DM. in ky
+            T_NM: Time interval for introgression in OOA from Neanderthal from T_EU_AS. in ky
+            T_XM: Time interval for introgression in African population from African archaic from T_EU_AS. in ky
+            T_Mix: Time interval for mixing between OOA (OOA_1) and Mix (OOA_2) from T_EU_AS. in ky
+            T_Sep: Time interval for separation of Mix population from Africa from T_Mix. in ky
+            T_B: Time interval for separation between Africa and OOA populations from maximum between T_NM,T_XM
+                and T_Sep. in ky
             T_AF: Time interval for decrease of effective population size of African population to ancestral effective
-                population size from T_B. in kya
-            T_N_D: Time interval for separation between Neanderthal and Denisova or Unknwon from now. in kya
-            T_H_A: Time interval for separation between Neanderthal and modern humans from T_N_D. in kya
-            T_H_X: Time interval for separation between African archaic and modern humans from now. in kya
-            mix: the fraction of OOA (OOA_1) genome is replaced but Mix population (OOA_2)
-            nintro: the fraction of introgression happened to OOA populations.
-            dintro: the fraction of introgression happened to East Asians
-            xintro: the fraction of introgression happened to African populations
+                population size from T_B. in ky
+            T_N_D: Time interval for separation between Neanderthal and Denisova or Unknwon from now. in ky
+            T_H_A: Time interval for separation between Neanderthal and modern humans from T_N_D. in ky
+            T_H_X: Time interval for separation between African archaic and modern humans from now. in ky
+            Mix: the fraction of OOA (OOA_1) genome is replaced by Mix population (OOA_2)
+            NMix: the fraction of introgression happened to OOA populations.
+            DMix: the fraction of introgression happened to East Asians
+            XMix: the fraction of introgression happened to African populations
         :param inds: the number of haplotypes per populations for example (10,10,10)
         :param length: the length of chromosome that has to be simulated. default is 1mb region
         :param mutation_rate: the amount of mutation rate. default is 1.45x10^-8 per generation per base
@@ -368,19 +369,18 @@ def MNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
         :param replicates: the number of replicated of length chromosome. default is 300
         :return: will return the msprime simulations. which then can be used to extract SFS
         """
-    (N_A, N_AF, N_EU, N_AS, N_EU0, N_AS0, N_MX, N_B1, N_B2, T_DIntro, T_EU_AS,
-     T_NIntro, T_XIntro, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X, mix, nintro,
-     dintro, xintro) = params
+    (N_A, N_AF, N_EU, N_AS, N_EU0, N_AS0, N_MX, N_B1, N_B2, T_DM, T_EU_AS,
+     T_NM, T_XM, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X, Mix, NMix,
+     DMix, XMix) = params
     (n1, n2, n3) = inds
-    T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X = numpy.array(
-        [T_DIntro, T_EU_AS, T_NIntro, T_XIntro, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X]) * (1e3 / 29.0)
+    T_DM, T_EU_AS, T_NM, T_XM, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X = numpy.array(
+        [T_DM, T_EU_AS, T_NM, T_XM, T_Mix, T_Sep, T_B, T_AF, T_N_D, T_H_A, T_H_X]) * (1e3 / 29.0)
 
     events = {}
     AFR, EUR, ASN, GST, NEA, DEN, XAF = 0, 1, 2, 3, 4, 5, 6
 
-    r_EU = (math.log(N_EU / N_EU0) / (T_DIntro + T_EU_AS))
-    r_AS = (math.log(N_AS / N_AS0) / (T_DIntro + T_EU_AS))
-    # N_B=N_EU0+N_AS0
+    r_EU = (math.log(N_EU / N_EU0) / (T_DM + T_EU_AS))
+    r_AS = (math.log(N_AS / N_AS0) / (T_DM + T_EU_AS))
     population_configurations = [
         msprime.PopulationConfiguration(
             sample_size=n1, initial_size=N_AF),
@@ -399,9 +399,9 @@ def MNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
     ]
 
     # Denisova or unknown admixture
-    events['deni_intro_asn'] = T_DIntro
+    events['deni_intro_asn'] = T_DM
     deni_intro_asn = [msprime.MassMigration(
-        time=events['deni_intro_asn'], source=ASN, destination=DEN, proportion=dintro)]
+        time=events['deni_intro_asn'], source=ASN, destination=DEN, proportion=DMix)]
     # CEU and CHB merge into B with rate changes at T_EU_AS
     events['split_eu_as'] = events['deni_intro_asn'] + T_EU_AS
     split_eu_as = [msprime.MassMigration(
@@ -410,18 +410,18 @@ def MNDX(params, inds, length=1e6, mutation_rate=1.45e-8, recombination_rate=1e-
             time=events['split_eu_as'], initial_size=N_B1, growth_rate=0, population_id=EUR),
         msprime.MigrationRateChange(time=events['split_eu_as'], rate=0)]
     # NEAN introgression
-    events['nean_intro_eur'] = T_NIntro + events['split_eu_as']
+    events['nean_intro_eur'] = T_NM + events['split_eu_as']
     nean_intro_eur = [msprime.MassMigration(
-        time=events['nean_intro_eur'], source=EUR, destination=NEA, proportion=nintro)]
+        time=events['nean_intro_eur'], source=EUR, destination=NEA, proportion=NMix)]
 
     # introgression XAFR
-    events['xafr_intro_afr'] = T_XIntro + events['split_eu_as']
+    events['xafr_intro_afr'] = T_XM + events['split_eu_as']
     xafr_intro_afr = [msprime.MassMigration(
-        time=events['xafr_intro_afr'], source=AFR, destination=XAF, proportion=xintro)]
+        time=events['xafr_intro_afr'], source=AFR, destination=XAF, proportion=XMix)]
     # mix migration
     events['mix_migration'] = T_Mix + events['split_eu_as']
     mix_migration = [msprime.MassMigration(time=events['mix_migration'], source=EUR,
-                                           destination=GST, proportion=mix), msprime.PopulationParametersChange(
+                                           destination=GST, proportion=Mix), msprime.PopulationParametersChange(
         time=events['mix_migration'], initial_size=N_B2, population_id=EUR)]
 
     # spearation between back and OOA

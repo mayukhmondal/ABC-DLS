@@ -7,4 +7,3 @@ rpy2
 r-essentials
 tzlocal
 tensorflow
-keras
