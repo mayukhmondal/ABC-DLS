@@ -348,12 +348,12 @@ class ABC_DLS_Classification:
         if header:
 
             command = Misc.joinginglistbyspecificstring(['cat <(head -n 1', inputcsv, ') <(tail -n+2', inputcsv,
-                                                         ' | python ' + terashuf + ' ) > ',
+                                                         ' | shuf ) > ',
                                                          os.getcwd() + '/' + output]).strip()
 
         else:
 
-            command = Misc.joinginglistbyspecificstring(['cat', inputcsv, '|', 'python ', terashuf, ">", output])
+            command = Misc.joinginglistbyspecificstring(['cat', inputcsv, '|', 'shuf >', output])
 
         p = subprocess.Popen([command], executable='/bin/bash', stdout=subprocess.PIPE, shell=True,
                              stderr=subprocess.PIPE)
