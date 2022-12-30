@@ -84,6 +84,7 @@ class VCF2SFS():
         """
         pops = pandas.DataFrame(allel.read_vcf_headers(vcffile)[-1])
         pops['pop'] = Misc.adding_pop(pops, popfile)
+        pops = pops.dropna()
         subpopdict = {}
         for pop in list(pops['pop'].unique()):
             subpopdict[pop] = list(pops[pops['pop'] == pop].index)
