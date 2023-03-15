@@ -1,6 +1,6 @@
 import tensorflow
-from tensorflow.python.keras.layers import *
-from tensorflow.python.keras.models import Sequential
+from tensorflow.keras.layers import *
+from tensorflow.keras.models import Sequential
 
 
 def ANNModelCheck(x, y):

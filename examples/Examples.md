@@ -59,8 +59,8 @@ This command will train the model.
 ABC-DLS has a default training neural model. But it is impossible to predict which model should be better for the input data. Thus, we can define custom made model cater to our own need. One such example is [src/extras/ModelClass.py](../src/extras/ModelClass.py). Here, we put very few epochs (only 20) to get faster results. More is merrier, of course. The *.py should have a definition name ANNModelCheck, which should return the trained model (after model.fit) and has two inputs, x and y. Example:
 ```python
 from tensorflow.python import keras
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import *
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import *
 
 def ANNModelCheck(x, y):
     """
@@ -153,8 +153,8 @@ python src/Run_ParamsEstimation.py Train --nn src/extras/ModelParams.py --test_s
 - --demography [src/extras/ModelParams.py](../src/extras/ModelParams.py)  
 Although there is a default method present in ABC-DLS (meaning python src/Run_ParamsEstimation.py Train --test_size 1000 will also work), we can give a model from outside. Here we kept 100 epochs to make it faster. *.py must have a def name ANNModelParams. We can decide the number of epochs and other stuff inside that definition. The structure of the file is very similar. Only ANNModelParams instead of ANNModelCheck and the NN output is linear (which is default for keras) instead of softmax. Everything else should be done as your model prefers. Example:
 ```python
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import *
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import *
 
 
 def ANNModelParams(x, y):
@@ -231,8 +231,8 @@ The code is similar to the parameter estimation part. Some added changes make it
  - --demography [src/extras/ModelParamsTogether.py](../src/extras/ModelParamsTogether.py)  
 The format is slightly different than the Parameter Estimation. The idea is train and test are send together for the training part to make it more efficient. As it is a recursive method, wasting of simulations does not make sense. In case you want, you can use the default NN, which works most of the time. In case you want to use your own NN model, you have to follow this format:
 ```python
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import *
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import *
 import numpy
 # from tensorflow.keras.callbacks import Callback, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
