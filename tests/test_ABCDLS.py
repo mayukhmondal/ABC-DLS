@@ -18,7 +18,10 @@ import numpy
 import joblib
 import shutil
 import os
+import tensorflow
 
+##only working with cpu now
+tensorflow.config.set_visible_devices([], 'GPU')
 
 def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, chunksize: int = 5, scale: bool = True,
                                   outfolder: str = 'cls'):

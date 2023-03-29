@@ -35,7 +35,8 @@ with warnings.catch_warnings():
 # activating R
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
-
+##only working with cpu now
+tensorflow.config.set_visible_devices([], 'GPU')
 
 class ABC_DLS_Classification:
     """
