@@ -38,6 +38,7 @@ pandas2ri.activate()
 ##only working with cpu now
 tensorflow.config.set_visible_devices([], 'GPU')
 
+
 class ABC_DLS_Classification:
     """
     Main classification class. It will distinguish between different models. with given underlying models it will
@@ -2297,6 +2298,11 @@ class ABC_DLS_SMC(ABC_DLS_Params):
     :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
         limit. every row is define a parameters. no header. same as Newrange.csv. important when used
         increase as not go awry for simulation parameters
+    :param resume: The path of already ran ModelParamPrediction.h5 and resume training from there. nn is ignored
+            not needed if you use this option. default is None (i.e. learn from scratch)
+    :param resume_fit: In case you want a special fit and do not want to use the default model.fit only with
+        --resume. As resume cannot use the older model fit parameter. path of the file. default is None (i.e. use
+        the default one is good for most cases.
     :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
         simulations which are within that new range
     """
@@ -2313,12 +2319,16 @@ class ABC_DLS_SMC(ABC_DLS_Params):
     folder: str = ''
     decrease: float = 0.95
     frac: float = 1.0
+    increase: float = 0.0
+    resume: Optional[str] = None
+    resume_fit: Optional[str] = None
 
     def __new__(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', decrease: float = 0.95,
                 frac: float = 1.0, increase: float = 0.0,
-                hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+                hardrange_file: Optional[str] = None, resume: Optional[str] = None,
+                resume_fit: Optional[str] = None) -> pandas.DataFrame:
         """
         This will call the wrapper function
 
@@ -2346,20 +2356,26 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
             limit. every row is define a parameters. no header. same as Newrange.csv. important when used
             increase as not go awry for simulation parameters
+        :param resume: The path of already ran ModelParamPrediction.h5 and resume training from there. nn is ignored
+            not needed if you use this option. default is None (i.e. learn from scratch)
+        :param resume_fit: In case you want a special fit and do not want to use the default model.fit only with
+            --resume. As resume cannot use the older model fit parameter. path of the file. default is None (i.e. use
+            the default one is good for most cases.
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
         return cls.wrapper(info=info, ssfile=ssfile, chunksize=chunksize, test_size=test_size, tol=tol, method=method,
                            nn=nn, scaling_x=scaling_x, scaling_y=scaling_y, csvout=csvout,
                            folder=folder, decrease=decrease, frac=frac, increase=increase,
-                           hardrange_file=hardrange_file)
+                           hardrange_file=hardrange_file, resume=resume, resume_fit=resume_fit)
 
     @classmethod
     def wrapper(cls, info: str, ssfile: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
                 tol: float = .005, method: str = 'rejection', nn: Optional[str] = None, scaling_x: bool = False,
                 scaling_y: bool = False, csvout: bool = False, folder: str = '', decrease: float = 0.95,
                 frac: float = 1.0, increase: float = 0.0,
-                hardrange_file: Optional[str] = None, round:int=3) -> pandas.DataFrame:
+                hardrange_file: Optional[str] = None, round: int = 3, resume: Optional[str] = None,
+                resume_fit: Optional[str] = None) -> pandas.DataFrame:
         """
         The main wrapper for ABC_DLS_NS neseted sampling. with given model underlying parameters it will compare with
         real data and will predict minima and maxima with in the parameter range can be for real data
@@ -2390,6 +2406,11 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             data are not from same length. default is 1
         :param round: The precision after decimal will be used to create Newrange. Important as R_abc only allow for 3
             right now. pandas can use more. We have to use the lower one between these two.  default is 3
+        :param resume: The path of already ran ModelParamPrediction.h5 and resume training from there. nn is ignored
+            not needed if you use this option. default is None (i.e. learn from scratch)
+        :param resume_fit: In case you want a special fit and do not want to use the default model.fit only with
+            --resume. As resume cannot use the older model fit parameter. path of the file. default is None (i.e. use
+            the default one is good for most cases.
         :return: will return the new range in pandas dataframe format as well as create Narrowed.csv which will keep the
             simulations which are within that new range
         """
@@ -2399,16 +2420,172 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                                                                                               test_size=test_size,
                                                                                               scaling_x=scaling_x,
                                                                                               scaling_y=scaling_y,
-                                                                                              folder=folder)
-
+                                                                                              folder=folder,
+                                                                                              resume=resume)
         ModelParamPrediction = cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                                                 nn=nn, folder=folder)
-
+                                                 nn=nn, folder=folder, resume=resume, resume_fit=resume_fit)
         return cls.wrapper_aftertrain(ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test,
                                       ssfile=ssfile, scale_x=scale_x, scale_y=scale_y, info=info, csvout=csvout,
                                       paramfile='params_header.csv', method=method, tol=tol, folder=folder,
-                                      decrease=decrease,round=round,
+                                      decrease=decrease, round=round,
                                       frac=frac, increase=increase, hardrange_file=hardrange_file)
+
+    @classmethod
+    def wrapper_pre_train(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
+                          scaling_x: bool = False, scaling_y: bool = False, folder: str = '',
+                          resume: Optional[str] = None) -> Tuple[
+        numpy.ndarray, numpy.ndarray, Optional[preprocessing.MinMaxScaler], numpy.ndarray, numpy.ndarray, Optional[
+            preprocessing.MinMaxScaler], str]:
+        """
+        This is a a wrapper on the pretrain for parameter estimation. this will build stuff just before the training in
+        ANN.it will produce data in hdf5 or numpy array format which then easily can be used in training part, it will
+        also delete all the files that can be output from ABC-DLS thus not clashing with them
+        Misc.removefiles-> cls.read_info ->cls.separation_param_ss -> if chunksize :preparingdata_hdf5 ;else
+        preparingdata->Misc.removefiles
+
+        :param info: the path of info file whose file column is the path of the file and second column defining the
+            number of  parameters. only first line will be used
+        :param chunksize: the number of rows accessed at a time. in case of big data
+        :param test_size: the number of test rows. everything else will be used for train. 10k is default
+        :param scaling_x: to tell if the x (ss) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param scaling_y: to tell if the y (parameters) should be scaled or not. default is false. will be scaled by
+            MinMaxscaler.
+        :param folder: to define the output folder. default is '' meaning current folder
+        :param resume: The path of already ran ModelParamPrediction.h5 and resume training from there. nn is ignored
+            not needed if you use this option. default is None (i.e. learn from scratch)
+        :return: will return (x_train, x_test, scale_x), (y_train, y_test, scale_y) and  header file path
+            (params_header.csv)
+        """
+        folder = Misc.creatingfolders(folder)
+        if resume:
+            previousfiles = (
+                'scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5',
+                'params.csv', 'ss.csv', 'params_header.csv')
+        else:
+            previousfiles = (
+                'scale_x.sav', 'scale_y.sav', 'x_test.h5', 'y_test.h5', 'y.h5', 'x.h5', 'ModelParamPrediction.h5',
+                'params.csv', 'ss.csv', 'params_header.csv', 'Checkpoint.h5')
+
+        previousfilesfullpath = tuple(folder + file for file in previousfiles)
+        Misc.removefiles(previousfilesfullpath)
+        files, paramnumbers, names = cls.read_info(info=info)
+        if len(files) > 1:
+            print("there are more than one file. Only will work with the first file:", files[0])
+        paramfile, simss = cls.separation_param_ss(filename=files[0], params_number=paramnumbers[0], folder=folder)
+        if chunksize:
+            x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata_hdf5(paramfile=paramfile,
+                                                                                        simss=simss,
+                                                                                        chunksize=chunksize,
+                                                                                        test_size=test_size,
+                                                                                        scaling_x=scaling_x,
+                                                                                        scaling_y=scaling_y,
+                                                                                        folder=folder)
+        else:
+            x_train, x_test, scale_x, y_train, y_test, scale_y = cls.preparingdata(paramfile=paramfile,
+                                                                                   simssfile=simss,
+                                                                                   test_size=test_size,
+                                                                                   scaling_x=scaling_x,
+                                                                                   scaling_y=scaling_y, folder=folder)
+        header = folder + 'params_header.csv'
+        pandas.DataFrame(index=pandas.read_csv(paramfile, nrows=10).columns).transpose().to_csv(header,
+                                                                                                index=False)
+        Misc.removefiles([simss, paramfile])
+
+        return x_train, x_test, scale_x, y_train, y_test, scale_y, header
+
+    @classmethod
+    def wrapper_train(cls, x_train: Union[numpy.ndarray, tuple],
+                      y_train: Union[numpy.ndarray, tuple],
+                      nn: Optional[str] = None, folder: str = '',
+                      resume: Optional[str] = None, resume_fit: Optional[str] = None) -> tensorflow.keras.models.Model:
+        """
+        This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need training
+        data set for x and y. can be either numpy array or hdf5 matrix format (HD5matrix) of keras
+        Misc.loading_def_4m_file -> def ANNModelCheck
+
+        :param x_train: train part of x aka summary statistics
+        :param y_train: train part of all the parameters
+        :param nn: custom function made for keras model. the path of that .py file. should have a def has
+            ANNModelParams as def in Any.py
+        :param folder: to define the output folder. default is '' meaning current folder
+        :param resume: The path of already ran ModelParamPrediction.h5 and resume training from there. nn is ignored
+            not needed if you use this option. default is None (i.e. learn from scratch)
+        :param resume_fit: In case you want a special fit and do not want to use the default model.fit only with
+            --resume. As resume cannot use the older model fit parameter. path of the file. default is None (i.e. use
+            the default one is good for most cases.
+        :param resume: The path of already ran ModelParamPrediction.h5 and resume training from there. nn is ignored
+            not needed if you use this option. default is None (i.e. learn from scratch)
+        :param resume_fit: In case you want a special fit and do not want to use the default model.fit only with
+            --resume. As resume cannot use the older model fit parameter. path of the file. default is None (i.e. use
+            the default one is good for most cases.
+        :return: will return the keras model. it will also save the model in ModelParamPrediction.h5
+        """
+        # needed as Checkpoint.h5 should be inside the folder and i do not want to make ANNModelCheck complicated with
+        # another variable 'folder'
+        if resume:
+            resume = os.path.abspath(resume)
+        folder = Misc.creatingfolders(folder)
+        parentfolder = os.getcwd()
+
+        if resume:
+            if folder != '':
+                os.chdir(folder)
+            save_model = ABC_DLS_Classification_CV.loadingkerasmodel(resume)
+            if resume_fit:
+                model_fit = Misc.loading_def_4m_file(filepath=resume_fit, defname='model_fit')
+                if model_fit is None:
+                    print('Could not find the model_fit in', resume_fit,
+                          '. Please check. Now using the default model_fit')
+                    model_fit = cls.model_fit
+            else:
+                model_fit = cls.model_fit
+            ModelParamPrediction = model_fit(save_model=save_model, x=x_train, y=y_train)
+        else:
+            print("run", os.getcwd())
+            Misc.removefiles((folder + "ModelParamPrediction.h5", folder + "Checkpoint.h5"))
+            if nn:
+                ANNModelParams = Misc.loading_def_4m_file(filepath=nn, defname='ANNModelParams')
+                if ANNModelParams is None:
+                    print('Could not find the ANNModelParams in', nn,
+                          '. Please check. Now using the default ANNModelParams')
+                    ANNModelParams = cls.ANNModelParams
+            else:
+                ANNModelParams = cls.ANNModelParams
+            if folder != '':
+                os.chdir(folder)
+            ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
+        cls.check_save_tfk_model(model=ModelParamPrediction, output="ModelParamPrediction.h5",
+                                 check_point='Checkpoint.h5')
+        # same as above to change back to previous stage
+        if folder != '':
+            os.chdir(parentfolder)
+        return ModelParamPrediction
+
+    @classmethod
+    def model_fit(cls, save_model: tensorflow.keras.models.Model, x: Tuple[numpy.ndarray, numpy.ndarray],
+                  y: Tuple[numpy.ndarray, numpy.ndarray]) -> tensorflow.keras.models.Model:
+        """
+        As from the saved model you can not know which Model.fit() was used. Thus we have to give them how to refit the
+        data with already optimised model to make it more optimised. As SMC is used recursive manned, no matter learn
+        the same thing again and again.
+        :param save_model: the ann model that was run by keras tf and saved in the previous run.
+        :param x: the x_train and x_test of summary statistics. can be numpy array or hdf5 of tuple
+        :param y: the x_train and x_test of the parameters which produced those ss. can be numpy array or hdf5 of tuple
+        :return: will return the trained model
+        """
+        x_train, x_test = x
+        y_train, y_test = y
+        # adding an early stop so that it does not overfit
+        ES = EarlyStopping(monitor='val_loss', patience=100)
+        # checkpoint
+        CP = ModelCheckpoint('Checkpoint.h5', verbose=0, save_best_only=True)
+        # Reduce learning rate
+        RL = ReduceLROnPlateau(factor=0.2)
+        save_model.fit(x_train, y_train, epochs=int(2e6), verbose=0, shuffle=True, callbacks=[ES, CP, RL],
+                       validation_data=(numpy.array(x_test), numpy.array(y_test)))
+
+        return save_model
 
     @classmethod
     def ANNModelParams(cls, x: Tuple[numpy.ndarray, numpy.ndarray],
@@ -2454,7 +2631,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                            paramfile: str = 'params_header.csv', method: str = 'rejection', tol: float = .005,
                            folder: str = '', csvout: bool = False, decrease: float = 0.95,
                            frac: float = 1.0, increase: float = 0.0,
-                           hardrange_file: Optional[str] = None, round:int=3) -> pandas.DataFrame:
+                           hardrange_file: Optional[str] = None, round: int = 3) -> pandas.DataFrame:
         """
         The wrapper to test how the training using ANN works. after training is done it will test on the test  data set
         to see the power and then use a real data set to show what most likely parameters can create the real data.
@@ -2619,7 +2796,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
     @classmethod
     def noise_injection_update(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame, increase: float = 0.005,
                                hardrange: pandas.DataFrame = pandas.DataFrame(),
-                               decrease: float = .95, round:int=3) -> pandas.DataFrame:
+                               decrease: float = .95, round: int = 3) -> pandas.DataFrame:
         """
         in case you want to use some noise injection to the newrange. important as sometime when ABC-DLS is working
         recursively by chance it misses the true values. By using this noise injection you broaden up the upper and
@@ -2650,7 +2827,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         doublecheck = newrange.round(round).iloc[:, :2]
         still_zero = doublecheck['max'] == doublecheck['min']
         if (still_zero).any():
-            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 10**(-round)
+            newrange.loc[still_zero, 'min'] = newrange.loc[still_zero, 'min'] - 10 ** (-round)
             # decrease_col = (newrange['max'] - newrange['min']) / (oldrange['max'] - oldrange['min'])
             newrange.loc[still_zero, 'decrease'] = 1.0
         newrange = newrange.round(round)
@@ -2658,7 +2835,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
 
     @classmethod
     def updating_newrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
-                          decrease: float = .95, round:int=3) -> pandas.DataFrame:
+                          decrease: float = .95, round: int = 3) -> pandas.DataFrame:
         """
         This will check if the new range decreasing is more than 95%. if true it will update the new range or else keep
         the old range assuming there is no direct decreasing. this step is necessary so that you do not get smaller

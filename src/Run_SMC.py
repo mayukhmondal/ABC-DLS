@@ -36,7 +36,17 @@ sp.add_argument('--ssfile', help="The summary statistics file from real data wit
                                  " lines.", required=True, type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--nn',
                 help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater '
-                     'to your own problem. The def ANNModelCheck should be inside',
+                     'to your own problem. The def ANNModelCheck should be inside. One example extras/Dynamic.py',
+                type=lambda x: Misc.args_valid_file(parser, x))
+sp.add_argument('--resume',
+                help='The path of already ran ModelParamPrediction.h5 and resume training from there. --nn not needed'
+                     'if you use this option but you need the --resume_fit in case you do not want to use the default'
+                     'fitting approach',
+                type=lambda x: Misc.args_valid_file(parser, x))
+sp.add_argument('--resume_fit',
+                help='In case you want a special fit and do not want to use the default model.fit only with --resume. '
+                     'As resume cannot use the older model fit parameter. path of the file One example is '
+                     'extras/Resume_fit.py',
                 type=lambda x: Misc.args_valid_file(parser, x))
 sp.add_argument('--method',
                 help='Method used for R abc classification. can be  "rejection", "loclinear", and "neuralnet". default'
@@ -87,9 +97,9 @@ if args.cmd == 'All':
         scaling_x = True
         scaling_y = True
     # running
-    newrange = ABC.ABC_DLS_SMC(info=args.info, ssfile=args.ssfile, nn=args.nn,
-                               method=args.method, tol=args.tolerance, test_size=args.test_size,
-                               chunksize=args.chunksize, csvout=args.csvout,
+    newrange = ABC.ABC_DLS_SMC(info=args.info, ssfile=args.ssfile, nn=args.nn, resume=args.resume,
+                               resume_fit=args.resume_fit, method=args.method, tol=args.tolerance,
+                               test_size=args.test_size, chunksize=args.chunksize, csvout=args.csvout,
                                scaling_x=scaling_x, scaling_y=scaling_y, decrease=args.decrease,
                                folder=args.folder, frac=args.frac, increase=args.increase,
                                hardrange_file=args.hardrange)
