@@ -6,7 +6,7 @@ while [ "$(echo "$imp < 0.95"| bc -l)"  -eq 1 ] #if no improvement is less than 
 do
 	echo "Params,Lower,Upper,imp" | cat - Oldrange.csv | tr "," "\t"  #this will print the current state in the terminal
 	snakemake -q --jobs 6    #snakemake running quietly
-	imp=$(cut -f4  -d ","  Newrange.csv |sort -n | head -n 1) #calculating the improvement we got for one run
+	imp=$(cut -f4  -d ","  Newrange.csv |sort -n | head -g 1) #calculating the improvement we got for one run
 	mv Newrange.csv Oldrange.csv # to start it again for another round
 done
 mv Oldrange.csv Finalrange.csv #done and create the final result
