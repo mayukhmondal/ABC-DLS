@@ -2542,7 +2542,6 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                 model_fit = cls.model_fit
             ModelParamPrediction = model_fit(save_model=save_model, x=x_train, y=y_train)
         else:
-            print("run", os.getcwd())
             Misc.removefiles((folder + "ModelParamPrediction.h5", folder + "Checkpoint.h5"))
             if nn:
                 ANNModelParams = Misc.loading_def_4m_file(filepath=nn, defname='ANNModelParams')
