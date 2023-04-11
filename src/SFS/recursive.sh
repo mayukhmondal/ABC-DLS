@@ -10,3 +10,4 @@ do
 	mv Newrange.csv Oldrange.csv # to start it again for another round
 done
 mv Oldrange.csv Finalrange.csv #done and create the final result
+rm -f All.csv Narrowed.csv #remove extra files. Also do not forget to remove the model folder.

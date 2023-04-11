@@ -2525,6 +2525,8 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         # another variable 'folder'
         if resume:
             resume = os.path.abspath(resume)
+        if resume_fit:
+            resume_fit = os.path.abspath(resume_fit)
         folder = Misc.creatingfolders(folder)
         parentfolder = os.getcwd()
 

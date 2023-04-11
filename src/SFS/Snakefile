@@ -47,6 +47,14 @@ if 'ldblock' in config:
     ld = '--ldblock ' + config['ldblock']
 else:
     ld = ''
+resume_nn=''
+if 'resume_nn' in config:
+    if config['resume_nn']:
+        if os.path.exists(config['demography'] + '/ModelParamPrediction.h5'):
+            resume_nn="--resume "+config['demography'] + '/ModelParamPrediction.h5'
+            if 'resume_fit' in config:
+                if config['resume_fit']:
+                    resume_nn = resume_nn+" --resume_fit "+config['resume_fit']
 
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd
@@ -124,15 +132,16 @@ rule params_sfs:
     output:
         temp(config['demography'] + '/Newrange.csv'), temp(config['demography'] + '/scale_x.sav'),
         temp(config['demography'] + '/scale_y.sav'), temp(config['demography'] + '/x.h5'),
-        temp(config['demography'] + '/y.h5'),temp(config['demography'] + '/params_header.csv'),
-        config['demography'] + '/ModelParamPrediction.h5'
+        temp(config['demography'] + '/y.h5'),temp(config['demography'] + '/params_header.csv')
     params:
         tfknn_demo=tfknn_demo,
-        noise=noise
+        noise=noise,
+        resume_nn=resume_nn
     shell:
         "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --frac {config[frac]} "
         "{params.tfknn_demo} {params.noise} --folder {config[demography]} --decrease {config[decrease]} {input[info]} "
+        "{params[resume_nn]}"
 
 rule info_sfs:
     """
