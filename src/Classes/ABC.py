@@ -266,8 +266,8 @@ class ABC_DLS_Classification:
         if observed.ndim > 1:
             if len(set(result_columns + [observed.shape[1]])) > 1:
                 print("the observed columns and/or result columns do no match. check")
-                print("result_columns:", result_columns)
-                print("observed_columns", observed.shape[0])
+                print("result_columns:", result_columns[0])
+                print("observed_columns", observed.shape[1])
                 sys.exit(1)
         else:
             if len(set(result_columns + [observed.shape[0]])) > 1:
