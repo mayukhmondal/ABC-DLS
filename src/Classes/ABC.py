@@ -2942,3 +2942,11 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         hardrange_dist = (hardrange.iloc[:, 1] - hardrange.iloc[:, 0]).abs()
         lmrd = numpy.log((newrange_dist / hardrange_dist).mean())
         return lmrd
+
+
+class ABC_DLS_SMC_PreTrain(ABC_DLS_SMC):
+    def __new__(cls, info: str, chunksize: Optional[int] = None, test_size: int = int(1e4),
+    scaling_x: bool = False, scaling_y: bool = False, folder: str = '',
+    resume: Optional[str] = None):
+        cls.wrapper_pre_train(info=info, chunksize=chunksize,test_size=test_size,scaling_x=scaling_x,
+                              scaling_y=scaling_y,folder=folder,resume=resume)
