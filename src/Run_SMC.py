@@ -76,6 +76,27 @@ sp.add_argument('--hardrange',
                 help="csv format of hardrange file path. Should have 3 columns. params_names, lower and upper limit. "
                      "every row is define a parameters. no header. same as Newrange.csv. important to define what is "
                      "possible for range", type=lambda x: Misc.args_valid_file(parser, x))
+sp = subparsers.add_parser('Pre_train', help='To prepare the data for training ANN.')
+sp.set_defaults(cmd='Pre_train')
+sp.add_argument('info',
+                help='the path for the info file. whose first column will be file path (.csv or .csv.gz) and tab '
+                     'delimited column with and the number of parameter in that file. ex. <file1.csv.gz> <n>. Only the '
+                     'first one will be taken as valid', type=lambda x: Misc.args_valid_file(parser, x))
+sp.add_argument('--folder',
+                help='in case you want to run the codes not in current working directory give the path', default='')
+sp.add_argument('--chunksize',
+                help='If two big for the memory use chunk size. relatively slow but no problem with ram. default 100 ',
+                type=int, default=100)
+sp.add_argument('--scale',
+                help="To scale the data. n: not to scale anything (default), x: to scale x (ss), y: to scale y "
+                     "(parameters), b: to scale both (ss+parameters)",
+                default='b', choices=["n", "x", "y", "b"])
+sp.add_argument('--resume',
+                help='The path of already ran ModelParamPrediction.h5 and resume training from there. --nn not needed'
+                     'if you use this option but you need the --resume_fit in case you do not want to use the default'
+                     'fitting approach',
+                type=lambda x: Misc.args_valid_file(parser, x))
+
 args = parser.parse_args()
 scaling_x, scaling_y = False, False
 # checking inputs
@@ -104,3 +125,20 @@ if args.cmd == 'All':
                                folder=args.folder, frac=args.frac, increase=args.increase,
                                hardrange_file=args.hardrange)
     print(newrange)
+elif args.cmd == 'Pre_train':
+    if args.chunksize:
+        args.chunksize = int(args.chunksize)
+    if args.scale == 'n':
+        scaling_x = False
+        scaling_y = False
+    elif args.scale == 'x':
+        scaling_x = True
+        scaling_y = False
+    elif args.scale == 'y':
+        scaling_x = False
+        scaling_y = True
+    elif args.scale == 'b':
+        scaling_x = True
+        scaling_y = True
+    ABC.ABC_DLS_SMC_PreTrain(info=args.info, chunksize=args.chunksize, scaling_x=scaling_x,
+                                scaling_y=scaling_y, folder=args.folder, resume=args.resume)
