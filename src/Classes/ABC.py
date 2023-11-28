@@ -36,7 +36,7 @@ with warnings.catch_warnings():
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
 ##only working with cpu now
-tensorflow.config.set_visible_devices([], 'GPU')
+#tensorflow.config.set_visible_devices([], 'GPU')
 
 
 class ABC_DLS_Classification:
@@ -2497,7 +2497,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
     @classmethod
     def wrapper_train(cls, x_train: Union[numpy.ndarray, tuple],
                       y_train: Union[numpy.ndarray, tuple],
-                      nn: Optional[str] = None, folder: str = '',
+                      nn: Optional[str] = None, folder: str = '', gpu: bool = False,
                       resume: Optional[str] = None, resume_fit: Optional[str] = None) -> tensorflow.keras.models.Model:
         """
         This is to the wrapper for the training for parameter estimation. the slowest part of the code.it need training
@@ -2542,7 +2542,12 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                     model_fit = cls.model_fit
             else:
                 model_fit = cls.model_fit
-            ModelParamPrediction = model_fit(save_model=save_model, x=x_train, y=y_train)
+            if gpu:
+                with tensorflow.device('/gpu:0'):
+                    ModelParamPrediction = model_fit(save_model=save_model, x=x_train, y=y_train)
+            else:
+                with tensorflow.device('/cpu:0'):
+                    ModelParamPrediction = model_fit(save_model=save_model, x=x_train, y=y_train)
         else:
             Misc.removefiles((folder + "ModelParamPrediction.h5", folder + "Checkpoint.h5"))
             if nn:
@@ -2555,7 +2560,12 @@ class ABC_DLS_SMC(ABC_DLS_Params):
                 ANNModelParams = cls.ANNModelParams
             if folder != '':
                 os.chdir(folder)
-            ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
+            if gpu:
+                with tensorflow.device('/gpu:0'):
+                    ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
+            else:
+                with tensorflow.device('/cpu:0'):
+                    ModelParamPrediction = ANNModelParams(x=x_train, y=y_train)
         cls.check_save_tfk_model(model=ModelParamPrediction, output="ModelParamPrediction.h5",
                                  check_point='Checkpoint.h5')
         # same as above to change back to previous stage
@@ -3005,12 +3015,14 @@ class ABC_DLS_SMC_PreTrain(ABC_DLS_SMC):
 
 class ABC_DLS_SMC_Train(ABC_DLS_SMC):
     def __new__(cls, test_rows: int = int(1e4), nn: Optional[str] = None, folder: str = '',
-                resume: Optional[str] = None, resume_fit: Optional[str] = None, together: bool = False):
-        cls.wrapper(test_rows=test_rows, nn=nn, folder=folder, together=together, resume=resume, resume_fit=resume_fit)
+                resume: Optional[str] = None, resume_fit: Optional[str] = None, together: bool = False, gpu: bool = False):
+        cls.wrapper(test_rows=test_rows, nn=nn, folder=folder, together=together, resume=resume, resume_fit=resume_fit,
+                    gpu=gpu)
 
     @classmethod
     def wrapper(cls, test_rows: int = int(1e4), nn: Optional[str] = None, folder: str = '',
-                together: bool = False, resume: Optional[str] = None, resume_fit: Optional[str] = None) -> None:
+                together: bool = False, resume: Optional[str] = None, resume_fit: Optional[str] = None,
+                gpu: bool = False) -> None:
         folder = Misc.creatingfolders(folder)
         y_train, y_test = ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5',
                                                                              test_rows=test_rows)
@@ -3018,10 +3030,10 @@ class ABC_DLS_SMC_Train(ABC_DLS_SMC):
                                                                              test_rows=test_rows)
         if together:
             cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
-                              nn=nn, folder=folder, resume=resume, resume_fit=resume_fit)
+                              nn=nn, folder=folder, resume=resume, resume_fit=resume_fit,gpu=gpu)
         else:
             cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn,
-                              folder=folder, resume=resume, resume_fit=resume_fit)
+                              folder=folder, resume=resume, resume_fit=resume_fit,gpu=gpu)
 
 
 class ABC_DLS_SMC_AfterTrain(ABC_DLS_SMC):

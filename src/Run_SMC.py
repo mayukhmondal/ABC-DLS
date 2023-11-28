@@ -121,6 +121,9 @@ sp.add_argument('--resume_fit',
                      'As resume cannot use the older model fit parameter. path of the file One example is '
                      'extras/Resume_fit.py',
                 type=lambda x: Misc.args_valid_file(parser, x))
+sp.add_argument('--gpu',
+                help="To run the training in the gpu",
+                action="store_true")
 sp = subparsers.add_parser('After_train', help='This is to run the ABC analysis after the training part is done')
 sp.set_defaults(cmd='After_train')
 sp.add_argument('info',
@@ -208,7 +211,7 @@ elif args.cmd == 'Pre_train':
                              scaling_y=scaling_y, folder=args.folder, resume=args.resume)
 elif args.cmd == 'Train':
     ABC.ABC_DLS_SMC_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
-                          together=args.together, resume=args.resume, resume_fit=args.resume_fit)
+                          together=args.together, resume=args.resume, resume_fit=args.resume_fit, gpu=args.gpu)
 elif args.cmd == 'After_train':
     newrange = ABC.ABC_DLS_SMC_AfterTrain(info=args.info, ssfile=args.ssfile, folder=args.folder,
                                                   test_size=args.test_size, tol=args.tolerance, method=args.method,
