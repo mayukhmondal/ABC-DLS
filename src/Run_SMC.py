@@ -96,6 +96,31 @@ sp.add_argument('--resume',
                      'if you use this option but you need the --resume_fit in case you do not want to use the default'
                      'fitting approach',
                 type=lambda x: Misc.args_valid_file(parser, x))
+sp = subparsers.add_parser('Train', help='The training part of the ANN. Should be done after Pre_train part')
+sp.set_defaults(cmd='Train')
+sp.add_argument('--folder',
+                help='in case you want to run the codes not in current working directory give the path', default='')
+sp.add_argument('--nn',
+                help='The NeuralNetwork.py file full path. If this is given it will assume it has better function cater'
+                     ' to your own problem. The def it can have ', type=lambda x: Misc.args_valid_file(parser, x))
+sp.add_argument('--test_size',
+                help='test size for r abc. everything else will be used for training purpose. default is 10 thousands',
+                default=10000, type=int)
+sp.add_argument('--together',
+                help="If the you want to send both train and test together in tfk model fit. Useful for early stopping"
+                     " validation test set. need a specific format for NeuralNetwork.py. Look at Extra/Dynamic.py. "
+                     "Should not be used for big test data as it loads in the memory",
+                action="store_true")
+sp.add_argument('--resume',
+                help='The path of already ran ModelParamPrediction.h5 and resume training from there. --nn not needed'
+                     'if you use this option but you need the --resume_fit in case you do not want to use the default'
+                     'fitting approach',
+                type=lambda x: Misc.args_valid_file(parser, x))
+sp.add_argument('--resume_fit',
+                help='In case you want a special fit and do not want to use the default model.fit only with --resume. '
+                     'As resume cannot use the older model fit parameter. path of the file One example is '
+                     'extras/Resume_fit.py',
+                type=lambda x: Misc.args_valid_file(parser, x))
 
 args = parser.parse_args()
 scaling_x, scaling_y = False, False
@@ -141,4 +166,7 @@ elif args.cmd == 'Pre_train':
         scaling_x = True
         scaling_y = True
     ABC.ABC_DLS_SMC_PreTrain(info=args.info, chunksize=args.chunksize, scaling_x=scaling_x,
-                                scaling_y=scaling_y, folder=args.folder, resume=args.resume)
+                             scaling_y=scaling_y, folder=args.folder, resume=args.resume)
+elif args.cmd == 'Train':
+    ABC.ABC_DLS_SMC_Train(nn=args.nn, test_rows=args.test_size, folder=args.folder,
+                          together=args.together, resume=args.resume, resume_fit=args.resume_fit)

@@ -2949,3 +2949,24 @@ class ABC_DLS_SMC_PreTrain(ABC_DLS_SMC):
                 scaling_y: bool = False, folder: str = '', resume: Optional[str] = None):
         cls.wrapper_pre_train(info=info, chunksize=chunksize, scaling_x=scaling_x,
                               scaling_y=scaling_y, folder=folder, resume=resume)
+
+
+class ABC_DLS_SMC_Train(ABC_DLS_SMC):
+    def __new__(cls, test_rows: int = int(1e4), nn: Optional[str] = None, folder: str = '',
+                resume: Optional[str] = None, resume_fit: Optional[str] = None, together: bool = False):
+        cls.wrapper(test_rows=test_rows, nn=nn, folder=folder, together=together, resume=resume, resume_fit=resume_fit)
+
+    @classmethod
+    def wrapper(cls, test_rows: int = int(1e4), nn: Optional[str] = None, folder: str = '',
+                together: bool = False, resume: Optional[str] = None, resume_fit: Optional[str] = None) -> None:
+        folder = Misc.creatingfolders(folder)
+        y_train, y_test = ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + 'y.h5',
+                                                                             test_rows=test_rows)
+        x_train, x_test = ABC_DLS_Classification_Train.train_test_split_hdf5(file=folder + 'x.h5',
+                                                                             test_rows=test_rows)
+        if together:
+            cls.wrapper_train(x_train=(x_train, x_test), y_train=(y_train, y_test),
+                              nn=nn, folder=folder, resume=resume, resume_fit=resume_fit)
+        else:
+            cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn,
+                              folder=folder, resume=resume, resume_fit=resume_fit)
