@@ -2702,6 +2702,58 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         return newrange
 
     @classmethod
+    def preparing_for_abc(cls, ModelParamPrediction: tensorflow.keras.models.Model, x_test: numpy.ndarray,
+                          y_test: numpy.ndarray, scale_x: Optional[preprocessing.MinMaxScaler],
+                          scale_y: Optional[preprocessing.MinMaxScaler], params_names: numpy.ndarray,
+                          ss: pandas.DataFrame) -> Tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]:
+        """
+        as the name suggest after ann ran it will prepare the data for abc analysis
+
+        :param ModelParamPrediction: the ann model that was run by keras tf
+        :param x_test: the test part of x aka summary statistics
+        :param y_test: the y_test or parameters series which never ran on the ann itself
+        :param scale_x: the MinMax scaler of x axis. can be None
+        :param scale_y: the MinMax scaler of y axis. can be None
+        :param params_names: all the parameter or y header in a numpy.array
+        :param ss: the real ss in a pandas series or pandas dataframe in case multiple runs of same ss
+        :return: will return test_prediction [ANN(x_test)_ unscaled y], predict4mreal [ANN(real_ss_scaled)_unscaled y]
+            params_unscaled [y_test_unscaled y]
+        """
+        if scale_y:
+            test_predictions = scale_y.inverse_transform(ModelParamPrediction.predict(x_test,verbose=0))
+            test_predictions = pandas.DataFrame(test_predictions, columns=params_names[:y_test.shape[1]])
+            params_unscaled = pandas.DataFrame(scale_y.inverse_transform(y_test[:]),
+                                               columns=params_names[-y_test.shape[1]:])
+        else:
+            test_predictions = ModelParamPrediction.predict(x_test[:],verbose=0)
+            test_predictions = pandas.DataFrame(test_predictions, columns=params_names[:y_test.shape[1]])
+            params_unscaled = pandas.DataFrame(y_test[:], columns=params_names[-y_test.shape[1]:])
+        if scale_x:
+            if ss.ndim > 1:
+                ssscaled = scale_x.transform(ss.values)
+            else:
+                ssscaled = scale_x.transform(ss.values.reshape(1, -1))
+            if scale_y:
+                predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled,verbose=0)))
+            else:
+                predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled,verbose=0))
+        else:
+            if ss.ndim > 1:
+                ssscaled = ss.values
+            else:
+                ssscaled = ss.values.reshape(1, -1)
+            if scale_y:
+                predict4mreal = pandas.DataFrame(scale_y.inverse_transform(ModelParamPrediction.predict(ssscaled,verbose=0)))
+            else:
+                predict4mreal = pandas.DataFrame(ModelParamPrediction.predict(ssscaled,verbose=0))
+
+        predict4mreal.columns = params_names[:y_test.shape[1]]
+        test_predictions, predict4mreal, params_unscaled = cls.remove_constant(test_predictions=test_predictions,
+                                                                               predict4mreal=predict4mreal,
+                                                                               params_unscaled=params_unscaled)
+        return test_predictions, predict4mreal, params_unscaled
+
+    @classmethod
     def abc_params_min_max(cls, target: pandas.DataFrame, param: pandas.DataFrame, ss: pandas.DataFrame,
                            tol: float = .01, method: str = "rejection") -> [pandas.Series, pandas.Series]:
         """
@@ -2970,3 +3022,25 @@ class ABC_DLS_SMC_Train(ABC_DLS_SMC):
         else:
             cls.wrapper_train(x_train=x_train, y_train=y_train, nn=nn,
                               folder=folder, resume=resume, resume_fit=resume_fit)
+
+
+class ABC_DLS_SMC_AfterTrain(ABC_DLS_SMC):
+    def __new__(cls, info: str, ssfile: str, test_size: int = int(1e4), folder: str = '', tol: float = 0.01,
+                method: str = 'rejection', csvout: bool = False, frac: float = 1.0,
+                decrease: float = 0.95, increase: float = 0.0, hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+        return cls.wrapper(info=info, ssfile=ssfile, test_size=test_size, folder=folder, tol=tol, method=method,
+                           csvout=csvout, frac=frac, increase=increase, decrease=decrease,
+                           hardrange_file=hardrange_file)
+
+    @classmethod
+    def wrapper(cls, info: str, ssfile: str, test_size: int = int(1e4), folder: str = '', tol: float = 0.01,
+                method: str = 'rejection', csvout: bool = False, frac: float = 1.0,
+                decrease: float = 0.95, increase: float = 0.0, hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+        folder = Misc.creatingfolders(folder)
+        ModelParamPrediction, x_test, y_test, scale_x, scale_y = ABC_DLS_Params_CV.read_data(test_rows=test_size,
+                                                                                             folder=folder)
+        newrange=cls.wrapper_aftertrain(info=info, ssfile=ssfile, folder=folder, ModelParamPrediction=ModelParamPrediction,
+                               x_test=x_test, y_test=y_test, scale_x=scale_x, scale_y=scale_y, tol=tol, method=method,
+                               csvout=csvout, frac=frac, decrease=decrease, increase=increase,
+                               hardrange_file=hardrange_file)
+        return newrange
