@@ -3,6 +3,8 @@
 This file will hold all the classes for ABC
 """
 import os
+#to block cuda for now
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import subprocess
 import sys
 # to stop future warning every time to print out
