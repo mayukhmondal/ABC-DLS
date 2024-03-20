@@ -3,8 +3,7 @@
 This file will hold all the classes for ABC
 """
 import os
-#to block cuda for now
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 import subprocess
 import sys
 # to stop future warning every time to print out
@@ -37,8 +36,8 @@ with warnings.catch_warnings():
 # activating R
 abc = Misc.importr_tryhard('abc')
 pandas2ri.activate()
-##only working with cpu now
-#tensorflow.config.set_visible_devices([], 'GPU')
+## only working with cpu now
+tensorflow.config.set_visible_devices([], 'GPU')
 
 
 class ABC_DLS_Classification:
