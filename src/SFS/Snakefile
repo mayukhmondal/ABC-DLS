@@ -137,6 +137,8 @@ rule params_sfs:
         tfknn_demo=tfknn_demo,
         noise=noise,
         resume_nn=resume_nn
+    resources:
+        mem_mb=6000
     shell:
         "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --frac {config[frac]} "
@@ -221,7 +223,7 @@ rule run_SFS:
     params:
         ld=ld
     resources:
-        mem=6000
+        mem_mb=6000
     threads: config['threads']
     shell:
         "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
