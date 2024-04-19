@@ -6,8 +6,8 @@ This file to create Site Frequency Spectrum (SFS) from Priors or parameters
 import argparse
 
 # noinspection PyUnresolvedReferences
-import Demography
-# from Simulation.msprime import Demography
+# import Demography
+from Simulation.msprime import Demography
 # noinspection PyUnresolvedReferences
 from Class import MsPrime2SFS
 from Classes import Misc

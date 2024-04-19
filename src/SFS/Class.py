@@ -415,7 +415,9 @@ class MsPrime2SFS:
                     itertools.repeat(ldblock), itertools.repeat(mut_rate), itertools.repeat(int(replicates)),
                     itertools.repeat(rec_rate), itertools.repeat(remainder_length))
         results = pool.starmap(cls.perline, input)
-        params_sfs = pandas.concat([paramsdf, pandas.DataFrame([result.flatten() for result in results])], axis=1)
+        results=pandas.DataFrame([result.flatten() for result in results])
+        results.columns=cls.haps2indexnames(haps=samples)
+        params_sfs = pandas.concat([paramsdf, results], axis=1)
         return params_sfs
 
     @classmethod
@@ -473,7 +475,19 @@ class MsPrime2SFS:
         for sim in sims:
             sfs += sim.allele_frequency_spectrum(sample_shape, polarised=True, span_normalise=False)
         return sfs
-
+    @classmethod
+    def haps2indexnames(cls,haps):
+        """
+        to get the columns names of sfs from haplotype counts per populations
+        :param haps: the number of haplotypes in tuple format
+        :return: will return one dimensional string formatted indexes. for example derived count 0,1,2 for pop1,pop2,
+        pop3 will be return as 0_1_2, all in list format
+        """
+        samples_exist = [i for i in haps if i != 0]
+        fs_shape = numpy.asarray(samples_exist) + 1
+        sfs = numpy.zeros(fs_shape)
+        index=VCF2SFS.sfs2indexnames(sfs)
+        return index
 
 class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
