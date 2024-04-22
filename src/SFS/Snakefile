@@ -55,7 +55,10 @@ if 'resume_nn' in config:
             if 'resume_fit' in config:
                 if config['resume_fit']:
                     resume_nn = resume_nn+" --resume_fit "+config['resume_fit']
-
+if 'sfs2c' in config:
+    sfs2c="--sfs2c"
+else:
+    sfs2c=""
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd
 
@@ -221,14 +224,15 @@ rule run_SFS:
     output:
         temp(config['demography'] + '/' + config['demography'] + '_{jobint}.csv')
     params:
-        ld=ld
+        ld=ld,
+        sfs2c=sfs2c
     resources:
         mem_mb=6000
     threads: config['threads']
     shell:
         "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
         "--total_length {config[total_length]} --mutation_rate {config[mutation_rate]} {config[demography]} {params.ld}"
-        " > {output}"
+        " {sfs2c} > {output}"
 
 rule priors_add_header:
     """

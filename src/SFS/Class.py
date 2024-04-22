@@ -559,3 +559,51 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
 
         lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
         return lmrd
+
+class MsPrime2SFS2c(MsPrime2SFS):
+    """
+    Given a msprime demographic python file and priors it can produce sfs out of it.
+    """
+    @classmethod
+    def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
+                mut_rate: float = 1.45e-8, replicates: Union[float, int] = 100, rec_rate: float = 1e-8,
+                remainder_length: Union[float, int] = 0):
+        replicates = int(replicates)
+        sfs = cls.sims2sfs(sim_func=sim_func, params=params, replicates=replicates, length=length,
+                           mut_rate=mut_rate, rec_rate=rec_rate, samples=samples)
+        if remainder_length > 0:
+            sfs += cls.sims2sfs(sim_func=sim_func, params=params, samples=samples,
+                                length=int(remainder_length),
+                                mut_rate=mut_rate, replicates=1, rec_rate=rec_rate)
+        sfs=cls.sfs2sfs2c(sfs)
+        return sfs
+
+    @classmethod
+    def sfs2sfs2c(cls, sfs):
+        haps = pandas.Series(sfs.shape) - 1
+        combs = list(itertools.combinations(haps.index, 2))
+        if len(haps) > 2:
+            sfs2c = [cls.sfs_multid_2sfs_2d(sfs=sfs, margin_axis=haps.drop(list(comb)).index, haps=haps) for comb in combs]
+            sfs2c = pandas.concat(sfs2c)
+            sfs2c = sfs2c.reset_index(drop=True)
+            return sfs2c.values
+        else:
+            return sfs.flatten()
+    @classmethod
+    def sfs_multid_2sfs_2d(cls, sfs, margin_axis, haps):
+        for axis in sorted(margin_axis)[::-1]:
+            sfs = sfs.sum(axis=axis)
+        sfs = pandas.Series(sfs.flatten())
+        return sfs
+    @classmethod
+    def haps2indexnames(cls,haps):
+        samples_exist = [i for i in haps if i != 0]
+        fs_shape = numpy.asarray(samples_exist) + 1
+        combs = list(itertools.combinations(range(len(samples_exist)), 2))
+        index = []
+        for comb in combs:
+            prods = itertools.product(range(fs_shape[comb[0]]), range(fs_shape[comb[1]]))
+            for prod in prods:
+                temp = f'{comb[0]}:{prod[0]}_{comb[1]}:{prod[1]}'
+                index.append(temp)
+        return index

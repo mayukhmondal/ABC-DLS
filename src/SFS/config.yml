@@ -20,3 +20,4 @@ tfknn: ../extras/Dynamic.py
 ldblock: 25e3
 resume_nn: True
 resume_fit: ../extras/Resume_fit.py
+sfs2c: True
