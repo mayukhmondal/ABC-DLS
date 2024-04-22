@@ -60,7 +60,7 @@ if 'sfs2c' in config:
 else:
     sfs2c=""
 # real snakemake pipeline starts here
-localrules: finalize,info_sfs,calculating_lmrd
+localrules: finalize,info_sfs,calculating_lmrd,priors_add_header
 
 rule finalize:
     """
