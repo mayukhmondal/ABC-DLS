@@ -6,8 +6,8 @@ This file to create Site Frequency Spectrum (SFS) from Priors or parameters
 import argparse
 
 # noinspection PyUnresolvedReferences
-import Demography
-#from Simulation.msprime import Demography
+#import Demography
+from Simulation.msprime import Demography
 # noinspection PyUnresolvedReferences
 import Class
 from Classes import Misc
@@ -33,14 +33,14 @@ parser.add_argument('--ldblock', help='Length of simulated blocks. Default is 1m
 parser.add_argument('--mutation_rate', help='mutation rate. default is 1.45e-8 per gen', type=float, default=1.45e-8)
 parser.add_argument('--threads', help='the number of threads. default is 1', type=int, default=1)
 parser.add_argument('--sfs2c',
-                help="Instead of SFS output cross populations SFS with all the two population combinations together. "
+                help="Instead of SFS, output cross populations SFS with all the two population combinations together. "
                      "Better in case you have too many samples and you cannot use it to fit in the memory",
                 action="store_true")
 args = parser.parse_args()
 
 demography = eval('Demography.' + args.demography)
 if args.sfs2c:
-    params_sfs = Class.MsPrime2SFS2c.wrapper(sim_func=demography, params_file=args.params_file, samples=args.inds,
+    params_sfs = Class.MsPrime2SFS2c(sim_func=demography, params_file=args.params_file, samples=args.inds,
                              total_length=args.total_length, ldblock=args.ldblock, mut_rate=args.mutation_rate,
                              threads=args.threads)
 else:
