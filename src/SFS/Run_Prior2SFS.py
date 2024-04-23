@@ -49,4 +49,4 @@ else:
                              threads=args.threads)
 
 
-print(params_sfs.to_csv(index=False))
+print(params_sfs.to_csv(index=False),end="")
