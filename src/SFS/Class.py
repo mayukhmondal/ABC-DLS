@@ -171,7 +171,7 @@ class VCF2SFS():
                 count.ALT != count.AA), 1] = numpy.nan
         # flipped
         count.loc[count.ALT == count.AA,
-                  1] = count.loc[count.ALT == count.AA, 0]
+        1] = count.loc[count.ALT == count.AA, 0]
         return count.loc[:, 1]
 
     @classmethod
@@ -415,8 +415,8 @@ class MsPrime2SFS:
                     itertools.repeat(ldblock), itertools.repeat(mut_rate), itertools.repeat(int(replicates)),
                     itertools.repeat(rec_rate), itertools.repeat(remainder_length))
         results = pool.starmap(cls.perline, input)
-        results=pandas.DataFrame([result.flatten() for result in results])
-        results.columns=cls.haps2indexnames(haps=samples)
+        results = pandas.DataFrame([result.flatten() for result in results])
+        results.columns = cls.haps2indexnames(haps=samples)
         params_sfs = pandas.concat([paramsdf, results], axis=1)
         return params_sfs
 
@@ -475,8 +475,9 @@ class MsPrime2SFS:
         for sim in sims:
             sfs += sim.allele_frequency_spectrum(sample_shape, polarised=True, span_normalise=False)
         return sfs
+
     @classmethod
-    def haps2indexnames(cls,haps):
+    def haps2indexnames(cls, haps):
         """
         to get the columns names of sfs from haplotype counts per populations
         :param haps: the number of haplotypes in tuple format
@@ -486,8 +487,9 @@ class MsPrime2SFS:
         samples_exist = [i for i in haps if i != 0]
         fs_shape = numpy.asarray(samples_exist) + 1
         sfs = numpy.zeros(fs_shape)
-        index=VCF2SFS.sfs2indexnames(sfs)
+        index = VCF2SFS.sfs2indexnames(sfs)
         return index
+
 
 class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
@@ -560,14 +562,35 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
         return lmrd
 
+
 class MsPrime2SFS2c(MsPrime2SFS):
     """
-    Given a msprime demographic python file and priors it can produce sfs out of it.
+    Given a msprime demographic python file and priors it can produce cross population sfs out of it.
     """
+
     @classmethod
     def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
                 mut_rate: float = 1.45e-8, replicates: Union[float, int] = 100, rec_rate: float = 1e-8,
                 remainder_length: Union[float, int] = 0):
+        """
+        simulations to sfs2c per line or parameters. kind of the real wrapper. but we created another wrapper to take
+        care of the multithreading
+
+        :param sim_func: the msprime demography func which will simulate a given demography using msprime.simulate and
+        return it
+        :param params: All the parameters required for the model. except the samples. in numpy array or list
+        :param samples: the number of samples in tuple format
+        :param length:  the length of the chromosome for simulation. default is 1e6 which is fast enough and big enough
+        :param mut_rate: the mutation rate. default is the one every body uses
+        :param replicates:  the number of replicates. default 100 is fast
+        :param rec_rate: the recombination rate for msprime. does it matter for sfs?
+        :param remainder_length: as generally we are simulating 1Mb region. if the region is slightly larger than Mbs
+            (like 1e6+100), it is defined by this remainder length (100bp in this case)
+        :return:  it will return one dimentional numpy array with all the combinations of cross population sfs. The
+        columns would be SFS(pop1,pop2) pop combination, then SFS(pop1,pop2).. sfs(popn-1,popn). according to
+        itertools.combination(list,2)
+
+        """
         replicates = int(replicates)
         sfs = cls.sims2sfs(sim_func=sim_func, params=params, replicates=replicates, length=length,
                            mut_rate=mut_rate, rec_rate=rec_rate, samples=samples)
@@ -575,28 +598,51 @@ class MsPrime2SFS2c(MsPrime2SFS):
             sfs += cls.sims2sfs(sim_func=sim_func, params=params, samples=samples,
                                 length=int(remainder_length),
                                 mut_rate=mut_rate, replicates=1, rec_rate=rec_rate)
-        sfs=cls.sfs2sfs2c(sfs)
+        sfs = cls.sfs2sfs2c(sfs)
         return sfs
 
     @classmethod
-    def sfs2sfs2c(cls, sfs):
+    def sfs2sfs2c(cls, sfs: numpy.array) -> numpy.array:
+        """
+        multidimentional sfs will be converted to cross population sfs with all the combinations of populations.
+        :param sfs: the multi-dimensional sfs in numpy format
+        :return: will return one dimentional numpy array with all the combinations of cross population sfs.
+        """
         haps = pandas.Series(sfs.shape) - 1
         combs = list(itertools.combinations(haps.index, 2))
         if len(haps) > 2:
-            sfs2c = [cls.sfs_multid_2sfs_2d(sfs=sfs, margin_axis=haps.drop(list(comb)).index, haps=haps) for comb in combs]
-            sfs2c = pandas.concat(sfs2c)
+            sfs2c = [cls.sfs_multid_2sfs_subd(sfs=sfs, keep=comb) for comb in combs]
+            sfs2c = pandas.concat([pandas.Series(sfs.flatten()) for sfs in sfs2c])
             sfs2c = sfs2c.reset_index(drop=True)
             return sfs2c.values
         else:
             return sfs.flatten()
+
     @classmethod
-    def sfs_multid_2sfs_2d(cls, sfs, margin_axis, haps):
+    def sfs_multid_2sfs_subd(cls, sfs: numpy.array, keep: Union[List[int], Tuple[int]]) -> numpy.array:
+        """
+        main def for this class. given which population to keep to get a sfs with 2 dimension sfs for targeted
+        population. can be used for any dimensional SFS
+        :param sfs: the multi-dimensional sfs in numpy format
+        :param keep: a list format with two populations that you want to keep. generally, the populations are the
+        dimensions. meaning the two dimensions that you want to keep
+        :return: a sub dimentional sfs
+        """
+        haps = pandas.Series(sfs.shape) - 1
+        margin_axis = haps.drop(list(keep)).index
         for axis in sorted(margin_axis)[::-1]:
             sfs = sfs.sum(axis=axis)
-        sfs = pandas.Series(sfs.flatten())
         return sfs
+
     @classmethod
-    def haps2indexnames(cls,haps):
+    def haps2indexnames(cls, haps: list) -> list:
+        """
+        Given the number of haplotypes this will give indexes for cross population SFS for all the combinations.
+        for exampel 0:0_1:0,0:0_1:1,0:0_1:2,...popn-1:haplotypes_popn:haplotypes. differnt populations will be divided
+        by _. The index of population will be in the left side of : and the right side is the allele count
+        :param haps: the number of hapltoypes present per population in a list format
+        :return: will retrun a list of indexes with 0:0_1:0,0:0_1:1,0:0_1:2,...popn-1:haplotypes_popn:haplotypes
+        """
         samples_exist = [i for i in haps if i != 0]
         fs_shape = numpy.asarray(samples_exist) + 1
         combs = list(itertools.combinations(range(len(samples_exist)), 2))
