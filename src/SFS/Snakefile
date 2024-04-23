@@ -23,11 +23,26 @@ joblist = [format(x,'03') for x in range(1,config["jobs"] + 1)]
 config["sfsfile"] = os.path.abspath(config["sfsfile"])
 parameteres = pandas.read_csv(config['priors_range'],header=None,names=['par_names', 'upper', 'lower'],
     usecols=[0, 1, 2])
-if os.path.isfile('Narrowed.csv'):
-    config["current_repeats"] = config["repeats"] - Misc.getting_line_count('Narrowed.csv')
-else:
-    config["current_repeats"] = config["repeats"]
-config["current_repeats"] = max(config["current_repeats"],config["jobs"])
+def getting_current_repeat(repeats,jobs,narrowed_path="Narrowed.csv"):
+    """
+    calculating how many repeats have to be done this cycle. The Minimum number is five times of the jobs. as if too less
+    number by random chance split will create empty files. It depends on the narrowed_path and repeats as the total
+    target is the repeats but some of them already is done by narrowed path which can be reused. Thus remaining will be
+    done by this cycle. Little bit more than what is needed is not a problem. Higher the number better for training.
+    Lesser the number faster cycle.
+
+    :param repeats: the number of repeats present in config file
+    :param jobs: the number of jobs present in config file
+    :param narrowed_path: the path of narrowed
+    :return: the number of repeats of simulation that is needed in this cycle
+    """
+    if os.path.isfile(narrowed_path):
+        current_repeats = repeats - Misc.getting_line_count(narrowed_path)
+    else:
+        current_repeats = repeats
+    current_repeats = max(current_repeats,jobs*5)
+    return current_repeats
+config["current_repeats"]=getting_current_repeat(repeats=config["repeats"],jobs=config["jobs"])
 # optional stuff
 if "tfknn" in config:
     if not os.path.isfile(config["tfknn"]):
