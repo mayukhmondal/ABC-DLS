@@ -495,6 +495,7 @@ class MsPrime2SFS2c(MsPrime2SFS):
     """
     Given a msprime demographic python file and priors it can produce cross population sfs out of it.
     """
+
     def __new__(cls, sim_func: Callable, params_file: str, samples: str, total_length: float = 1e7,
                 ldblock: float = 1e6, mut_rate: float = 1.45e-8, rec_rate: float = 1e-8,
                 threads: int = 1) -> pandas.DataFrame:
@@ -518,6 +519,7 @@ class MsPrime2SFS2c(MsPrime2SFS):
         """
         return cls.wrapper(sim_func=sim_func, params_file=params_file, samples=samples, total_length=total_length,
                            ldblock=ldblock, mut_rate=mut_rate, rec_rate=rec_rate, threads=threads)
+
     @classmethod
     def perline(cls, sim_func: Callable, params, samples: Union[numpy.array, list], length: Union[float, int] = 1e6,
                 mut_rate: float = 1.45e-8, replicates: Union[float, int] = 100, rec_rate: float = 1e-8,
@@ -605,6 +607,99 @@ class MsPrime2SFS2c(MsPrime2SFS):
         return index
 
 
+class SFS_to_SFS2c:
+    """
+    To convert a multi-dimensional SFS csv file to cross population SFS csv file
+    """
+
+    @classmethod
+    def main(cls, file: str, chunksize: int = 1000, params: int = 0) -> str:
+        """
+        The main wrapper of the class. This will read the multi dimensional SFS file by chunk size. Then it will
+        separate params (if exist) and SFS columns. Then it will convert multidimentional SFS (per row) to cross
+        populations SFS per row. After that it will concatenate with parameters and then pandas.df to to_csv format.
+        This will be yielded, so that it does not saved totally on the ram.
+        :param file: The path of the multi-dimensional SFS csv file with proper header coming from either
+        Run_Prior2SFS.py or Run_VCF2SFS.py. Can be zipped
+        :param chunksize: If too big for the memory use chunk size. relatively slow but no problem with ram
+        :param params: The number of columns with parameters, the first few columns can be parameteres if it is
+        coming from Run_Prior2SFS.py and rest are SFS. default is 0, meaning no parameters (for example coming from
+        Run_VCF2SFS.py
+        :return: will return parameters and cross population SFS in csv format
+        """
+        header = True
+        for chunk in pandas.read_csv(file, chunksize=chunksize):
+            params_df = chunk.iloc[:, :params]
+            sfs = cls.sfs_marg2(sfs=chunk.iloc[:, params:])
+            sfs.index = params_df.index
+            chunk = pandas.concat([params_df, sfs], axis=1)
+            yield chunk.to_csv(index=False, header=header)
+            header = False
+
+    @classmethod
+    def sfs_marg2(cls, sfs: pandas.DataFrame) -> pandas.DataFrame:
+        """
+        This will convert multidimensional SFS in pandas.DF to cross population SFS format
+        :param sfs: pandas.Dataframe foramt of SFS, whose every line is an independent run, and columns are the indexes
+        of SFS in 0_1_2_3 format
+        :return: will return all the combination of cross population SFS in a pandas.DataFrame format. every row is
+        different run and every columns one cross population count
+        """
+        haps = cls.top_haplotypes(sfs.columns)
+        combs = list(itertools.combinations(haps.index, 2))
+        sfs = [cls.sfs2sfs_marg(sfs=sfs, margin_axis=haps.drop(list(comb)).index, haps=haps) for comb in combs]
+        sfs = pandas.concat(sfs, axis=1)
+        return sfs
+
+    @classmethod
+    def top_haplotypes(cls, sfs_columns: pandas.Series) -> pandas.Series:
+        """
+        from the SFS column names it will extract the number of haplotypes per populations present in the sfs
+        :param sfs_columns: the columns name of SFS, should be like  0_1_2_3 format. i.e. first population derived
+        allele count is 0, second population derived allele count is 1 so forth
+        :return: will return the highest number of haplotpyes present in SFS per populsiton in pandas Series format
+        """
+        haps = pandas.DataFrame([col.split("_") for col in sfs_columns]).astype(int).max()
+        return haps
+
+    @classmethod
+    def sfs2sfs_marg(cls, sfs, margin_axis, haps):
+        """
+        This will convert multidimentional SFS cross population SFS for a given two populations, which will be
+        calculated from which axis/pop to drop (margin_axis), and total number of population (in haps)
+        :param sfs: the SFS is pandas.Datamframe format
+        :param margin_axis: the axis or population to be dropped. in a series foramt
+        :param haps: the total number of haplotypes per population in a Series format
+        :return: will return the two dimentional SFS for the two population
+        """
+        fs_shape = haps + 1
+        sfs = sfs.values.reshape([sfs.shape[0]] + list(fs_shape))
+        for axis in sorted(margin_axis)[::-1]:
+            sfs = sfs.sum(axis=axis + 1)
+        modified_haps = haps.drop(margin_axis)
+        columns = cls.sfs_marg2index(sfs=sfs[0], modified_haps=modified_haps)
+        sfs = sfs.reshape(sfs.shape[0], numpy.prod(modified_haps.values + 1))
+        sfs = pandas.DataFrame(sfs, columns=columns)
+        return sfs
+
+    @classmethod
+    def sfs_marg2index(cls, sfs: numpy.ndarray, modified_haps: pandas.Series) -> list:
+        """
+        getting the index of cross population SFS from SFS
+        :param sfs: multidimentional SFS in numpy array format
+        :param modified_haps: targetted hapltoypes count and their corresponding population in the index. in a
+        pandas.Series format
+        :return: will return all the indexes in a list format
+        """
+        out_index = []
+        for index, values in numpy.ndenumerate(sfs):
+            index_df = pandas.DataFrame([modified_haps.index, index])
+            temp = [":".join(row) for row in index_df.astype(str).T.values]
+            temp = "_".join(temp)
+            out_index.append(temp)
+        return out_index
+
+
 class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
     Just to have extrac function required for Snakemake file for SFS creation
@@ -675,5 +770,3 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
 
         lmrd = cls.lmrd_calculation(newrange=newrange, hardrange=hardrange)
         return lmrd
-
-
