@@ -15,7 +15,7 @@ from Classes import Misc
 
 
 ##input info extraction
-configfile: 'config.yml'
+configfile: os.getcwd()+'/config.yml'
 workdir: os.getcwd()
 # extra work
 
