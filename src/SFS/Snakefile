@@ -74,6 +74,8 @@ if 'sfs2c' in config:
     sfs2c="--sfs2c"
 else:
     sfs2c=""
+if not 'abc_repeats' in config:
+    config['abc_repeats']=1
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd,priors_add_header
 

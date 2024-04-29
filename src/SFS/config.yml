@@ -12,6 +12,7 @@ threads: 1
 jobs: 10
 repeats: 2000
 test_size: 1000
+abc_repeats: 10
 decrease : 0.95
 increase : 0.01
 tolerance: .1
