@@ -2685,7 +2685,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
             ModelParamPrediction=ModelParamPrediction, x_test=x_test, y_test=y_test, scale_x=scale_x, scale_y=scale_y,
             params_names=params_names, ss=ss)
         if predict4mreal.ndim > 1:
-            predict4mreal = pandas.DataFrame(predict4mreal.mean()).transpose()
+            predict4mreal = pandas.DataFrame(predict4mreal.median()).transpose()
         parmin, parmax = cls.abc_params_min_max(target=predict4mreal, param=params_unscaled, ss=test_predictions,
                                                 tol=tol, method=method)
         newrange = pandas.concat([parmin, parmax], axis=1)
