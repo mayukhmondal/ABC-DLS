@@ -706,6 +706,44 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
 
     @classmethod
+    def multiple_newrange2updatednewrange(cls,newrange_files,csvfile,params_length,decrease=0.95,increase=0.0,hardrange_file=None,outfile='Newrange.csv'):
+        newrange = cls.median_newrange(newrange_files)
+        oldrange = cls.extract_oldrange(file=csvfile, params_length=params_length)
+        newrange = cls.update_newrange_using_oldrange_hardrange(newrange=newrange, oldrange=oldrange, increase=increase,
+                                                            decrease=decrease,hardrange_file=hardrange_file)
+        newrange.to_csv(outfile, header=False)
+        return newrange
+
+    @classmethod
+    def median_newrange(cls, files):
+        alldata = [Misc.reading_csv_no_header(file).iloc[:, :3] for file in files]
+        min_series = pandas.DataFrame([data.iloc[:, 1] for data in alldata]).median()
+        max_series = pandas.DataFrame([data.iloc[:, 2] for data in alldata]).median()
+        newrange = pandas.concat([min_series, max_series], axis=1)
+        newrange.columns = ['min', 'max']
+        newrange.index = list(alldata[0].iloc[:, 0])
+        return newrange
+
+    @classmethod
+    def extract_oldrange(cls, file, params_length):
+        params = pandas.read_csv(file, usecols=range(params_length))
+        oldrange = pandas.concat([params.min(), params.max()], axis=1)
+        oldrange.columns = ['min', 'max']
+        return oldrange
+
+    @classmethod
+    def update_newrange_using_oldrange_hardrange(cls, newrange, oldrange, decrease=0.95, increase=0.0,hardrange_file=None):
+        newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, decrease=decrease)
+        if increase > 0:
+            if hardrange_file:
+                hardrange = pandas.read_csv(hardrange_file, index_col=0, header=None, names=['', 'min', 'max'],
+                                            usecols=[0, 1, 2])
+            else:
+                hardrange = pandas.DataFrame()
+            newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
+                                                          oldrange=oldrange, decrease=decrease)
+        return newrange
+    @classmethod
     def narrowing_input(cls, paramsnumbers: int, inputfile: str, rangefile: str, folder: str = '') -> int:
         """
         Narrowing the All.csv file with the range that is calculated by SFS so that it can be used for next cycle

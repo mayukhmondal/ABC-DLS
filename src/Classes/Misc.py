@@ -304,3 +304,17 @@ def adding_pop(alldata, popfilepath):
         except IndexError:
             pass
     return alldata['pop']
+
+def reading_csv_no_header(file, **kwrds):
+    """
+    As I always forget how to read pandas csv files without reading the header. Here is the automatic version
+    Args:
+        file: the csv file to read.
+        **kwrds: all the other commands except header=None can be passed here. header=None is to tell them that there is
+        no header line in the file
+    Returns: will return the pandas dataframe
+
+    """
+    import pandas
+    data = pandas.read_csv(file, header=None, **kwrds)
+    return data

@@ -20,13 +20,14 @@ workdir: os.getcwd()
 
 
 # extra work
-def main_before_submission(config: dict) -> tuple[dict, list, pandas.DataFrame]:
+def main_before_submission(config: dict) -> tuple[dict, list, list, pandas.DataFrame]:
     """
     main def where most of the internal changes are done before it start to submit jobs.
     :param config: the config file in dict format.
     :return: will return the updated config as well as the number of joblist and parameters in a df format.
     """
     joblist = [format(x,'03') for x in range(1,config["jobs"] + 1)]
+    abc_repeat_list = [format(x,'02') for x in range(1,config["abc_repeats"] + 1)]
     config["sfsfile"] = os.path.abspath(config["sfsfile"])
     parameteres = pandas.read_csv(config['priors_range'],header=None,names=['par_names', 'upper', 'lower'],
         usecols=[0, 1, 2])
@@ -61,7 +62,7 @@ def main_before_submission(config: dict) -> tuple[dict, list, pandas.DataFrame]:
         config['sfs2c_cli'] = "--sfs2c"
     if not 'abc_repeats' in config:
         config['abc_repeats'] = 1
-    return config, joblist, parameteres
+    return config, joblist, abc_repeat_list, parameteres
 
 
 def getting_current_repeat(repeats, jobs, narrowed_path="Narrowed.csv"):
@@ -85,7 +86,7 @@ def getting_current_repeat(repeats, jobs, narrowed_path="Narrowed.csv"):
     return current_repeats
 
 
-config, joblist, parameteres = main_before_submission(config)
+config, joblist, abc_repeat_list, parameteres = main_before_submission(config)
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd,priors_add_header
 
@@ -147,6 +148,20 @@ rule reusing_simulations:
         ABC_DLS_SMC_Snakemake.narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],
             folder=f"{config['demography']}/")
 
+rule join_newrange:
+    input:
+        files=expand(f"{config['demography']}/Repeats" + "{abc_int}/Newrange.csv",abc_int=abc_repeat_list),
+        csvfile=f"{config['demography']}/{config['demography']}.csv.gz"
+    output:
+        f"{config['demography']}/Newrange.csv"
+    params:
+        parameteres.shape[0]
+    run:
+        newrange = ABC_DLS_SMC_Snakemake.multiple_newrange2updatednewrange(newrange_files=input['files'],csvfile=input[
+            'csvfile'],params_length=params[0],decrease=config['decrease'],increase=config['increase'],hardrange_file=
+        config['hardrange_file'],outfile=output[0])
+        print(newrange)
+
 rule params_sfs:
     """
     Main run for ABC-DLS SMC sampling method. This will using Priors+SFS will give Posterior range which are 
@@ -160,16 +175,22 @@ rule params_sfs:
         csv=f"{config['demography']}/{config['demography']}.csv.gz",
         sfs=config['sfsfile']
     output:
-        temp(f"{config['demography']}/Newrange.csv"),temp(f"{config['demography']}/scale_x.sav"),
-        temp(f"{config['demography']}/scale_y.sav"),temp(f"{config['demography']}/x.h5"),
-        temp(f"{config['demography']}/y.h5"),temp(f"{config['demography']}/params_header.csv")
+        f"{config['demography']}/Repeats" + "{abc_int}/Newrange.csv",
+        temp(f"{config['demography']}/Repeats" + "{abc_int}/ABC_SMC.out"),
+        temp(f"{config['demography']}/Repeats" + "{abc_int}/scale_x.sav"),
+        temp(f"{config['demography']}/Repeats" + "{abc_int}/scale_y.sav"),
+        temp(f"{config['demography']}/Repeats" + "{abc_int}/x.h5"),
+        temp(f"{config['demography']}/Repeats" + "{abc_int}/y.h5"),
+        temp(f"{config['demography']}/Repeats" + "{abc_int}/params_header.csv")
+    params:
+        folder=f"{config['demography']}/Repeats" + "{abc_int}/"
     resources:
         mem_mb=6000
     shell:
         "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --frac {config[frac]} "
-        "{config[tfknn_demo]} {config[noise]} --folder {config[demography]} --decrease {config[decrease]} {input[info]}"
-        " {config[resume_nn_cli]}"
+        "{config[tfknn_demo]} {config[noise]} --folder {params.folder} --decrease {config[decrease]} {input[info]}"
+        " {config[resume_nn_cli]} > {params.folder}ABC_SMC.out"
 
 rule info_sfs:
     """
@@ -227,7 +248,8 @@ rule join_SFS_All:
     input:
         files=expand(f"{config['demography']}/{config['demography']}_" + '{jobint}.csv',jobint=joblist)
     output:
-        temp(f"{config['demography']}/{config['demography']}.csv.gz")
+        f"{config['demography']}/{config['demography']}.csv.gz"
+    #temp(f"{config['demography']}/{config['demography']}.csv.gz")
     params:
         config['repeats'] - config['current_repeats']
     shell:
