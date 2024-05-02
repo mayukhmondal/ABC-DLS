@@ -15,10 +15,12 @@ from Classes import Misc
 
 
 ##input info extraction
-configfile: os.getcwd()+'/config.yml'
+configfile: os.getcwd() + '/config.yml'
 workdir: os.getcwd()
+
+
 # extra work
-def main_before_submission(config: dict)-> tuple[dict,list,pandas.DataFrame]:
+def main_before_submission(config: dict) -> tuple[dict, list, pandas.DataFrame]:
     """
     main def where most of the internal changes are done before it start to submit jobs.
     :param config: the config file in dict format.
@@ -50,7 +52,7 @@ def main_before_submission(config: dict)-> tuple[dict,list,pandas.DataFrame]:
     if 'resume_nn' in config:
         if config['resume_nn']:
             if os.path.exists(config['demography'] + '/ModelParamPrediction.h5'):
-                config['resume_nn_cli']= "--resume " + config['demography'] + '/ModelParamPrediction.h5'
+                config['resume_nn_cli'] = "--resume " + config['demography'] + '/ModelParamPrediction.h5'
                 if 'resume_fit' in config:
                     if config['resume_fit']:
                         config['resume_nn_cli'] = config['resume_nn_cli'] + " --resume_fit " + config['resume_fit']
@@ -59,8 +61,10 @@ def main_before_submission(config: dict)-> tuple[dict,list,pandas.DataFrame]:
         config['sfs2c_cli'] = "--sfs2c"
     if not 'abc_repeats' in config:
         config['abc_repeats'] = 1
-    return config,joblist,parameteres
-def getting_current_repeat(repeats,jobs,narrowed_path="Narrowed.csv"):
+    return config, joblist, parameteres
+
+
+def getting_current_repeat(repeats, jobs, narrowed_path="Narrowed.csv"):
     """
     calculating how many repeats have to be done this cycle. The Minimum number is five times of the jobs. as if too less
     number by random chance split will create empty files. It depends on the narrowed_path and repeats as the total
@@ -77,10 +81,11 @@ def getting_current_repeat(repeats,jobs,narrowed_path="Narrowed.csv"):
         current_repeats = repeats - Misc.getting_line_count(narrowed_path)
     else:
         current_repeats = repeats
-    current_repeats = max(current_repeats,jobs*5)
+    current_repeats = max(current_repeats,jobs * 5)
     return current_repeats
 
-config,joblist,parameteres=main_before_submission(config)
+
+config, joblist, parameteres = main_before_submission(config)
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd,priors_add_header
 
@@ -94,8 +99,8 @@ rule finalize:
     All.csv, Newrange.csv and Narrowed.csv adding new lmrd in lmrd.out
     """
     input:
-        config['demography'] + '/Newrange.csv',config['demography'] + '/All_rr.csv',
-        config['demography'] + '/Narrowed.csv',config['demography'] + '/lmrd.out'
+        f"{config['demography']}/Newrange.csv",f"{config['demography']}/All_rr.csv",
+        f"{config['demography']}/Narrowed.csv",f"{config['demography']}/lmrd.out"
     output:
         'Newrange.csv'
     shell:
@@ -115,9 +120,9 @@ rule calculating_lmrd:
     output: will create lmrd.out in demography folder and print lmrd there
     """
     input:
-        config['demography'] + '/Newrange.csv',config["hardrange_file"]
+        f"{config['demography']}/Newrange.csv",config["hardrange_file"]
     output:
-        temp(config['demography'] + '/lmrd.out')
+        temp(f"{config['demography']}/lmrd.out")
     run:
         if "hardrange_file" in config:
             lmrd = ABC_DLS_SMC_Snakemake.lmrd4mcsv(hardrange_file=config["hardrange_file"],newrange_file=input[0])
@@ -133,14 +138,14 @@ rule reusing_simulations:
     output: Will produce Narrowed.csv which has information of recyclable SFS that was created before
     """
     output:
-        temp(config['demography'] + '/Narrowed.csv')
+        temp(f"{config['demography']}/Narrowed.csv")
     input:
-        config['demography'] + '/All_rr.csv',config['demography'] + '/Newrange.csv'
+        f"{config['demography']}/All_rr.csv",f"{config['demography']}/Newrange.csv"
     params:
         parameteres.shape[0]
     run:
         ABC_DLS_SMC_Snakemake.narrowing_input(paramsnumbers=params[0],rangefile=input[1],inputfile=input[0],
-            folder=config['demography'] + '/')
+            folder=f"{config['demography']}/")
 
 rule params_sfs:
     """
@@ -151,13 +156,13 @@ rule params_sfs:
     demography/Newrange.csv
     """
     input:
-        info=config['demography'] + '/Model.info',
-        csv=config['demography'] + '/' + config['demography'] + '.csv.gz',
+        info=f"{config['demography']}/Model.info",
+        csv=f"{config['demography']}/{config['demography']}.csv.gz",
         sfs=config['sfsfile']
     output:
-        temp(config['demography'] + '/Newrange.csv'), temp(config['demography'] + '/scale_x.sav'),
-        temp(config['demography'] + '/scale_y.sav'), temp(config['demography'] + '/x.h5'),
-        temp(config['demography'] + '/y.h5'),temp(config['demography'] + '/params_header.csv')
+        temp(f"{config['demography']}/Newrange.csv"),temp(f"{config['demography']}/scale_x.sav"),
+        temp(f"{config['demography']}/scale_y.sav"),temp(f"{config['demography']}/x.h5"),
+        temp(f"{config['demography']}/y.h5"),temp(f"{config['demography']}/params_header.csv")
     resources:
         mem_mb=6000
     shell:
@@ -174,9 +179,9 @@ rule info_sfs:
     output: tab formatted file path and the parameters columns. demography/Model.info
     """
     input:
-        config['demography'] + '/' + config['demography'] + '.csv.gz'
+        f"{config['demography']}/{config['demography']}.csv.gz"
     output:
-        temp(config['demography'] + '/Model.info')
+        temp(f"{config['demography']}/Model.info")
     params:
         str(parameteres.shape[0])
     run:
@@ -190,9 +195,9 @@ rule all_repeat_remove:
     output: repeat removed All.csv
     """
     input:
-        config['demography'] + '/All.csv'
+        f"{config['demography']}/All.csv"
     output:
-        temp(config['demography'] + '/All_rr.csv')
+        temp(f"{config['demography']}/All_rr.csv")
     params:
         int(parameteres.shape[0])
     run:
@@ -206,9 +211,9 @@ rule updating_all:
     output: the updated All.csv file
     """
     input:
-        'All.csv',config['demography'] + '/' + config['demography'] + '.csv.gz'
+        'All.csv',f"{config['demography']}/{config['demography']}.csv.gz"
     output:
-        temp(config['demography'] + '/All.csv')
+        temp(f"{config['demography']}/All.csv")
     shell:
         "cat {input[0]} <(zcat {input[1]}| tail -n+2)  > {output}"
 
@@ -220,9 +225,9 @@ rule join_SFS_All:
     output: zipped version. demography/demography.csv.gz
     """
     input:
-        files=expand(config['demography'] + '/' + config['demography'] + '_{jobint}.csv',jobint=joblist)
+        files=expand(f"{config['demography']}/{config['demography']}_" + '{jobint}.csv',jobint=joblist)
     output:
-        temp(config['demography'] + '/' + config['demography'] + '.csv.gz')
+        temp(f"{config['demography']}/{config['demography']}.csv.gz")
     params:
         config['repeats'] - config['current_repeats']
     shell:
@@ -238,9 +243,9 @@ rule run_SFS:
     output: pramaters+sfs together. demography/demography_xxx.csv
     """
     input:
-        config['demography'] + '/Priors_{jobint}.csv'
+        f"{config['demography']}/Priors_" + "{jobint}.csv"
     output:
-        temp(config['demography'] + '/' + config['demography'] + '_{jobint}.csv')
+        temp(f"{config['demography']}/{config['demography']}_" + "{jobint}.csv")
     resources:
         mem_mb=6000
     threads: config['threads']
@@ -256,10 +261,10 @@ rule priors_add_header:
     output: just added the header on the input demography/Priors_XXX.csv
     """
     output:
-        temp(config['demography'] + '/Priors_{jobint}.csv')
+        temp(f"{config['demography']}/Priors_" + "{jobint}.csv")
     input:
-        prior=config['demography'] + "/{jobint}.csv",
-        header=config['demography']+ "/Priors.csv"
+        prior=f"{config['demography']}/" + "{jobint}.csv",
+        header=f"{config['demography']}/Priors.csv"
     shell:
         "cat <(head -n 1 {input[header]}) <(cat {input[prior]}) > {output}"
 
@@ -271,10 +276,10 @@ rule breaks_priors:
     output: broken apart Priors.csv demography/XXX.csv assuming we are not going to run more than 1000 jobs together
     """
     output:
-        temp(expand(config['demography'] + "/{jobint}.csv",jobint=joblist)),
-        temp(config['demography']+'/Priors_NH.csv')
+        temp(expand(f"{config['demography']}/" + "{jobint}.csv",jobint=joblist)),
+        temp(f"{config['demography']}/Priors_NH.csv")
     input:
-        config['demography'] + "/Priors.csv"
+        f"{config['demography']}/Priors.csv"
     shell:
         "tail -n+2 {input} > {config[demography]}/Priors_NH.csv\n"
         "split --numeric-suffixes=1 --number=l/{config[jobs]} -a 3 --additional-suffix=.csv "
@@ -290,7 +295,7 @@ rule priors_create:
     output: demography/Priors.csv  
     """
     output:
-        temp(config['demography'] + "/Priors.csv")
+        temp(f"{config['demography']}/Priors.csv")
     params:
         par_names=parameteres['par_names'].to_csv(line_terminator=",",index=False,header=False)[:-1],
         upper=parameteres['upper'].to_csv(line_terminator=",",index=False,header=False)[:-1],
