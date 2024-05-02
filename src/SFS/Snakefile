@@ -18,11 +18,48 @@ from Classes import Misc
 configfile: os.getcwd()+'/config.yml'
 workdir: os.getcwd()
 # extra work
-
-joblist = [format(x,'03') for x in range(1,config["jobs"] + 1)]
-config["sfsfile"] = os.path.abspath(config["sfsfile"])
-parameteres = pandas.read_csv(config['priors_range'],header=None,names=['par_names', 'upper', 'lower'],
-    usecols=[0, 1, 2])
+def main_before_submission(config: dict)-> tuple[dict,list,pandas.DataFrame]:
+    """
+    main def where most of the internal changes are done before it start to submit jobs.
+    :param config: the config file in dict format.
+    :return: will return the updated config as well as the number of joblist and parameters in a df format.
+    """
+    joblist = [format(x,'03') for x in range(1,config["jobs"] + 1)]
+    config["sfsfile"] = os.path.abspath(config["sfsfile"])
+    parameteres = pandas.read_csv(config['priors_range'],header=None,names=['par_names', 'upper', 'lower'],
+        usecols=[0, 1, 2])
+    config["current_repeats"] = getting_current_repeat(repeats=config["repeats"],jobs=config["jobs"])
+    # optional stuff
+    config['tfknn_demo'] = ''
+    if "tfknn" in config:
+        if not os.path.isfile(config["tfknn"]):
+            print("Could not find the tfknn file. If you do not want to use leave it blank as tfknn='' ")
+            sys.exit(1)
+        config['tfknn_demo'] = '--nn ' + os.path.abspath(config["tfknn"])
+    config['noise'] = ''
+    if 'increase' in config:
+        if config["increase"] > 0:
+            config['noise'] = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
+                config["hardrange_file"])
+    if not 'mutation_rate' in config:
+        config['mutation_rate'] = 1.45e-8
+    config['ld'] = ''
+    if 'ldblock' in config:
+        config['ld'] = '--ldblock ' + config['ldblock']
+    config['resume_nn_cli'] = ''
+    if 'resume_nn' in config:
+        if config['resume_nn']:
+            if os.path.exists(config['demography'] + '/ModelParamPrediction.h5'):
+                config['resume_nn_cli']= "--resume " + config['demography'] + '/ModelParamPrediction.h5'
+                if 'resume_fit' in config:
+                    if config['resume_fit']:
+                        config['resume_nn_cli'] = config['resume_nn_cli'] + " --resume_fit " + config['resume_fit']
+    config['sfs2c_cli'] = ""
+    if 'sfs2c' in config:
+        config['sfs2c_cli'] = "--sfs2c"
+    if not 'abc_repeats' in config:
+        config['abc_repeats'] = 1
+    return config,joblist,parameteres
 def getting_current_repeat(repeats,jobs,narrowed_path="Narrowed.csv"):
     """
     calculating how many repeats have to be done this cycle. The Minimum number is five times of the jobs. as if too less
@@ -42,40 +79,8 @@ def getting_current_repeat(repeats,jobs,narrowed_path="Narrowed.csv"):
         current_repeats = repeats
     current_repeats = max(current_repeats,jobs*5)
     return current_repeats
-config["current_repeats"]=getting_current_repeat(repeats=config["repeats"],jobs=config["jobs"])
-# optional stuff
-if "tfknn" in config:
-    if not os.path.isfile(config["tfknn"]):
-        print("Could not find the tfknn file. If you do not want to use leave it blank as tfknn='' ")
-        sys.exit(1)
-    tfknn_demo = '--nn ' + os.path.abspath(config["tfknn"])
-else:
-    tfknn_demo = ''
-noise = ''
-if 'increase' in config:
-    if config["increase"] > 0:
-        noise = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
-            config["hardrange_file"])
-if not 'mutation_rate' in config:
-    config['mutation_rate'] = 1.45e-8
-if 'ldblock' in config:
-    ld = '--ldblock ' + config['ldblock']
-else:
-    ld = ''
-resume_nn=''
-if 'resume_nn' in config:
-    if config['resume_nn']:
-        if os.path.exists(config['demography'] + '/ModelParamPrediction.h5'):
-            resume_nn="--resume "+config['demography'] + '/ModelParamPrediction.h5'
-            if 'resume_fit' in config:
-                if config['resume_fit']:
-                    resume_nn = resume_nn+" --resume_fit "+config['resume_fit']
-if 'sfs2c' in config:
-    sfs2c="--sfs2c"
-else:
-    sfs2c=""
-if not 'abc_repeats' in config:
-    config['abc_repeats']=1
+
+config,joblist,parameteres=main_before_submission(config)
 # real snakemake pipeline starts here
 localrules: finalize,info_sfs,calculating_lmrd,priors_add_header
 
@@ -153,17 +158,13 @@ rule params_sfs:
         temp(config['demography'] + '/Newrange.csv'), temp(config['demography'] + '/scale_x.sav'),
         temp(config['demography'] + '/scale_y.sav'), temp(config['demography'] + '/x.h5'),
         temp(config['demography'] + '/y.h5'),temp(config['demography'] + '/params_header.csv')
-    params:
-        tfknn_demo=tfknn_demo,
-        noise=noise,
-        resume_nn=resume_nn
     resources:
         mem_mb=6000
     shell:
         "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --frac {config[frac]} "
-        "{params.tfknn_demo} {params.noise} --folder {config[demography]} --decrease {config[decrease]} {input[info]} "
-        "{params[resume_nn]}"
+        "{config[tfknn_demo]} {config[noise]} --folder {config[demography]} --decrease {config[decrease]} {input[info]}"
+        " {config[resume_nn_cli]}"
 
 rule info_sfs:
     """
@@ -240,16 +241,13 @@ rule run_SFS:
         config['demography'] + '/Priors_{jobint}.csv'
     output:
         temp(config['demography'] + '/' + config['demography'] + '_{jobint}.csv')
-    params:
-        ld=ld,
-        sfs2c=sfs2c
     resources:
         mem_mb=6000
     threads: config['threads']
     shell:
         "python {config[sc_sfs]}  --inds {config[inds]} --params_file {input}  --threads {config[threads]} "
-        "--total_length {config[total_length]} --mutation_rate {config[mutation_rate]} {config[demography]} {params.ld}"
-        " {sfs2c} > {output}"
+        "--total_length {config[total_length]} --mutation_rate {config[mutation_rate]} {config[demography]} "
+        "{config[ld]} {config[sfs2c_cli]} > {output}"
 
 rule priors_add_header:
     """
