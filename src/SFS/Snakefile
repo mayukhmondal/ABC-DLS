@@ -38,11 +38,11 @@ def main_before_submission(config: dict) -> tuple[dict, list, list, pandas.DataF
             print("Could not find the tfknn file. If you do not want to use leave it blank as tfknn='' ")
             sys.exit(1)
         config['tfknn_demo'] = '--nn ' + os.path.abspath(config["tfknn"])
-    config['noise'] = ''
-    if 'increase' in config:
-        if config["increase"] > 0:
-            config['noise'] = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
-                config["hardrange_file"])
+    # config['noise'] = ''
+    # if 'increase' in config:
+    #     if config["increase"] > 0:
+    #         config['noise'] = '--increase ' + str(config["increase"]) + ' --hardrange ' + os.path.abspath(
+    #             config["hardrange_file"])
     if not 'mutation_rate' in config:
         config['mutation_rate'] = 1.45e-8
     config['ld'] = ''
@@ -189,7 +189,7 @@ rule params_sfs:
     shell:
         "python {config[sc_abc]} All --test_size {config[test_size]} --chunksize 1000 --scale b  "
         "--ssfile {config[sfsfile]} --tolerance {config[tolerance]} --method rejection --frac {config[frac]} "
-        "{config[tfknn_demo]} {config[noise]} --folder {params.folder} --decrease {config[decrease]} {input[info]}"
+        "{config[tfknn_demo]} --folder {params.folder} --decrease 1.0 {input[info]}"
         " {config[resume_nn_cli]} > {params.folder}ABC_SMC.out"
 
 rule info_sfs:
