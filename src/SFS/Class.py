@@ -706,16 +706,45 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
     """
 
     @classmethod
-    def multiple_newrange2updatednewrange(cls,newrange_files,csvfile,params_length,decrease=0.95,increase=0.0,hardrange_file=None,outfile='Newrange.csv'):
+    def multiple_newrange2updatednewrange(cls, newrange_files: list, csvfile: str, params_length: int,
+                                          decrease: float = 0.95, increase: float = 0.0,
+                                          hardrange_file: Optional[str] = None,
+                                          outfile: str = 'Newrange.csv') -> pandas.DataFrame:
+        """
+        main wrapper for multiple newrange to updated newrange pandas.df in snakemake. the update will output median of
+        multiple values. This will make the parameter estimation slightly more robust. important mainly for multiple
+        cycles. as one cycle one wrong prediction can make output of all consecutive runs wrong. This will make 10 run
+        per cycle and from that will take the median which will make it more robust
+        :param newrange_files: the files path in a list format
+        :param csvfile: the main simulated SFS.csv path
+        :param params_length: the number of columns for parameters present in csvfile
+        :param decrease: minimum amount of decrease of the range needed to register as true. default is .95. lower means
+        stronger filter
+        :param increase: If you want to increase the new range. Important in case the newrange has missed the true
+        parameters. The value is in fraction to distance of new range min and max (similar to decrease). a good value is
+        5 times lower than 1-decrease. Only increase in case of no decrease is detected (>decrease). It is better to
+        use hardrange to make it understand what should be the hard cut off if not newrange can be outside of possible
+        values. default is  0
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+        limit. every row is define a parameters. no header. same as Newrange.csv. important to define what is possible
+        for range
+        :param outfile: the medina newrange should be saved in specific path
+        :return: will return the median newrange df
+        """
         newrange = cls.median_newrange(newrange_files)
         oldrange = cls.extract_oldrange(file=csvfile, params_length=params_length)
         newrange = cls.update_newrange_using_oldrange_hardrange(newrange=newrange, oldrange=oldrange, increase=increase,
-                                                            decrease=decrease,hardrange_file=hardrange_file)
+                                                                decrease=decrease, hardrange_file=hardrange_file)
         newrange.to_csv(outfile, header=False)
         return newrange
 
     @classmethod
-    def median_newrange(cls, files):
+    def median_newrange(cls, files: list) -> pandas.DataFrame:
+        """
+        This will read all the newranges file from a list format and then caclulate the median of every parameters
+        :param files:  the files path in a list format
+        :return: wil return a pandas dataframe of newrange with median values of every parameters
+        """
         alldata = [Misc.reading_csv_no_header(file).iloc[:, :3] for file in files]
         min_series = pandas.DataFrame([data.iloc[:, 1] for data in alldata]).median()
         max_series = pandas.DataFrame([data.iloc[:, 2] for data in alldata]).median()
@@ -725,14 +754,40 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
         return newrange
 
     @classmethod
-    def extract_oldrange(cls, file, params_length):
+    def extract_oldrange(cls, file: str, params_length: int) -> pandas.DataFrame:
+        """
+        reading the simulated sfs file to get the parameters and from that creatign the oldrange file, which is
+        basically the min and max values of every parameters
+        :param file: the main simulated SFS.csv path
+        :param params_length: the number of columns for parameters present in csvfile
+        :return: will return the oldrange parameter values
+        """
         params = pandas.read_csv(file, usecols=range(params_length))
         oldrange = pandas.concat([params.min(), params.max()], axis=1)
         oldrange.columns = ['min', 'max']
         return oldrange
 
     @classmethod
-    def update_newrange_using_oldrange_hardrange(cls, newrange, oldrange, decrease=0.95, increase=0.0,hardrange_file=None):
+    def update_newrange_using_oldrange_hardrange(cls, newrange: pandas.DataFrame, oldrange: pandas.DataFrame,
+                                                 decrease: float = 0.95, increase: float = 0.0,
+                                                 hardrange_file: Optional[str] = None) -> pandas.DataFrame:
+        """
+        This will update the newrange Will check if it has decrease the newrange more than the decrease if not it will
+        try to increase the range taken care of hardrange so that newrange is never outside of hardrange.
+        :param newrange: the median newrange df
+        :param oldrange: the oldrange parameter values
+        :param decrease: minimum amount of decrease of the range needed to register as true. default is .95. lower means
+        stronger filter
+        :param increase: If you want to increase the new range. Important in case the newrange has missed the true
+        parameters. The value is in fraction to distance of new range min and max (similar to decrease). a good value is
+        5 times lower than 1-decrease. Only increase in case of no decrease is detected (>decrease). It is better to
+        use hardrange to make it understand what should be the hard cut off if not newrange can be outside of possible
+        values. default is  0
+        :param hardrange_file: csv format of hardrange file path. Should have 3 columns. params_names, lower and upper
+        limit. every row is define a parameters. no header. same as Newrange.csv. important to define what is possible
+        for range
+        :return: will return the newrange with updated values as well as the amount of improvement for this cycle
+        """
         newrange = cls.updating_newrange(newrange=newrange, oldrange=oldrange, decrease=decrease)
         if increase > 0:
             if hardrange_file:
@@ -741,8 +796,9 @@ class ABC_DLS_SMC_Snakemake(ABC.ABC_DLS_SMC):
             else:
                 hardrange = pandas.DataFrame()
             newrange = cls.noise_injection_update(newrange=newrange, increase=increase, hardrange=hardrange,
-                                                          oldrange=oldrange, decrease=decrease)
+                                                  oldrange=oldrange, decrease=decrease)
         return newrange
+
     @classmethod
     def narrowing_input(cls, paramsnumbers: int, inputfile: str, rangefile: str, folder: str = '') -> int:
         """
