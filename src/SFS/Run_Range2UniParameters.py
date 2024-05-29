@@ -7,7 +7,6 @@ import argparse
 
 # noinspection PyUnresolvedReferences
 from Class import Range2UniformPrior
-
 from _version import __version__
 
 ##input argument is done
@@ -30,4 +29,4 @@ args = parser.parse_args()
 
 out = Range2UniformPrior(upper=args.upper, lower=args.lower, variable_names=args.par_names,
                          repeats=args.repeats)
-print(out.to_csv(index=False),end="")
+print(out.to_csv(index=False), end="")
