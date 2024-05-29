@@ -30,4 +30,4 @@ args = parser.parse_args()
 
 out = Range2UniformPrior(upper=args.upper, lower=args.lower, variable_names=args.par_names,
                          repeats=args.repeats)
-print(out.to_csv(index=False))
+print(out.to_csv(index=False),end="")
