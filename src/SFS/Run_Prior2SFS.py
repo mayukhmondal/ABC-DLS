@@ -4,10 +4,10 @@
 This file to create Site Frequency Spectrum (SFS) from Priors or parameters
 """
 import argparse
-
+import sys
 # noinspection PyUnresolvedReferences
-import Demography
-#from Simulation.msprime import Demography
+#import Demography
+from Simulation.msprime import Demography
 # noinspection PyUnresolvedReferences
 import Class
 from Classes import Misc
@@ -16,16 +16,18 @@ from _version import __version__
 parser = argparse.ArgumentParser(description='To run msprime and create sfs from priors')
 parser.add_argument('-v', '--version', action='version',
                     version='ABC-DLS {version}'.format(version=__version__))
-parser.add_argument('demography', help='The msprime demography function that has to be load from Demogrpahy.py')
+parser.add_argument('params_file',
+                    help='All the priors for the parameters on which the simulation will run. Should be "," comma '
+                         'separated csv format. Different rows signify different run. columns different parameters',
+                    nargs='?', default=sys.stdin)
+parser.add_argument('--demography', help='The msprime demography function that has to be load from '
+                                         'Demography.py',required=True)
 parser.add_argument('--inds',
                     help='The number of individuals  per populations. All the output populations should be mentioned in'
                          ' the inds. again separated by inds1,inds2. remember 1 inds = 2 haplotypes. thus from 5 '
                          'individuals  you would get total 11 (0 included) different allele counts ',
                     required=True)
-parser.add_argument('--params_file', required=True,
-                    help='All the priors for the parameters on which the simulation will run. Should be "," comma '
-                         'separated csv format. Different rows signify different run. columns different parameters',
-                    type=lambda x: Misc.args_valid_file(parser, x))
+
 parser.add_argument('--total_length',
                     help='total length of the genome. default is 3gb roughly the length of human genome',
                     type=float, default=3e9)
