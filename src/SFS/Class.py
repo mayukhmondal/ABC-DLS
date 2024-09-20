@@ -67,9 +67,6 @@ class VCF2SFS():
         sfs = pandas.Series(sfs.flatten(), index=indx_names)
         if out:
             cls.ss2csv(sfs, out + '.csv')
-        else:
-            cls.ss2csv(sfs, Misc.filenamewithoutextension_checking_zipped(
-                vcffile) + '.csv')
         return sfs
 
     @classmethod

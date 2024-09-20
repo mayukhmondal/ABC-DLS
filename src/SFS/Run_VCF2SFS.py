@@ -5,6 +5,8 @@ This file to convert vcf file to sfs (csv) format
 """
 import argparse
 
+import pandas
+
 # noinspection PyUnresolvedReferences
 from Class import VCF2SFS
 from Classes import Misc
@@ -33,3 +35,4 @@ args = parser.parse_args()
 
 out = VCF2SFS(vcffile=args.vcffile, popfile=args.popfile,
               sfs_pop=args.sfs_pop.split(","), chunk_length=args.chunksize, out=args.outprefix)
+print(pandas.DataFrame(out).transpose().to_csv(index=False), end="")
