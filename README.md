@@ -55,9 +55,15 @@ For Model selection, parameters estimation and parameter estimation using SMC, r
 ### Installation Issues 
 In case you try to install it to an already existed conda environment that already has R (r-base), it can conflict with the rpy2 when it tries to automatically download an abc package from R saying abc package does not exist. In that case, create a new environment. 
 ## Citation
+
 ### Revisiting the out of Africa event with a deep learning approach  
 Francesco Montinaro, Vasili Pankratov, Burak Yelmen, Luca Pagani, Mayukh Mondal  
-The American Journal of Human Genetics; doi: https://doi.org/10.1016/j.ajhg.2021.09.006
+The American Journal of Human Genetics; doi: https://doi.org/10.1016/j.ajhg.2021.09.006  
+
+If you use cSFS please cite:
+### Resolving out of Africa event for Papua New Guinean population using neural network
+Mayukh Mondal, Mathilde Andre, Ajai K. Pathak, Nicolas Brucato, Francois-Xavier Ricaut, Mait Metspalu, Anders Eriksson   
+bioRxiv 2024.09.19.613861; doi: https://doi.org/10.1101/2024.09.19.613861
 ## Contact 
 The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact 
 <mondal.mayukh@gmail.com>
