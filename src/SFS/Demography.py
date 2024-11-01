@@ -586,7 +586,7 @@ def PNG_A_ND(params, inds, length=1e6, recombination_rate=1e-8, mutation_rate=1.
             time=events['neanderthal_denisova'], initial_size=N_ND, population_id=NEAI)]
     # Archaics merging with humans
     events['human_archaic'] = max(events['neanderthal_denisova'], events['split_afr_ooa']) + T_H_A
-    human_neanderthal = [msprime.MassMigration(
+    human_archaic = [msprime.MassMigration(
         time=events['human_archaic'], source=NEAI, destination=AFR, proportion=1.0)]
 
     demographic_events = []
