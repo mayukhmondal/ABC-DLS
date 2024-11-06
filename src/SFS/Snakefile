@@ -78,6 +78,7 @@ def getting_current_repeat(repeats, jobs, narrowed_path="Narrowed.csv"):
     :param narrowed_path: the path of narrowed
     :return: the number of repeats of simulation that is needed in this cycle
     """
+    repeats=int(float(repeats))
     if os.path.isfile(narrowed_path):
         current_repeats = repeats - Misc.getting_line_count(narrowed_path)
     else:
@@ -251,7 +252,7 @@ rule join_SFS_All:
         f"{config['demography']}/{config['demography']}.csv.gz"
     #temp(f"{config['demography']}/{config['demography']}.csv.gz")
     params:
-        config['repeats'] - config['current_repeats']
+        int(float(config['repeats'])) - config['current_repeats']
     shell:
         "touch Narrowed.csv\n"
         "cat <(head -n1 {input.files[0]}) <(tail -qn+2 {input.files}) <(head -n {params} Narrowed.csv)| grep , "
