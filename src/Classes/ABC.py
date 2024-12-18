@@ -341,7 +341,6 @@ class ABC_DLS_Classification:
         :return: will return output which is the shuffled rows of input
         """
         import os
-        import shutil
         terashuf = os.path.dirname(os.path.abspath(__file__)) + '/shuffle.py'
         parentfolder = os.getcwd()
         if outfolder != '':
