@@ -11,7 +11,6 @@ from pathlib import Path
 from src.Classes import ABC
 from src.Classes import Misc
 from SFS import Class as SFS_Class
-from CRT import Class as CRT_Class
 from collections import Counter
 import pandas
 import numpy
@@ -278,17 +277,3 @@ def test_MsPrime2SFS(demography='OOA', params_file='Priors.csv', samples='5,5,5'
     assert 1345 == prisfs.shape[1], "The sfs do not have expected number of columns (1331+priors)"
     Misc.removefiles(['Priors.csv', 'test_out.csv'])
 
-
-def test_MsPrimeCRT(demography='OOA', params_file='Priors.csv', samples='5,5,5',
-                    gen_file='../examples/CRT/generations.csv'):
-    # noinspection PyUnresolvedReferences
-    from src.CRT import Demography
-    demography = eval('Demography.' + demography)
-    priors = SFS_Class.Range2UniformPrior(upper="25e3, 2e5, 2e5, 2e5,1e4, 1e4, 1e4,80, 320, 700,50,50,50,50",
-                                          lower="5000, 10000, 10000, 10000, 500,500,500, 15, 5, 5,0,0,0,0", repeats=10)
-    priors.to_csv('Priors.csv', index=False)
-    pricrt = CRT_Class.MsPrime2CRT(sim_func=demography, params_file=params_file, samples=samples, gen_file=gen_file)
-
-    assert 10 == pricrt.shape[0], "The crt output do not have same rows as in the prior"
-    assert 152 == pricrt.shape[1], "The crt do not have expected number of columns (138+priors)"
-    Misc.removefiles(['Priors.csv'])
