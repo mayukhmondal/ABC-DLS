@@ -346,24 +346,20 @@ class ABC_DLS_Classification:
         parentfolder = os.getcwd()
         if outfolder != '':
             os.chdir(outfolder)
-        Misc.creatingfolders('temp')
-        if header:
-
-            command = Misc.joinginglistbyspecificstring(['cat <(head -n 1', inputcsv, ') <(tail -n+2', inputcsv,
-                                                         ' | shuf ) > ',
-                                                         os.getcwd() + '/' + output]).strip()
-
+        if inputcsv[-3:] == '.gz':
+            readcommand = f'zcat {inputcsv}'
         else:
-
-            command = Misc.joinginglistbyspecificstring(['cat', inputcsv, '|', 'shuf >', output])
-
+            readcommand = f'cat {inputcsv}'
+        if header:
+            command = f'cat <({readcommand} |head -n 1) <({readcommand}|tail -n+2|python {terashuf}) > {output}'
+        else:
+            command = f'{readcommand} |python {terashuf} > {output}'
         p = subprocess.Popen([command], executable='/bin/bash', stdout=subprocess.PIPE, shell=True,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if stderr:
             print(stderr)
             sys.exit(1)
-        shutil.rmtree('temp')
         if outfolder != '':
             os.chdir(parentfolder)
         return outfolder + output

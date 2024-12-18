@@ -26,49 +26,49 @@ import tempfile
 # need better way to estimate this given overhead for str. setting to
 # 0.5GB uses rougly 4GB of ram.
 memory = int(float(os.environ.get('MEMORY', 4.0)) / 8 * 1024 ** 3)
-
-files = []
-files.append(tempfile.NamedTemporaryFile(mode='w', delete=False, dir='temp/'))
-total_bytes = 0
-total_lines = 0
-buf = []
-bytes_used = 0
-
-
-def shuffle_and_close(buf, f):
-    random.shuffle(buf)
-    f.writelines(buf)
-    f.close()
-
-
-for line in sys.stdin:
-    bytes_used += len(line)
-    total_bytes += len(line)
-    total_lines += 1
-    buf.append(line)
-    if bytes_used >= memory:
-        # sys.stderr.write("wrote %d lines\n" % (len(buf)))
-        shuffle_and_close(buf, files[-1])
-        files.append(tempfile.NamedTemporaryFile(mode='w', delete=False, dir='temp/'))
-        buf = []
-        bytes_used = 0
-if buf:
-    shuffle_and_close(buf, files[-1])
-
-buf = []
-avg_bytes_per_line = total_bytes / float(total_lines)
-files = [open(f.name) for f in files]
-while files:
-    rm_files = []
-    lines_per_file = int((memory / avg_bytes_per_line) / len(files))
-    for f in files:
-        lines = f.readlines(lines_per_file)
-        if not lines:
-            rm_files.append(f)
-        buf += lines
-    random.shuffle(buf)
-    sys.stdout.writelines(buf)
+with tempfile.TemporaryDirectory() as tmpdirname:
+    files = []
+    files.append(tempfile.NamedTemporaryFile(mode='w', delete=False, dir=tmpdirname))
+    total_bytes = 0
+    total_lines = 0
     buf = []
-    for f in rm_files:
-        files.remove(f)
-        os.unlink(f.name)
+    bytes_used = 0
+
+
+    def shuffle_and_close(buf, f):
+        random.shuffle(buf)
+        f.writelines(buf)
+        f.close()
+
+
+    for line in sys.stdin:
+        bytes_used += len(line)
+        total_bytes += len(line)
+        total_lines += 1
+        buf.append(line)
+        if bytes_used >= memory:
+            # sys.stderr.write("wrote %d lines\n" % (len(buf)))
+            shuffle_and_close(buf, files[-1])
+            files.append(tempfile.NamedTemporaryFile(mode='w', delete=False, dir=tmpdirname))
+            buf = []
+            bytes_used = 0
+    if buf:
+        shuffle_and_close(buf, files[-1])
+
+    buf = []
+    avg_bytes_per_line = total_bytes / float(total_lines)
+    files = [open(f.name) for f in files]
+    while files:
+        rm_files = []
+        lines_per_file = int((memory / avg_bytes_per_line) / len(files))
+        for f in files:
+            lines = f.readlines(lines_per_file)
+            if not lines:
+                rm_files.append(f)
+            buf += lines
+        random.shuffle(buf)
+        sys.stdout.writelines(buf)
+        buf = []
+        for f in rm_files:
+            files.remove(f)
+            os.unlink(f.name)
