@@ -40,6 +40,7 @@ def test_Classification_Pre_train(info: str = 'Model.info', test_size: int = 1, 
                                                          'format is not simple text dict '
 
     y_cat_names = list(eval(open('cls/y_cat_dict.txt', 'r').read()).values())
+    print(y_cat_names)
     assert Counter(y_cat_names) == Counter(
         ['BNDX', 'MNDX', 'SNDX']), 'Model.info model names do not match with y_cat_dict.txt'
 

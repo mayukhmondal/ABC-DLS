@@ -426,17 +426,12 @@ class ABC_DLS_Classification:
             scale_x = cls.MinMax4bigfile(csvpath=outfolder + 'ss.csv', h5path=xfile,
                                          chunksize=chunksize, scaling=False)
         x_train, x_test = cls.train_test_split_hdf5(xfile, test_rows=int(test_size))
-
         if scale_x:
             joblib.dump(scale_x, outfolder + "scale_x.sav")
         models_command = Misc.joinginglistbyspecificstring(
             ["cut -f 1 ", '-d ","', filename, ">", outfolder + "models.csv"])
         os.system(models_command)
-        model_index = pandas.read_csv(outfolder + 'models.csv')
-        y_cat_dict = dict(zip(pandas.Categorical(model_index.iloc[:, 0]).codes, model_index.iloc[:, 0]))
-        y = tensorflow.keras.utils.to_categorical(pandas.Categorical(model_index.iloc[:, 0]).codes, len(y_cat_dict),
-                                                  'uint8')
-        Misc.numpy2hdf5(y, yfile)
+        y_cat_dict = cls.save_y_h5(classfile=outfolder + "models.csv", yfile=yfile, chunksize=chunksize)
         y_train, y_test = cls.train_test_split_hdf5(yfile, test_rows=int(test_size))
         Misc.removefiles([outfolder + 'ss.csv', outfolder + 'models.csv'])
         return x_train, x_test, y_train, y_test, scale_x, y_cat_dict
@@ -528,6 +523,34 @@ class ABC_DLS_Classification:
         f.close()
 
         return scale
+
+    @classmethod
+    def save_y_h5(cls, classfile: str, yfile: str = "y_temp.h5", chunksize: int = 1000) -> dict:
+        """
+        this will read the classfile change it to one hot encoding format and save it in h5format
+        Args:
+            classfile: The path of file where the classes are written. one class per row and one column. can be zipped
+            y_cat_dict: a dict format whose key is the key is the class and the integers in the values. used for
+            onehot encoding
+            yfile: the outful file path
+        :return: this will return the y_cat_dict dictionary
+        """
+
+        type_index = pandas.read_csv(classfile).iloc[:, 0]
+        y_cat_dict = dict(zip(pandas.Categorical(type_index).codes, type_index))
+        f = h5py.File(yfile, 'w')
+        yh5 = f.create_dataset('mydata', (type_index.shape[0], len(y_cat_dict)), chunks=True)
+        row = 0
+        breaks= int(type_index.shape[0] / chunksize)
+        if breaks <1:
+            breaks=1
+        for subtype in numpy.array_split(type_index, breaks):
+            y = tensorflow.keras.utils.to_categorical(pandas.Categorical(subtype).codes, len(y_cat_dict))
+            row_end = row + y.shape[0]
+            yh5[row:row_end] = y
+            row = row_end
+        f.close()
+        return y_cat_dict
 
     @classmethod
     def train_test_split_hdf5(cls, file: str, dataset: str = 'mydata', test_rows: Union[int, float] = int(1e4)) -> \
