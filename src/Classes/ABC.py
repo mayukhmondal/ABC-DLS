@@ -935,8 +935,10 @@ class ABC_DLS_Classification:
         :return: will not return anything. rather call goodness_fit to plot stuff and print the summary of gfit
         """
         # abc complains if there is no std in the data columns (ss)
-        noise = numpy.random.normal(0, 1e-4, ss.shape)
-        ss = (ss + noise).clip(0)
+        noise = numpy.random.randint(0,10,(ss.shape))/100
+        # gfit calculates strange distances in case we have too much precision in the number. thus nurfed
+        ss=(ss+noise).round(2)
+        observed=observed.round(2)
         for key in y_cat_dict:
             modelindex = ss.reset_index(drop=True).index[pandas.Series(ss.index) == y_cat_dict[key]].values
             ss_sub = ss.iloc[modelindex]
