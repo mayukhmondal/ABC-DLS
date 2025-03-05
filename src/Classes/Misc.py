@@ -251,16 +251,16 @@ def loading_def_4m_file(filepath: str, defname: str) -> Optional[Callable]:
     :param defname: the name of the definition
     :return: will return the func if exist in the file. if not will return None
     """
-    import importlib, imp
+    import importlib
     if not os.path.isfile(filepath):
         print('The file count not be found to load. Please check:', filepath)
     modname = filenamewithoutextension(filepath)
-    mod = imp.load_source(modname, filepath)
+    spec = importlib.util.spec_from_file_location(modname, filepath)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
     if defname in dir(mod):
-        spec = importlib.util.spec_from_file_location(modname, filepath)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return getattr(module, defname)
+
+        return getattr(mod, defname)
     else:
         return None
 
