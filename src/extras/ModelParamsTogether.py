@@ -24,7 +24,7 @@ def ANNModelParams(x, y):
     model.add(Dense(32, activation='relu'))
     model.add(Dense(y_train.shape[1]))
 
-    model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+    model.compile(loss='log_cosh', optimizer='Nadam', metrics=['accuracy'])
     # adding an early stop so that it does not overfit
     ES = EarlyStopping(monitor='val_loss', patience=100)
     # checkpoint

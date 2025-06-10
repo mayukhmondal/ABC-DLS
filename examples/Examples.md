@@ -55,7 +55,7 @@ This command will create in total three files. x.h5 (this is for ss), y.h5 (mode
 ### Train 
 The next part is to run the training part by NN. This command will train the NN to differentiate between models.
 ```commandline
-python src/Run_Classification.py Train --demography src/extras/ModelClass.py --test_size 1000 
+python src/Run_Classification.py Train --nn src/extras/ModelClass.py --test_size 1000 
 ``` 
 This command will train the model.  
 -  --nn [src/extras/ModelClass.py](../src/extras/ModelClass.py)  

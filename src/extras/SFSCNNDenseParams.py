@@ -38,7 +38,7 @@ def ANNModelParams(x, y):
     combined = Dense(y.shape[1])(combined)
     model = Model(inputs=x_0, outputs=combined)
 
-    model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+    model.compile(loss='log_cosh', optimizer='Nadam', metrics=['accuracy'])
     # adding an early stop so that it does not overfit
     ES = EarlyStopping(monitor='val_loss', patience=100)
     # checkpoint
