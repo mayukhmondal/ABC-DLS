@@ -1699,7 +1699,7 @@ class ABC_DLS_Params(ABC_DLS_Classification):
         model.add(Dense(32, activation='relu'))
         model.add(Dropout(.01))
         model.add(Dense(y.shape[1]))
-        model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+        model.compile(loss='log_cosh', optimizer='Nadam', metrics=['accuracy'])
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
         # checkpoint
@@ -2641,7 +2641,7 @@ class ABC_DLS_SMC(ABC_DLS_Params):
         model.add(Dense(32, activation='relu'))
         model.add(Dense(y_train.shape[1]))
 
-        model.compile(loss='logcosh', optimizer='Nadam', metrics=['accuracy'])
+        model.compile(loss='log_cosh', optimizer='Nadam', metrics=['accuracy'])
         # adding an early stop so that it does not overfit
         ES = EarlyStopping(monitor='val_loss', patience=100)
         # checkpoint

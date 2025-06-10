@@ -39,7 +39,12 @@ same but for last tested version. Use it in case you getting conflict between pa
 conda env create -f requirements.yml --name ABC-DLS
 conda activate ABC-DLS
 ```
-Please wait a little bit as it can take a long time to install all the dependencies.  After installing all the dependencies, you can just run either
+Please wait a little bit as it can take a long time to install all the dependencies.     
+You can also install all the package including SFS using requirements_all.yml. Please use mamba to install it faster. 
+```shell script
+mamba env create -f requirements_all.yml
+conda activate ABC-DLS
+```
 ```
 python src/Run_Classification.py --help
 ```

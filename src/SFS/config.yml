@@ -1,4 +1,5 @@
 sc_priors: Run_Range2UniParameters.py
+sc_priors: Run_Range2UniParameters.py
 sc_sfs: Run_Prior2SFS.py
 sc_abc: ../Run_SMC.py
 sfsfile: ../../examples/YRI_FRN_HAN.observed.csv
@@ -17,8 +18,5 @@ decrease : 0.95
 increase : 0.01
 tolerance: .1
 frac: 0.0015455858426908665
-tfknn: ../extras/Dynamic.py
 ldblock: 25e3
-resume_nn: True
-resume_fit: ../extras/Resume_fit.py
-sfs2c: True
+sfs2c: False

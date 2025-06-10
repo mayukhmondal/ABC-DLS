@@ -1,11 +1,11 @@
 dependencies:
-    - python=3.9.9
-    - numpy=1.22.1
-    - scikit-learn=1.0.2
-    - joblib=1.1.0
-    - pandas=1.4.0
-    - h5py=3.6.0
-    - rpy2=3.4.5
-    - r-essentials=4.1
-    - tzlocal=4.1
-    - tensorflow=2.6.0
+  - python=3.11.13
+  - numpy=1.26.4
+  - scikit-learn=1.7.0
+  - joblib=1.5.1
+  - pandas=1.5.3
+  - h5py=3.14.0
+  - rpy2=3.5.11
+  - r-essentials=4.3
+  - tzlocal=5.3
+  - tensorflow=2.18.0
