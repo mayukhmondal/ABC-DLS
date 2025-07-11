@@ -63,12 +63,12 @@ In case you try to install it to an already existed conda environment that alrea
 
 ### Revisiting the out of Africa event with a deep learning approach  
 Francesco Montinaro, Vasili Pankratov, Burak Yelmen, Luca Pagani, Mayukh Mondal  
-The American Journal of Human Genetics; doi: https://doi.org/10.1016/j.ajhg.2021.09.006  
+The American Journal of Human Genetics 108 (11): 2037 - 2051; doi: https://doi.org/10.1016/j.ajhg.2021.09.006  
 
 If you use cSFS please cite:
 ### Resolving out of Africa event for Papua New Guinean population using neural network
 Mayukh Mondal, Mathilde Andre, Ajai K. Pathak, Nicolas Brucato, Francois-Xavier Ricaut, Mait Metspalu, Anders Eriksson   
-bioRxiv 2024.09.19.613861; doi: https://doi.org/10.1101/2024.09.19.613861
+Nat Commun 16, 6345 (2025); doi: https://doi.org/10.1038/s41467-025-61661-w
 ## Contact 
-The code is maintained by Dr. Mayukh Mondal. In case you need further assistance please contact 
+The code is maintained by Dr. Mayukh Mondal. In case you need further assistance, please contact 
 <mondal.mayukh@gmail.com>
